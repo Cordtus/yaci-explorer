@@ -300,26 +300,6 @@ Contributions are welcome! Please follow these guidelines:
 - Write type-safe TypeScript (no `any` types)
 - Test UI changes across desktop and mobile viewports
 
-## Troubleshooting
-
-### Explorer shows no data
-
-- Check that yaci indexer is running and indexing blocks
-- Verify PostgREST is accessible: `curl http://localhost:3000`
-- Check browser console for API errors
-
-### Indexer not syncing
-
-- Verify chain gRPC endpoint is accessible
-- Check indexer logs: `docker logs yaci-explorer-indexer`
-- Ensure database connection is working
-
-### Database connection errors
-
-- Check PostgreSQL is running: `docker ps | grep postgres`
-- Verify connection string in `.env`
-- Check PostgreSQL logs: `docker logs yaci-explorer-postgres`
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.

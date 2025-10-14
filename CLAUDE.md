@@ -368,26 +368,6 @@ In code, access via `import.meta.env.VITE_*` for client-side env vars.
 - **Image optimization**: Use modern formats (WebP, AVIF)
 - **Virtual scrolling**: For large lists (blocks, transactions)
 
-## Troubleshooting
-
-### Build Errors
-
-- `Cannot find module`: Run `npm install`
-- TypeScript errors: Run `npm run typecheck` to see all errors
-- Vite errors: Clear cache with `rm -rf node_modules/.vite`
-
-### Runtime Errors
-
-- API errors: Check PostgREST is running and accessible
-- CORS errors: PostgREST must allow requests from explorer origin
-- Styling issues: Check Tailwind build, verify classes in `globals.css`
-
-### Docker Issues
-
-- Container won't start: Check logs with `docker logs <container-name>`
-- Database connection failed: Verify postgres container is healthy
-- Explorer shows 502: Wait for PostgREST to be ready (health check)
-
 ## Deployment Checklist
 
 - [ ] Update `.env` with production values

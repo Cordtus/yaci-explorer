@@ -501,47 +501,6 @@ curl -s http://10.123.45.2:26657/status | jq '.result.sync_info.latest_block_hei
 exit
 ```
 
-### Common Issues
-
-**Issue: Yaci can't connect to node**
-```bash
-# Check mantrad is listening on 0.0.0.0:9090
-login mantrad
-netstat -tlnp | grep 9090
-# Should show 0.0.0.0:9090, not 127.0.0.1:9090
-exit
-
-# Check firewall (if enabled)
-login mantrad
-ufw status
-# If active, allow from yaci-indexer subnet:
-ufw allow from 10.123.45.0/24 to any port 9090
-exit
-```
-
-**Issue: Docker won't start in LXC**
-```bash
-# On host, ensure nesting is enabled
-lxc config get yaci-indexer security.nesting
-# Should return: true
-
-# If not, enable and restart
-lxc config set yaci-indexer security.nesting true
-lxc restart yaci-indexer
-```
-
-**Issue: Can't access explorer from outside**
-```bash
-# Check port proxy is configured
-lxc config device show yaci-indexer
-
-# Should show explorer-port device
-# If missing, add it:
-lxc config device add yaci-indexer explorer-port proxy \
-  listen=tcp:0.0.0.0:3001 \
-  connect=tcp:127.0.0.1:3001
-```
-
 ---
 
 ## Part 6: Production Hardening
