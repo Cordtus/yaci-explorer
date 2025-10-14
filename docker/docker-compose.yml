@@ -64,6 +64,8 @@ services:
     restart: unless-stopped
     networks:
       - yaci-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # Block explorer UI
   explorer:
