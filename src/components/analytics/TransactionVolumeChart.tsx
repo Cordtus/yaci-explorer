@@ -10,9 +10,9 @@ interface VolumeData {
 }
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_POSTGREST_URL
+  const baseUrl = import.meta.env.VITE_POSTGREST_URL
   if (!baseUrl) {
-    throw new Error('NEXT_PUBLIC_POSTGREST_URL environment variable is not set')
+    throw new Error('VITE_POSTGREST_URL environment variable is not set')
   }
   const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 

@@ -10,9 +10,9 @@ interface MessageTypeStats {
 }
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_POSTGREST_URL
+  const baseUrl = import.meta.env.VITE_POSTGREST_URL
   if (!baseUrl) {
-    throw new Error('NEXT_PUBLIC_POSTGREST_URL environment variable is not set')
+    throw new Error('VITE_POSTGREST_URL environment variable is not set')
   }
 
   // Fetch message types from the last 10000 messages

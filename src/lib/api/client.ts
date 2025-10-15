@@ -13,11 +13,20 @@ export class YaciAPIClient {
   private cache = new Map<string, { data: any; timestamp: number }>()
   private cacheTimeout = 10000 // 10 seconds
 
-  constructor(baseUrl = process.env.NEXT_PUBLIC_POSTGREST_URL) {
-    if (!baseUrl) {
-      throw new Error('NEXT_PUBLIC_POSTGREST_URL environment variable is not set')
+  /**
+   * Creates a new Yaci API client instance
+   * @param baseUrl - The PostgREST API base URL. If not provided, uses VITE_POSTGREST_URL from environment
+   * @throws {Error} If no baseUrl is provided and VITE_POSTGREST_URL is not set
+   */
+  constructor(baseUrl?: string) {
+    // Use provided baseUrl, or fall back to environment variable
+    const url = baseUrl || import.meta.env.VITE_POSTGREST_URL
+
+    if (!url) {
+      throw new Error('VITE_POSTGREST_URL environment variable is not set and no baseUrl provided')
     }
-    this.baseUrl = baseUrl
+
+    this.baseUrl = url
   }
 
   private async fetchWithCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {

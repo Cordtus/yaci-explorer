@@ -354,7 +354,8 @@ Currently no automated tests. When adding tests:
 
 Key environment variables (set in `.env` or docker-compose):
 
-- `POSTGREST_URL`: PostgREST API endpoint (default: http://localhost:3000)
+- `VITE_POSTGREST_URL`: PostgREST API endpoint for frontend (build-time, default: http://localhost:3000)
+- `POSTGREST_URL`: PostgREST API endpoint for docker-compose (default: http://localhost:3000)
 - `CHAIN_ID`: Chain identifier for display (default: manifest-1)
 - `CHAIN_NAME`: Human-readable chain name (default: Manifest Network)
 

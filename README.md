@@ -191,7 +191,7 @@ If you want to develop locally without Docker:
 4. **Start explorer**:
    ```bash
    npm install
-   POSTGREST_URL=http://localhost:3000 npm run dev
+   VITE_POSTGREST_URL=http://localhost:3000 npm run dev
    ```
 
 ## Configuration
@@ -204,7 +204,8 @@ See `.env.example` for all configuration options. Key variables:
 |----------|-------------|---------|
 | `CHAIN_GRPC_ENDPOINT` | gRPC endpoint of chain to index | `localhost:9090` |
 | `POSTGRES_PASSWORD` | PostgreSQL password | `foobar` |
-| `POSTGREST_URL` | PostgREST API URL | `http://localhost:3000` |
+| `VITE_POSTGREST_URL` | PostgREST API URL for frontend (build-time) | `http://localhost:3000` |
+| `POSTGREST_URL` | PostgREST API URL for docker-compose | `http://localhost:3000` |
 | `CHAIN_ID` | Chain identifier for display | `manifest-1` |
 | `YACI_IMAGE` | Yaci Docker image to use | `ghcr.io/manifest-network/yaci:latest` |
 
@@ -229,6 +230,44 @@ export const chains = {
 ```
 
 ## Deployment
+
+### Production Deployment Scripts
+
+For deploying to a production server with separate containers, use the provided deployment scripts:
+
+```bash
+# Quick deployment (pull latest code, build, and deploy)
+./scripts/update-and-deploy.sh
+
+# Or step by step:
+
+# 1. Build for production (builds with /api as API endpoint)
+./scripts/build-production.sh /api
+
+# 2. Deploy to web server
+./scripts/deploy.sh /var/www/mantrachain-explorer
+
+# 3. Custom API URL
+./scripts/build-production.sh https://api.yourdomain.com
+```
+
+**Script Options**:
+
+- `build-production.sh [API_URL]` - Build with custom API endpoint
+  - Default: `/api` (for reverse proxy setups)
+  - Example: `/api`, `https://api.example.com`, `http://10.0.0.1:3000`
+
+- `deploy.sh [WEBROOT_PATH]` - Deploy to web server directory
+  - Default: `/var/www/mantrachain-explorer`
+  - Automatically backs up existing deployment
+  - Reloads Caddy or Nginx if running
+
+- `update-and-deploy.sh [API_URL] [WEBROOT_PATH]` - Complete update workflow
+  - Pulls latest code from git
+  - Builds for production
+  - Deploys to web server
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions including reverse proxy setup with Caddy/Nginx.
 
 ### Production Deployment with Docker
 

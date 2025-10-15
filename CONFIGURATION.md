@@ -103,6 +103,11 @@ POSTGREST_PORT=3000
 POSTGREST_URL=http://localhost:3000
 POSTGREST_PROXY_URI=http://localhost:3000
 
+# Explorer Frontend API URL (used at build time)
+# For development: http://localhost:3000
+# For production: Use your proxied API endpoint (e.g., /api or https://api.yourdomain.com)
+VITE_POSTGREST_URL=http://localhost:3000
+
 # Yaci Indexer
 YACI_MAX_CONCURRENCY=100
 YACI_LOG_LEVEL=info

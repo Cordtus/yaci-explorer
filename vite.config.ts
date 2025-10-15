@@ -9,7 +9,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    'process.env.NEXT_PUBLIC_POSTGREST_URL': JSON.stringify(process.env.NEXT_PUBLIC_POSTGREST_URL || 'http://localhost:3010')
-  }
+  // Vite automatically exposes VITE_* environment variables to import.meta.env
+  // No need for manual define - just set VITE_POSTGREST_URL in your .env file
 });
