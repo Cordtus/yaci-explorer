@@ -231,43 +231,38 @@ export const chains = {
 
 ## Deployment
 
-### Production Deployment Scripts
+### Two-Container Production Deployment
 
-For deploying to a production server with separate containers, use the provided deployment scripts:
+For deploying across separate backend and frontend containers:
 
+**Backend Container** (PostgreSQL + PostgREST + Yaci):
 ```bash
-# Quick deployment (pull latest code, build, and deploy)
-./scripts/update-and-deploy.sh
-
-# Or step by step:
-
-# 1. Build for production (builds with /api as API endpoint)
-./scripts/build-production.sh /api
-
-# 2. Deploy to web server
-./scripts/deploy.sh /var/www/mantrachain-explorer
-
-# 3. Custom API URL
-./scripts/build-production.sh https://api.yourdomain.com
+# On backend container (e.g., 10.70.48.134)
+cd /opt/yaci-explorer
+./scripts/deploy-backend.sh
 ```
 
-**Script Options**:
+**Frontend Container** (Caddy + Static Files):
+```bash
+# On frontend container (e.g., 10.70.48.100)
+cd /opt/yaci-explorer
+./scripts/deploy-frontend.sh
+```
 
-- `build-production.sh [API_URL]` - Build with custom API endpoint
-  - Default: `/api` (for reverse proxy setups)
-  - Example: `/api`, `https://api.example.com`, `http://10.0.0.1:3000`
+**Deployment Scripts**:
 
-- `deploy.sh [WEBROOT_PATH]` - Deploy to web server directory
-  - Default: `/var/www/mantrachain-explorer`
-  - Automatically backs up existing deployment
-  - Reloads Caddy or Nginx if running
+- `deploy-backend.sh` - Deploys backend services (PostgreSQL, PostgREST, Yaci)
+  - Pulls latest code
+  - Starts Docker Compose services
+  - Verifies backend is running
 
-- `update-and-deploy.sh [API_URL] [WEBROOT_PATH]` - Complete update workflow
-  - Pulls latest code from git
-  - Builds for production
-  - Deploys to web server
+- `deploy-frontend.sh [WEBROOT_PATH]` - Deploys frontend to web server
+  - Pulls latest code
+  - Builds for production with `/api` endpoint
+  - Deploys to webroot (default: `/var/www/mantrachain-explorer`)
+  - Reloads Caddy/Nginx (supports both init.d and systemd)
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions including reverse proxy setup with Caddy/Nginx.
+See [TWO-CONTAINER-DEPLOYMENT.md](./TWO-CONTAINER-DEPLOYMENT.md) for detailed setup instructions including network configuration and reverse proxy setup.
 
 ### Production Deployment with Docker
 
