@@ -260,8 +260,8 @@ POSTGRES_PASSWORD=CHANGE_THIS_SECURE_PASSWORD
 # IMPORTANT: Set this to your mantrad container IP!
 CHAIN_GRPC_ENDPOINT=10.123.45.2:9090
 
-# Use the fork with your modifications
-YACI_IMAGE=ghcr.io/cordtus/yaci:poc
+# Use the fork with Mantrachain compatibility and error handling
+YACI_IMAGE=ghcr.io/cordtus/yaci:main
 
 # Other settings
 YACI_INSECURE=-k  # Use -k for insecure gRPC (no TLS)

@@ -85,7 +85,43 @@ Services available:
 - **Prometheus Metrics**: http://localhost:2112
 - **PostgreSQL**: localhost:5432
 
-### Option 2: Local Development
+### Option 2: LXC Deployment (Production)
+
+Automated deployment to LXC containers with one command:
+
+```bash
+# On your host machine (with LXD installed)
+# First, create an LXC container:
+lxc launch ubuntu:22.04 yaci-indexer
+lxc config set yaci-indexer security.nesting true
+lxc config set yaci-indexer security.syscalls.intercept.mknod true
+lxc config set yaci-indexer security.syscalls.intercept.setxattr true
+lxc restart yaci-indexer
+
+# Run the automated deployment script:
+./scripts/lxc-deploy.sh yaci-indexer
+
+# The script will:
+# 1. Install Docker in the container
+# 2. Clone the repository
+# 3. Create .env (you'll need to configure it on first run)
+# 4. Pull Docker images
+# 5. Start all services
+# 6. Set up port forwarding
+# 7. Configure auto-start
+```
+
+After the first run, edit the configuration:
+```bash
+lxc exec yaci-indexer -- nano /opt/yaci-explorer/.env
+# Set CHAIN_GRPC_ENDPOINT and other settings
+```
+
+Then run the deployment script again to complete setup.
+
+**See [LXC_DEPLOYMENT.md](./LXC_DEPLOYMENT.md) for detailed manual setup instructions.**
+
+### Option 3: Local Development
 
 For frontend development with existing infrastructure:
 

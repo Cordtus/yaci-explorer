@@ -43,7 +43,7 @@ services:
 
   # Yaci indexer (from Docker image)
   yaci:
-    image: ${YACI_IMAGE:-ghcr.io/manifest-network/yaci:latest}
+    image: ${YACI_IMAGE:-ghcr.io/cordtus/yaci:main}
     container_name: yaci-explorer-indexer
     command: >
       extract postgres ${CHAIN_GRPC_ENDPOINT}
