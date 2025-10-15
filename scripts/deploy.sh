@@ -1,94 +1,90 @@
 #!/bin/bash
-# Backend and Frontend Deployment Script
-# Run on backend container (10.70.48.134)
-# Usage: ./scripts/deploy.sh [FRONTEND_HOST] [WEBROOT]
+# Native LXC deployment (no Docker)
+# Runs backend services and frontend server
+# Usage: ./scripts/deploy.sh
 
 set -e
 
-FRONTEND_HOST="${1:-10.70.48.100}"
-WEBROOT="${2:-/var/www/yaci-explorer}"
+FRONTEND_PORT="${FRONTEND_PORT:-3001}"
+POSTGREST_PORT="${POSTGREST_PORT:-3000}"
 
 echo "=========================================="
-echo "Yaci Explorer - Deployment"
+echo "Yaci Explorer - Native Deployment"
 echo "=========================================="
-echo "Backend: This container"
-echo "Frontend: ${FRONTEND_HOST}:${WEBROOT}"
+echo "Frontend will run on: http://localhost:${FRONTEND_PORT}"
+echo "PostgREST API will run on: http://localhost:${POSTGREST_PORT}"
 echo ""
-
-# Check if running in the right directory
-if [ ! -f "docker/docker-compose.yml" ]; then
-    echo "ERROR: docker/docker-compose.yml not found!"
-    exit 1
-fi
 
 # Pull latest code
 echo "Step 1: Pulling latest code..."
-git pull origin main
+git pull origin main || echo "Skipping git pull"
 
 # Check if .env exists
 if [ ! -f ".env" ]; then
     cp .env.example .env
-    echo "⚠ Created .env - please configure and run again"
+    echo "⚠ Created .env - please configure CHAIN_GRPC_ENDPOINT and run again"
     exit 1
 fi
 
-# Stop existing containers and clean up
-echo ""
-echo "Step 2: Cleaning up old containers..."
-docker compose -f docker/docker-compose.yml down -v
-docker system prune -f
+# Load environment variables
+source .env
 
-# Start backend services (no explorer frontend)
+# Install dependencies if needed
 echo ""
-echo "Step 3: Starting backend services..."
-docker compose -f docker/docker-compose.yml up -d postgres postgrest yaci
-
-echo ""
-echo "Step 4: Waiting for services..."
-sleep 15
-
-# Build frontend
-echo ""
-echo "Step 5: Building frontend..."
+echo "Step 2: Installing Node.js dependencies..."
 if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-VITE_POSTGREST_URL=/api npm run build
-
-# Deploy frontend to Caddy server
+# Build frontend
 echo ""
-echo "Step 6: Deploying frontend to ${FRONTEND_HOST}..."
-if [ "${FRONTEND_HOST}" = "localhost" ] || [ "${FRONTEND_HOST}" = "127.0.0.1" ]; then
-    # Local deployment
-    mkdir -p "${WEBROOT}"
-    rm -rf "${WEBROOT}"/*
-    cp -r build/client/* "${WEBROOT}/"
-    echo "✓ Frontend deployed locally"
-else
-    # Remote deployment
-    ssh root@${FRONTEND_HOST} "mkdir -p ${WEBROOT} && rm -rf ${WEBROOT}/*"
-    scp -r build/client/* root@${FRONTEND_HOST}:${WEBROOT}/
-    ssh root@${FRONTEND_HOST} "/etc/init.d/caddy reload 2>/dev/null || systemctl reload caddy 2>/dev/null || true"
-    echo "✓ Frontend deployed to ${FRONTEND_HOST}"
+echo "Step 3: Building frontend..."
+VITE_POSTGREST_URL="http://localhost:${POSTGREST_PORT}" npm run build
+
+# Install serve if not present
+if ! command -v serve &> /dev/null; then
+    echo ""
+    echo "Step 4: Installing 'serve' package..."
+    npm install -g serve
 fi
 
-# Check services
+# Stop existing processes
 echo ""
-echo "Service Status:"
-docker compose -f docker/docker-compose.yml ps
+echo "Step 5: Stopping existing processes..."
+pkill -f "serve.*build/client" || true
+pkill -f "node.*build/server" || true
+
+# Start frontend server
+echo ""
+echo "Step 6: Starting frontend server..."
+nohup serve -s build/client -l ${FRONTEND_PORT} > /var/log/yaci-explorer.log 2>&1 &
+FRONTEND_PID=$!
+echo "Frontend server started (PID: ${FRONTEND_PID})"
+
+# Wait a moment and verify it started
+sleep 2
+if ps -p ${FRONTEND_PID} > /dev/null; then
+    echo "✓ Frontend is running on port ${FRONTEND_PORT}"
+else
+    echo "✗ Frontend failed to start"
+    cat /var/log/yaci-explorer.log
+    exit 1
+fi
 
 echo ""
 echo "=========================================="
 echo "Deployment Complete!"
 echo "=========================================="
 echo ""
-echo "Backend services (this container):"
-echo "  - PostgreSQL: localhost:5432"
-echo "  - PostgREST: localhost:3000"
-echo "  - Yaci Indexer: (internal)"
+echo "Frontend: http://localhost:${FRONTEND_PORT}"
+echo "Logs: /var/log/yaci-explorer.log"
 echo ""
-echo "Frontend: ${FRONTEND_HOST}:${WEBROOT}"
+echo "Configure Caddy to proxy to this port:"
 echo ""
-echo "View logs: docker compose -f docker/docker-compose.yml logs -f"
+echo "  explorer.yourdomain.com {"
+echo "      reverse_proxy localhost:${FRONTEND_PORT}"
+echo "  }"
+echo ""
+echo "To stop: pkill -f 'serve.*build/client'"
+echo "To view logs: tail -f /var/log/yaci-explorer.log"
 echo "=========================================="

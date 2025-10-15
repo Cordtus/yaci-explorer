@@ -231,9 +231,21 @@ export const chains = {
 
 ## Deployment
 
-### Single-Container Deployment
+### Native LXC Container Deployment
 
-Deploy the entire stack on one server using the deployment script:
+**One-time backend setup:**
+
+```bash
+cd /opt/yaci-explorer
+sudo ./scripts/setup-backend.sh
+```
+
+This installs and configures:
+- PostgreSQL
+- PostgREST (API on port 3000)
+- Yaci indexer
+
+**Deploy/update frontend:**
 
 ```bash
 cd /opt/yaci-explorer
@@ -242,29 +254,17 @@ cd /opt/yaci-explorer
 
 This will:
 1. Pull latest code
-2. Start all services (PostgreSQL, PostgREST, Yaci, Explorer)
-3. Expose Explorer on port 3001 (configurable via `EXPLORER_PORT` in `.env`)
+2. Build frontend
+3. Start frontend server on port 3001 (configurable via `FRONTEND_PORT`)
 
-### Caddy Configuration
+### Caddy Proxy Configuration
 
-Configure Caddy to serve frontend and proxy API to backend container:
+On your Caddy server, proxy to the frontend server:
 
 **Caddy** (`/etc/caddy/Caddyfile`):
 ```
 explorer.yourdomain.com {
-    # Serve static frontend files
-    root * /var/www/yaci-explorer
-
-    # Proxy API calls to backend container
-    handle /api/* {
-        uri strip_prefix /api
-        reverse_proxy 10.70.48.134:3000
-    }
-
-    # Serve static files, fallback to index.html for SPA
-    try_files {path} /index.html
-    file_server
-    encode gzip
+    reverse_proxy 10.70.48.134:3001
 }
 ```
 
