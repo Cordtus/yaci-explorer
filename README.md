@@ -231,40 +231,49 @@ export const chains = {
 
 ## Deployment
 
-### Two-Container Production Deployment
+### Single-Container Deployment
 
-For deploying across separate backend and frontend containers:
+Deploy the entire stack on one server using the deployment script:
 
-**Backend Container** (PostgreSQL + PostgREST + Yaci):
 ```bash
-# On backend container (e.g., 10.70.48.134)
 cd /opt/yaci-explorer
-./scripts/deploy-backend.sh
+./scripts/deploy.sh
 ```
 
-**Frontend Container** (Caddy + Static Files):
-```bash
-# On frontend container (e.g., 10.70.48.100)
-cd /opt/yaci-explorer
-./scripts/deploy-frontend.sh
+This will:
+1. Pull latest code
+2. Start all services (PostgreSQL, PostgREST, Yaci, Explorer)
+3. Expose Explorer on port 3001 (configurable via `EXPLORER_PORT` in `.env`)
+
+### Caddy Configuration
+
+Configure Caddy to serve frontend and proxy API to backend container:
+
+**Caddy** (`/etc/caddy/Caddyfile`):
+```
+explorer.yourdomain.com {
+    # Serve static frontend files
+    root * /var/www/yaci-explorer
+
+    # Proxy API calls to backend container
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy 10.70.48.134:3000
+    }
+
+    # Serve static files, fallback to index.html for SPA
+    try_files {path} /index.html
+    file_server
+    encode gzip
+}
 ```
 
-**Deployment Scripts**:
+Reload Caddy:
+```bash
+/etc/init.d/caddy reload
+```
 
-- `deploy-backend.sh` - Deploys backend services (PostgreSQL, PostgREST, Yaci)
-  - Pulls latest code
-  - Starts Docker Compose services
-  - Verifies backend is running
-
-- `deploy-frontend.sh [WEBROOT_PATH]` - Deploys frontend to web server
-  - Pulls latest code
-  - Builds for production with `/api` endpoint
-  - Deploys to webroot (default: `/var/www/mantrachain-explorer`)
-  - Reloads Caddy/Nginx (supports both init.d and systemd)
-
-See [TWO-CONTAINER-DEPLOYMENT.md](./TWO-CONTAINER-DEPLOYMENT.md) for detailed setup instructions including network configuration and reverse proxy setup.
-
-### Production Deployment with Docker
+### Manual Docker Deployment
 
 ```bash
 # Build and start all services
