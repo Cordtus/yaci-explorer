@@ -23,10 +23,14 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-source .env
+# Load environment variables, ignoring comments
+set -a
+source <(grep -v '^#' .env | grep -v '^$')
+set +a
 
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-foobar}"
 POSTGREST_PORT="${POSTGREST_PORT:-3000}"
+CHAIN_GRPC_ENDPOINT="${CHAIN_GRPC_ENDPOINT:-localhost:9090}"
 
 echo "Step 1: Installing PostgreSQL..."
 apt-get update

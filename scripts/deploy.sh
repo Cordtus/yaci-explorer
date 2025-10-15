@@ -26,8 +26,10 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Load environment variables
-source .env
+# Load environment variables, ignoring comments
+set -a
+source <(grep -v '^#' .env | grep -v '^$')
+set +a
 
 # Install dependencies if needed
 echo ""
