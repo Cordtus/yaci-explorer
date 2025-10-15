@@ -170,6 +170,13 @@ fi
 echo "  Building Yaci indexer..."
 cd yaci
 make build > /dev/null 2>&1
+
+# Stop yaci service if running to allow binary replacement
+if systemctl is-active --quiet yaci 2>/dev/null; then
+    echo "  Stopping existing yaci service..."
+    systemctl stop yaci
+fi
+
 cp bin/yaci /usr/local/bin/yaci
 chmod +x /usr/local/bin/yaci
 echo "  Yaci built and installed"
