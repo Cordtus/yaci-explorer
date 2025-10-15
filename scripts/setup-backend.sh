@@ -23,10 +23,16 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Load environment variables, ignoring comments
-set -a
-source <(grep -v '^#' .env | grep -v '^$')
-set +a
+# Load environment variables, ignoring comments and blank lines
+while IFS= read -r line; do
+    # Skip comments and blank lines
+    [[ "$line" =~ ^#.*$ ]] && continue
+    [[ -z "$line" ]] && continue
+    # Export valid variable assignments
+    if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+        export "$line"
+    fi
+done < .env
 
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-foobar}"
 POSTGREST_PORT="${POSTGREST_PORT:-3000}"
