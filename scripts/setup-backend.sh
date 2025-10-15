@@ -96,43 +96,29 @@ if ! command -v go &> /dev/null; then
     rm go1.21.5.linux-amd64.tar.gz
 fi
 
-# Clone and build Yaci
+# Clone and build Yaci (using Cordtus fork with Mantrachain compatibility)
 cd /opt
 if [ ! -d "yaci" ]; then
-    git clone https://github.com/manifest-network/yaci.git
+    echo "Cloning Yaci indexer (Cordtus fork with Mantrachain fixes)..."
+    git clone -b main https://github.com/Cordtus/yaci.git
+else
+    echo "Updating Yaci indexer..."
+    cd yaci
+    git fetch origin
+    git checkout main
+    git pull origin main
+    cd ..
 fi
+
 cd yaci
-git pull
-go build -o /usr/local/bin/yaci
+echo "Building Yaci indexer..."
+make build
+cp bin/yaci /usr/local/bin/yaci
+chmod +x /usr/local/bin/yaci
 
 echo ""
-echo "Step 7: Creating Yaci systemd service..."
-cat > /etc/systemd/system/yaci.service <<EOF
-[Unit]
-Description=Yaci Blockchain Indexer
-After=postgresql.service postgrest.service
-Requires=postgresql.service
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/yaci
-Environment="GRPC_ENDPOINT=${CHAIN_GRPC_ENDPOINT}"
-Environment="DB_HOST=localhost"
-Environment="DB_PORT=5432"
-Environment="DB_USER=postgres"
-Environment="DB_PASSWORD=${POSTGRES_PASSWORD}"
-Environment="DB_NAME=yaci"
-ExecStart=/usr/local/bin/yaci index
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable yaci
-systemctl start yaci
+echo "Step 7: Yaci systemd service will be created by setup-yaci-service.sh"
+echo "       Run ./scripts/setup-yaci-service.sh after this completes."
 
 echo ""
 echo "=========================================="

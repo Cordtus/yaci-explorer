@@ -47,12 +47,13 @@ Requires=postgresql.service
 [Service]
 Type=simple
 WorkingDirectory=/opt/yaci
-ExecStart=/usr/local/bin/yaci extract postgres \\
-  --postgres-conn "host=localhost port=5432 user=postgres password=${POSTGRES_PASSWORD} dbname=yaci sslmode=disable" \\
+ExecStart=/usr/local/bin/yaci extract postgres ${GRPC_ENDPOINT} \\
+  -p "postgres://postgres:${POSTGRES_PASSWORD}@localhost:5432/yaci?sslmode=disable" \\
   --live \\
   --enable-prometheus \\
+  --prometheus-addr 0.0.0.0:2112 \\
   --enable-denom-resolver \\
-  ${GRPC_ENDPOINT}
+  -k
 Restart=always
 RestartSec=10
 StandardOutput=journal
