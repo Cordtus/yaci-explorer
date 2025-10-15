@@ -1,0 +1,69 @@
+# Caddy configuration for Yaci Explorer
+# Place this in /etc/caddy/Caddyfile on your Caddy server (10.70.48.100)
+
+mantra.basementnodes.ca {
+    # Reverse proxy to backend frontend server
+    reverse_proxy 10.70.48.134:3001 {
+        # Health check
+        health_uri /
+        health_interval 30s
+        health_timeout 5s
+
+        # Proxy headers
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # Fail timeout
+        fail_duration 30s
+        max_fails 3
+    }
+
+    # Security headers
+    header {
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+
+        # XSS protection
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+
+        # Permissions policy
+        Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+
+        # Remove server info
+        -Server
+    }
+
+    # Logging
+    log {
+        output file /var/log/caddy/explorer-access.log {
+            roll_size 100mb
+            roll_keep 5
+            roll_keep_for 720h
+        }
+        format json
+    }
+
+    # Enable gzip compression
+    encode gzip zstd
+
+    # Error handling
+    handle_errors {
+        respond "{err.status_code} {err.status_text}"
+    }
+}
+
+# Optional: Redirect www to non-www
+www.mantra.basementnodes.ca {
+    redir https://mantra.basementnodes.ca{uri} permanent
+}
+
+# Optional: Redirect HTTP to HTTPS (Caddy does this automatically, but explicit config)
+http://mantra.basementnodes.ca {
+    redir https://mantra.basementnodes.ca{uri} permanent
+}
