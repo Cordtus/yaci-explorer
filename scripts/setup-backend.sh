@@ -10,12 +10,6 @@ echo "Backend Services Setup"
 echo "=========================================="
 echo ""
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run as root"
-    exit 1
-fi
-
 # Load config
 if [ ! -f ".env" ]; then
     cp .env.example .env

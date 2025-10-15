@@ -237,7 +237,7 @@ export const chains = {
 
 ```bash
 cd /opt/yaci-explorer
-sudo ./scripts/setup-backend.sh
+./scripts/setup-backend.sh
 ```
 
 This installs and configures:
