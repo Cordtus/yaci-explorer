@@ -550,8 +550,17 @@ export class YaciAPIClient {
       new Date(tx.timestamp).getTime() > oneMinuteAgo
     )
 
-    // Get validator count from Prometheus
-    const activeValidators = networkHealth?.validators || 0
+    // Get validator count from Prometheus, fallback to block data
+    let activeValidators = networkHealth?.validators || 0
+
+    // If Prometheus doesn't have validator count, get from latest block
+    if (activeValidators === 0) {
+      activeValidators =
+        latestBlock?.data?.block?.last_commit?.signatures?.length ||
+        latestBlock?.data?.block?.lastCommit?.signatures?.length ||
+        latestBlock?.data?.lastCommit?.signatures?.length ||
+        0
+    }
 
     // Calculate average block time from recent blocks
     const blockTimeAnalysis = await this.getBlockTimeAnalysis(100)

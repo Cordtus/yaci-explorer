@@ -1,0 +1,51 @@
+# Caddyfile for Yaci Explorer
+# This file should be placed at /etc/caddy/Caddyfile on your server
+# Or use it directly with: caddy run --config Caddyfile
+
+# For production, replace with your domain:
+# explorer.yourdomain.com {
+
+# For development/local testing:
+:80 {
+    # Proxy /api requests to PostgREST
+    handle /api/* {
+        # Strip /api prefix before proxying
+        uri strip_prefix /api
+        reverse_proxy localhost:3000
+    }
+
+    # Serve frontend application
+    handle {
+        reverse_proxy localhost:3001
+    }
+
+    # Enable compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /var/log/caddy/explorer.log
+        format json
+    }
+}
+
+# For HTTPS with automatic cert, use:
+# your-domain.com {
+#     # Proxy /api requests to PostgREST
+#     handle /api/* {
+#         uri strip_prefix /api
+#         reverse_proxy localhost:3000
+#     }
+#
+#     # Serve frontend application
+#     handle {
+#         reverse_proxy localhost:3001
+#     }
+#
+#     encode gzip
+#
+#     log {
+#         output file /var/log/caddy/explorer.log
+#         format json
+#     }
+# }

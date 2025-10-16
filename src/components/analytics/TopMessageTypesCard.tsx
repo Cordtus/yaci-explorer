@@ -17,7 +17,7 @@ async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
 
   // Fetch message types from the last 10000 messages
   const response = await fetch(
-    `${baseUrl}/messages_main?select=type&order=tx_id.desc&limit=10000`
+    `${baseUrl}/messages_main?select=type&order=id.desc&limit=10000`
   )
 
   if (!response.ok) {

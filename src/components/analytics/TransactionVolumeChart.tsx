@@ -17,7 +17,7 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
   const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 
   const response = await fetch(
-    `${baseUrl}/transactions_main?select=time,gas_used&time=gte.${hoursAgo}&order=time.asc`
+    `${baseUrl}/transactions_main?select=timestamp,fee&timestamp=gte.${hoursAgo}&order=timestamp.asc`
   )
 
   if (!response.ok) {
@@ -30,12 +30,13 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
   const hourlyData: { [key: string]: { count: number; gasUsed: number } } = {}
 
   transactions.forEach((tx: any) => {
-    const hour = new Date(tx.time).toISOString().substring(0, 13) + ':00:00'
+    const hour = new Date(tx.timestamp).toISOString().substring(0, 13) + ':00:00'
     if (!hourlyData[hour]) {
       hourlyData[hour] = { count: 0, gasUsed: 0 }
     }
     hourlyData[hour].count++
-    hourlyData[hour].gasUsed += parseInt(tx.gas_used || 0)
+    // Calculate gas from fee.gasLimit if available
+    hourlyData[hour].gasUsed += parseInt(tx.fee?.gasLimit || 0)
   })
 
   // Convert to array and ensure all hours are present
