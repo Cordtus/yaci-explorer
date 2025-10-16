@@ -334,9 +334,10 @@ export class YaciAPIClient {
     })
 
     // Use PostgREST's OR syntax to search both sender and mentions array
-    // Format: or=(sender.eq.address,mentions.cs.{address})
+    // Format: or=(sender.eq.address,mentions.cs.%7Baddress%7D)
     // cs = contains (for array containment check)
-    params.append('or', `(sender.eq.${address},mentions.cs.{${address}})`)
+    // Note: Braces must be URL-encoded (%7B = {, %7D = }) for PostgreSQL text array syntax
+    params.append('or', `(sender.eq.${address},mentions.cs.%7B${address}%7D)`)
 
     const response = await fetch(`${this.baseUrl}/messages_main?${params}`)
     if (!response.ok) {
@@ -393,8 +394,9 @@ export class YaciAPIClient {
     total_received: number
   }> {
     // Get all messages involving this address
+    // Note: Braces must be URL-encoded for PostgreSQL text array syntax
     const params = new URLSearchParams({
-      or: `(sender.eq.${address},mentions.cs.{${address}})`,
+      or: `(sender.eq.${address},mentions.cs.%7B${address}%7D)`,
       order: 'id.desc'
     })
 
