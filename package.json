@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Modern block explorer for Cosmos SDK chains with EVM support",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build",
