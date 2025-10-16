@@ -41,6 +41,17 @@ export class YaciAPIClient {
   }
 
   // Block methods
+
+  /**
+   * Fetches a paginated list of blocks from the blockchain
+   * @param limit - Maximum number of blocks to return (default: 20)
+   * @param offset - Number of blocks to skip for pagination (default: 0)
+   * @returns Promise resolving to paginated response containing blocks
+   * @throws {Error} If the API request fails
+   * @example
+   * const result = await client.getBlocks(10, 0);
+   * console.log(`Retrieved ${result.data.length} of ${result.pagination.total} blocks`);
+   */
   async getBlocks(limit = 20, offset = 0): Promise<PaginatedResponse<Block>> {
     const response = await fetch(
       `${this.baseUrl}/blocks_raw?limit=${limit}&offset=${offset}&order=id.desc`,
@@ -71,6 +82,15 @@ export class YaciAPIClient {
     }
   }
 
+  /**
+   * Fetches a specific block by its height with caching
+   * @param height - The block height to fetch
+   * @returns Promise resolving to the block or null if not found
+   * @throws {Error} If the API request fails
+   * @example
+   * const block = await client.getBlock(12345);
+   * if (block) console.log(`Block time: ${block.data.block.header.time}`);
+   */
   async getBlock(height: number): Promise<Block | null> {
     return this.fetchWithCache(`block:${height}`, async () => {
       const response = await fetch(`${this.baseUrl}/blocks_raw?id=eq.${height}`)
@@ -82,6 +102,14 @@ export class YaciAPIClient {
     })
   }
 
+  /**
+   * Fetches the most recent block from the blockchain
+   * @returns Promise resolving to the latest block
+   * @throws {Error} If the API request fails or no blocks exist
+   * @example
+   * const latest = await client.getLatestBlock();
+   * console.log(`Current height: ${latest.id}`);
+   */
   async getLatestBlock(): Promise<Block> {
     const response = await fetch(`${this.baseUrl}/blocks_raw?order=id.desc&limit=1`)
     if (!response.ok) {
@@ -92,6 +120,18 @@ export class YaciAPIClient {
   }
 
   // Transaction methods
+
+  /**
+   * Fetches a paginated list of transactions with optional filters
+   * @param limit - Maximum number of transactions to return (default: 20)
+   * @param offset - Number of transactions to skip for pagination (default: 0)
+   * @param filters - Optional filters for status, block height, timestamp, and message type
+   * @returns Promise resolving to paginated response containing enhanced transactions with messages and events
+   * @throws {Error} If the API request fails
+   * @example
+   * const txs = await client.getTransactions(10, 0, { status: 'success', block_height: 12345 });
+   * txs.data.forEach(tx => console.log(tx.id, tx.messages.length));
+   */
   async getTransactions(
     limit = 20,
     offset = 0,
@@ -178,6 +218,15 @@ export class YaciAPIClient {
     }
   }
 
+  /**
+   * Fetches a single transaction by hash with full details including messages, events, and EVM data
+   * @param hash - The transaction hash (64 character hex string)
+   * @returns Promise resolving to enhanced transaction with all related data
+   * @throws {Error} If the API request fails or transaction is not found
+   * @example
+   * const tx = await client.getTransaction('A1B2C3...');
+   * console.log(`Gas used: ${tx.gas_used}, Messages: ${tx.messages.length}`);
+   */
   async getTransaction(hash: string): Promise<EnhancedTransaction> {
     const [mainResponse, rawResponse] = await Promise.all([
       fetch(`${this.baseUrl}/transactions_main?id=eq.${hash}`),
@@ -258,6 +307,154 @@ export class YaciAPIClient {
     return response.json()
   }
 
+  // Address methods
+
+  /**
+   * Fetches transactions associated with a specific address
+   * Searches both sender field and mentions array in messages_main table
+   * @param address - The blockchain address to search for (e.g., 'manifest1...' or '0x...')
+   * @param limit - Maximum number of transactions to return (default: 50)
+   * @param offset - Number of transactions to skip for pagination (default: 0)
+   * @returns Promise resolving to paginated response of transactions involving the address
+   * @throws {Error} If the API request fails
+   * @example
+   * const txs = await client.getTransactionsByAddress('manifest1abc...', 20, 0);
+   * console.log(`Address has ${txs.pagination.total} transactions`);
+   */
+  async getTransactionsByAddress(
+    address: string,
+    limit = 50,
+    offset = 0
+  ): Promise<PaginatedResponse<EnhancedTransaction>> {
+    // Query messages_main to find transactions where address is sender or mentioned
+    const params = new URLSearchParams({
+      limit: (limit * 10).toString(), // Get more messages to ensure we have enough unique transactions
+      offset: offset.toString(),
+      order: 'id.desc'
+    })
+
+    // Use PostgREST's OR syntax to search both sender and mentions array
+    // Format: or=(sender.eq.address,mentions.cs.{address})
+    // cs = contains (for array containment check)
+    params.append('or', `(sender.eq.${address},mentions.cs.{${address}})`)
+
+    const response = await fetch(`${this.baseUrl}/messages_main?${params}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch transactions for address')
+    }
+
+    const messages = await response.json()
+
+    // Get unique transaction IDs
+    const txIds = [...new Set(messages.map((msg: Message) => msg.id))]
+
+    // Fetch full transaction details for each unique tx
+    const transactions = await Promise.all(
+      txIds.slice(0, limit).map(async (txId: string) => {
+        try {
+          return await this.getTransaction(txId)
+        } catch (error) {
+          console.error(`Failed to fetch transaction ${txId}:`, error)
+          return null
+        }
+      })
+    )
+
+    // Filter out any failed fetches
+    const validTransactions = transactions.filter((tx): tx is EnhancedTransaction => tx !== null)
+
+    return {
+      data: validTransactions,
+      pagination: {
+        total: txIds.length,
+        limit,
+        offset,
+        has_next: txIds.length > limit,
+        has_prev: offset > 0
+      }
+    }
+  }
+
+  /**
+   * Gets statistics and summary information for a specific address
+   * @param address - The blockchain address to get statistics for
+   * @returns Promise resolving to address statistics including transaction count and timestamps
+   * @throws {Error} If the API request fails
+   * @example
+   * const stats = await client.getAddressStats('manifest1abc...');
+   * console.log(`First seen: ${stats.first_seen}, Total txs: ${stats.transaction_count}`);
+   */
+  async getAddressStats(address: string): Promise<{
+    address: string
+    transaction_count: number
+    first_seen: string | null
+    last_seen: string | null
+    total_sent: number
+    total_received: number
+  }> {
+    // Get all messages involving this address
+    const params = new URLSearchParams({
+      or: `(sender.eq.${address},mentions.cs.{${address}})`,
+      order: 'id.desc'
+    })
+
+    const response = await fetch(`${this.baseUrl}/messages_main?${params}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch address statistics')
+    }
+
+    const messages = await response.json()
+
+    // Count unique transactions
+    const uniqueTxIds = new Set(messages.map((msg: Message) => msg.id))
+
+    // Get timestamps from transactions
+    let firstSeen: string | null = null
+    let lastSeen: string | null = null
+    let sentCount = 0
+    let receivedCount = 0
+
+    if (uniqueTxIds.size > 0) {
+      // Fetch transaction timestamps
+      const txIds = Array.from(uniqueTxIds).slice(0, 100) // Limit to 100 for performance
+      const txParams = new URLSearchParams({
+        select: 'id,timestamp',
+        order: 'timestamp.asc'
+      })
+
+      // Build OR clause for transaction IDs
+      const idFilters = txIds.map(id => `id.eq.${id}`).join(',')
+      txParams.append('or', `(${idFilters})`)
+
+      const txResponse = await fetch(`${this.baseUrl}/transactions_main?${txParams}`)
+      if (txResponse.ok) {
+        const txData = await txResponse.json()
+        if (txData.length > 0) {
+          firstSeen = txData[0].timestamp
+          lastSeen = txData[txData.length - 1].timestamp
+        }
+      }
+    }
+
+    // Count sent vs received (sent = where address is sender)
+    messages.forEach((msg: Message) => {
+      if (msg.sender === address) {
+        sentCount++
+      } else {
+        receivedCount++
+      }
+    })
+
+    return {
+      address,
+      transaction_count: uniqueTxIds.size,
+      first_seen: firstSeen,
+      last_seen: lastSeen,
+      total_sent: sentCount,
+      total_received: receivedCount
+    }
+  }
+
   /**
    * Fetches all distinct message types from the database
    * @returns Promise resolving to array of distinct message type strings
@@ -328,6 +525,15 @@ export class YaciAPIClient {
   }
 
   // Stats methods
+
+  /**
+   * Fetches comprehensive chain statistics including latest block, TPS, and validator count
+   * @returns Promise resolving to chain statistics object
+   * @throws {Error} If the API request fails
+   * @example
+   * const stats = await client.getChainStats();
+   * console.log(`Latest block: ${stats.latest_block}, TPS: ${stats.tps.toFixed(2)}`);
+   */
   async getChainStats(): Promise<ChainStats> {
     const [latestBlock, recentTxResponse, networkHealth] = await Promise.all([
       this.getLatestBlock(),
@@ -351,9 +557,25 @@ export class YaciAPIClient {
     const blockTimeAnalysis = await this.getBlockTimeAnalysis(100)
     const avgBlockTime = blockTimeAnalysis.avg > 0 ? blockTimeAnalysis.avg : 2.0
 
+    // Get actual total transaction count from the database
+    const totalTxResponse = await fetch(
+      `${this.baseUrl}/transactions_main?select=id&limit=1`,
+      {
+        headers: {
+          'Prefer': 'count=exact'
+        }
+      }
+    )
+
+    let totalTransactions = 0
+    if (totalTxResponse.ok) {
+      const totalHeader = totalTxResponse.headers.get('Content-Range')
+      totalTransactions = totalHeader ? parseInt(totalHeader.split('/')[1]) : 0
+    }
+
     return {
       latest_block: latestBlock.id,
-      total_transactions: recentTxs.length,
+      total_transactions: totalTransactions,
       avg_block_time: avgBlockTime,
       tps: txsLastMinute.length / 60,
       active_validators: activeValidators,
@@ -362,12 +584,24 @@ export class YaciAPIClient {
   }
 
   // Search functionality
+
+  /**
+   * Universal search function that detects and searches for blocks, transactions, or addresses
+   * Automatically determines the query type and returns appropriate results
+   * @param query - Search query (block height, tx hash, or address)
+   * @returns Promise resolving to array of search results with type and score
+   * @example
+   * const results = await client.search('12345'); // Block height
+   * const results = await client.search('A1B2C3...'); // Transaction hash
+   * const results = await client.search('manifest1...'); // Address
+   */
   async search(query: string): Promise<any[]> {
     const results = []
+    const trimmedQuery = query.trim()
 
     // Try to parse as number for block height
-    const blockHeight = parseInt(query)
-    if (!isNaN(blockHeight)) {
+    const blockHeight = parseInt(trimmedQuery)
+    if (!isNaN(blockHeight) && trimmedQuery === blockHeight.toString()) {
       try {
         const block = await this.getBlock(blockHeight)
         if (block) {
@@ -377,18 +611,34 @@ export class YaciAPIClient {
     }
 
     // Check if it's a transaction hash (64 chars hex)
-    if (query.length === 64 && /^[a-fA-F0-9]+$/.test(query)) {
+    if (trimmedQuery.length === 64 && /^[a-fA-F0-9]+$/.test(trimmedQuery)) {
       try {
-        const tx = await this.getTransaction(query)
+        const tx = await this.getTransaction(trimmedQuery)
         if (tx) {
           results.push({ type: 'transaction', value: tx, score: 100 })
         }
       } catch {}
     }
 
-    // Check if it's an address (starts with chain prefix or 0x for EVM)
-    if (query.startsWith('manifest') || query.startsWith('0x')) {
-      results.push({ type: 'address', value: { address: query }, score: 90 })
+    // Check if it's an address
+    // Cosmos bech32 addresses (e.g., cosmos1..., manifest1..., osmo1...)
+    // Ethereum addresses (0x... with 40 hex chars)
+    // Validator addresses (cosmosvaloper1..., manifestvaloper1...)
+    const isBech32Address = /^[a-z]+1[a-z0-9]{38,}$/i.test(trimmedQuery)
+    const isEthAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedQuery)
+    const isValidatorAddress = /^[a-z]+valoper1[a-z0-9]{38,}$/i.test(trimmedQuery)
+
+    if (isBech32Address || isEthAddress || isValidatorAddress) {
+      // Verify the address has transactions before returning
+      try {
+        const stats = await this.getAddressStats(trimmedQuery)
+        if (stats.transaction_count > 0) {
+          results.push({ type: 'address', value: { address: trimmedQuery }, score: 90 })
+        }
+      } catch {
+        // Even if stats fail, still include the address as a result
+        results.push({ type: 'address', value: { address: trimmedQuery }, score: 80 })
+      }
     }
 
     return results
@@ -422,6 +672,16 @@ export class YaciAPIClient {
   }
 
   // Analytics methods
+
+  /**
+   * Fetches transaction volume grouped by date over a specified time period
+   * @param days - Number of days to look back (default: 7)
+   * @returns Promise resolving to array of date/count pairs
+   * @throws {Error} If the API request fails
+   * @example
+   * const volume = await client.getTransactionVolumeOverTime(30);
+   * volume.forEach(d => console.log(`${d.date}: ${d.count} txs`));
+   */
   async getTransactionVolumeOverTime(days = 7): Promise<Array<{ date: string; count: number }>> {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
@@ -450,6 +710,15 @@ export class YaciAPIClient {
     }))
   }
 
+  /**
+   * Fetches distribution of transaction types across all messages
+   * Returns top 10 most common message types with their counts
+   * @returns Promise resolving to array of type/count pairs sorted by count descending
+   * @throws {Error} If the API request fails
+   * @example
+   * const dist = await client.getTransactionTypeDistribution();
+   * console.log(`Most common: ${dist[0].type} (${dist[0].count} messages)`);
+   */
   async getTransactionTypeDistribution(): Promise<Array<{ type: string; count: number }>> {
     const response = await fetch(
       `${this.baseUrl}/messages_main?order=type.asc&limit=10000`
@@ -503,6 +772,15 @@ export class YaciAPIClient {
     }))
   }
 
+  /**
+   * Analyzes block time statistics from recent blocks
+   * @param limit - Number of recent blocks to analyze (default: 100)
+   * @returns Promise resolving to average, min, and max block times in seconds
+   * @throws {Error} If the API request fails
+   * @example
+   * const analysis = await client.getBlockTimeAnalysis(100);
+   * console.log(`Avg: ${analysis.avg.toFixed(2)}s, Range: ${analysis.min}-${analysis.max}s`);
+   */
   async getBlockTimeAnalysis(limit = 100): Promise<{ avg: number; min: number; max: number }> {
     const response = await fetch(
       `${this.baseUrl}/blocks_raw?order=id.desc&limit=${limit}`

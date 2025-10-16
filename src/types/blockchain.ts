@@ -1,5 +1,12 @@
-// Core blockchain types aligned with yaci indexer schema
+/**
+ * Core blockchain types aligned with yaci indexer schema
+ * These types reflect the PostgreSQL database schema created by the Yaci indexer
+ */
 
+/**
+ * Block data structure from blocks_raw table
+ * Contains complete block information including header, transactions, and metadata
+ */
 export interface Block {
   id: number
   data: {
@@ -38,7 +45,10 @@ export interface Block {
   }
 }
 
-// Yaci indexer schema - transactions_main table
+/**
+ * Transaction data from transactions_main table
+ * Represents a blockchain transaction with fees, status, and timing information
+ */
 export interface Transaction {
   id: string // tx hash
   fee: {
@@ -57,7 +67,10 @@ export interface Transaction {
   proposal_ids: string[] | null // Note: plural
 }
 
-// Yaci indexer schema - messages_main table
+/**
+ * Message data from messages_main table
+ * Represents a single message within a transaction (e.g., MsgSend, MsgDelegate)
+ */
 export interface Message {
   id: string // tx hash
   message_index: number
@@ -67,7 +80,10 @@ export interface Message {
   metadata: any | null // parsed message fields as jsonb
 }
 
-// Yaci indexer schema - events_main table
+/**
+ * Event data from events_main table
+ * Represents a single event attribute emitted during transaction execution
+ */
 export interface Event {
   id: string // tx hash
   event_index: number
@@ -158,7 +174,10 @@ export interface Address {
   contract_info?: Contract
 }
 
-// Enhanced types
+/**
+ * Enhanced transaction type that includes related messages, events, and EVM data
+ * Used for transaction detail views with complete information
+ */
 export interface EnhancedTransaction extends Transaction {
   messages: Message[]
   events: Event[]
@@ -176,7 +195,11 @@ export interface EnhancedTransaction extends Transaction {
   }
 }
 
-// API response types
+/**
+ * Generic paginated API response wrapper
+ * Includes data array and pagination metadata for list endpoints
+ * @template T - The type of data items in the response
+ */
 export interface PaginatedResponse<T> {
   data: T[]
   pagination: {
@@ -188,6 +211,10 @@ export interface PaginatedResponse<T> {
   }
 }
 
+/**
+ * Chain-wide statistics and metrics
+ * Used for dashboard overview and network health monitoring
+ */
 export interface ChainStats {
   latest_block: number
   total_transactions: number
@@ -199,6 +226,10 @@ export interface ChainStats {
   price?: number
 }
 
+/**
+ * Search result wrapper with type information and relevance score
+ * Used by universal search to return heterogeneous results
+ */
 export interface SearchResult {
   type: 'block' | 'transaction' | 'address' | 'contract'
   value: any

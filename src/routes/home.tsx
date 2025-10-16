@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Blocks, Activity, TrendingUp, Users, Gauge, DollarSign, Wallet } from 'lucide-react'
+import { ArrowRight, Blocks, Activity, TrendingUp, Users, Gauge, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { YaciAPIClient } from '@/lib/api/client'
@@ -71,12 +71,6 @@ export default function DashboardPage() {
     enabled: mounted,
   })
 
-  const { data: gasPrice } = useQuery({
-    queryKey: ['gasPrice'],
-    queryFn: () => api.getAverageGasPrice(),
-    refetchInterval: 30000,
-    enabled: mounted,
-  })
 
   // Display errors if any
   if (mounted && (statsError || blocksError || txError)) {
@@ -169,7 +163,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Additional Analytics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Fee Revenue</CardTitle>
@@ -212,29 +206,6 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               {gasEfficiency && `${(gasEfficiency.totalUsed / 1e6).toFixed(1)}M of ${(gasEfficiency.totalLimit / 1e6).toFixed(1)}M used`}
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Gas Price</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {!gasPrice || gasPrice.length === 0 ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {gasPrice.map((gp) => (
-                    <span key={gp.denom} className="inline-flex items-center gap-1">
-                      {gp.avgPrice.toFixed(4)} <DenomDisplay denom={gp.denom} />
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Per gas unit</p>
           </CardContent>
         </Card>
 

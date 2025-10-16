@@ -4,6 +4,14 @@ import { Search, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { YaciAPIClient } from '@/lib/api/client'
 
+/**
+ * Universal search bar component for searching blocks, transactions, and addresses
+ * Supports keyboard shortcut (Cmd/Ctrl+K) to focus the search input
+ * Automatically detects query type and navigates to appropriate detail page
+ *
+ * @example
+ * <SearchBar />
+ */
 export function SearchBar() {
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
@@ -25,6 +33,10 @@ export function SearchBar() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  /**
+   * Handles search execution when user submits a query
+   * Determines query type (block, transaction, or address) and navigates to appropriate page
+   */
   const handleSearch = async () => {
     if (!query.trim()) return
 
