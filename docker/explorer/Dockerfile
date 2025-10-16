@@ -12,7 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with /api as the PostgREST URL
+# This ensures the built JS uses relative URLs that work with the nginx proxy
+ENV VITE_POSTGREST_URL=/api
 RUN npm run build
 
 # Production stage

@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Blocks, Activity, TrendingUp, Users, Gauge, DollarSign } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowRight, Blocks, Activity } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { YaciAPIClient } from '@/lib/api/client'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getNetworkHealth } from '@/lib/api/prometheus'
-import { formatDenomAmount } from '@/lib/denom'
-import { DenomDisplay } from '@/components/common/DenomDisplay'
+import { DashboardMetrics } from '@/components/common/DashboardMetrics'
 
 const api = new YaciAPIClient()
 
@@ -20,16 +18,6 @@ export default function DashboardPage() {
     setMounted(true)
   }, [])
 
-  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
-    queryKey: ['chainStats'],
-    queryFn: async () => {
-      const result = await api.getChainStats()
-      return result
-    },
-    refetchInterval: 5000,
-    enabled: mounted, // Only run after client mount
-  })
-
   const { data: blocks, isLoading: blocksLoading, error: blocksError } = useQuery({
     queryKey: ['latestBlocks'],
     queryFn: async () => {
@@ -37,7 +25,7 @@ export default function DashboardPage() {
       return result
     },
     refetchInterval: 2000,
-    enabled: mounted, // Only run after client mount
+    enabled: mounted,
   })
 
   const { data: transactions, isLoading: txLoading, error: txError } = useQuery({
@@ -47,37 +35,14 @@ export default function DashboardPage() {
       return result
     },
     refetchInterval: 2000,
-    enabled: mounted, // Only run after client mount
-  })
-
-  const { data: feeRevenue } = useQuery({
-    queryKey: ['feeRevenue'],
-    queryFn: () => api.getTotalFeeRevenue(),
-    refetchInterval: 30000,
     enabled: mounted,
   })
-
-  const { data: gasEfficiency } = useQuery({
-    queryKey: ['gasEfficiency'],
-    queryFn: () => api.getGasEfficiency(1000),
-    refetchInterval: 30000,
-    enabled: mounted,
-  })
-
-  const { data: networkHealth } = useQuery({
-    queryKey: ['networkHealth'],
-    queryFn: () => getNetworkHealth(),
-    refetchInterval: 6000,
-    enabled: mounted,
-  })
-
 
   // Display errors if any
-  if (mounted && (statsError || blocksError || txError)) {
+  if (mounted && (blocksError || txError)) {
     return (
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-red-600">Error Loading Data</h2>
-        {statsError && <p className="text-red-500">Stats error: {String(statsError)}</p>}
         {blocksError && <p className="text-red-500">Blocks error: {String(blocksError)}</p>}
         {txError && <p className="text-red-500">Transactions error: {String(txError)}</p>}
         <p className="text-sm text-muted-foreground">API URL: {api['baseUrl']}</p>
@@ -87,143 +52,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Latest Block</CardTitle>
-            <Blocks className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.latest_block || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.avg_block_time}s avg block time
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.total_transactions || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatNumber(stats?.tps || 0, 2)} TPS
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Validators</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : stats?.active_validators > 0 ? (
-                stats.active_validators
-              ) : (
-                <span className="text-muted-foreground text-base">-</span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.active_validators > 0 ? 'Active set' : 'Fetching validator data...'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Supply</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : stats?.total_supply && stats.total_supply !== '0' ? (
-                formatNumber(stats.total_supply)
-              ) : (
-                <span className="text-muted-foreground text-base">-</span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.total_supply && stats.total_supply !== '0' ? 'Native Token' : 'Requires gRPC query'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Analytics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fee Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {!feeRevenue ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(feeRevenue).map(([denom, amount]) => {
-                    const formatted = formatDenomAmount(amount, denom, { maxDecimals: 2 })
-                    return (
-                      <span key={denom} className="inline-flex items-center gap-1">
-                        {formatted} <DenomDisplay denom={denom} />
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">From recent transactions</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gas Efficiency</CardTitle>
-            <Gauge className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {!gasEfficiency ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                `${gasEfficiency.avgEfficiency.toFixed(1)}%`
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {gasEfficiency && `${(gasEfficiency.totalUsed / 1e6).toFixed(1)}M of ${(gasEfficiency.totalLimit / 1e6).toFixed(1)}M used`}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mempool Size</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {!networkHealth ? <Skeleton className="h-8 w-24" /> : networkHealth.mempoolSize}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {networkHealth && `${(networkHealth.mempoolBytes / 1024).toFixed(1)}KB total`}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Dashboard Metrics */}
+      <DashboardMetrics />
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Latest Blocks */}

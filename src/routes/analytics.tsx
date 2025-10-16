@@ -3,6 +3,7 @@ import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
 import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'
+import { DashboardMetrics } from '@/components/common/DashboardMetrics'
 
 export default function AnalyticsPage() {
   return (
@@ -16,6 +17,9 @@ export default function AnalyticsPage() {
           </p>
         </div>
       </div>
+
+      {/* Key metrics from dashboard */}
+      <DashboardMetrics />
 
       {/* Primary metrics card */}
       <NetworkMetricsCard />

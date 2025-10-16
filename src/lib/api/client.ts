@@ -1107,38 +1107,40 @@ export class YaciAPIClient {
   }
 
   /**
-   * Get gas efficiency metrics
+   * Get gas limit metrics from recent transactions
+   * Note: gas_used is not available in transactions_main, only gas limit (fee.gasLimit)
    */
   async getGasEfficiency(limit: number = 1000): Promise<{
-    avgEfficiency: number
-    totalUsed: number
-    totalLimit: number
+    avgGasLimit: number
+    totalGasLimit: number
+    transactionCount: number
   }> {
     const response = await fetch(
-      `${this.baseUrl}/transactions_main?select=gas_used,gas_wanted&order=height.desc&limit=${limit}`
+      `${this.baseUrl}/transactions_main?select=fee&order=height.desc&limit=${limit}`
     )
 
     if (!response.ok) {
-      throw new Error('Failed to fetch gas efficiency data')
+      throw new Error('Failed to fetch gas data')
     }
 
     const transactions = await response.json()
-    let totalUsed = 0
-    let totalLimit = 0
+    let totalGasLimit = 0
+    let transactionCount = 0
 
     transactions.forEach((tx: any) => {
-      const gasUsed = parseInt(tx.gas_used) || 0
-      const gasWanted = parseInt(tx.gas_wanted) || 0
-      totalUsed += gasUsed
-      totalLimit += gasWanted
+      if (tx.fee?.gasLimit) {
+        const gasLimit = parseInt(tx.fee.gasLimit) || 0
+        totalGasLimit += gasLimit
+        transactionCount++
+      }
     })
 
-    const avgEfficiency = totalLimit > 0 ? (totalUsed / totalLimit) * 100 : 0
+    const avgGasLimit = transactionCount > 0 ? totalGasLimit / transactionCount : 0
 
     return {
-      avgEfficiency,
-      totalUsed,
-      totalLimit,
+      avgGasLimit,
+      totalGasLimit,
+      transactionCount,
     }
   }
 
