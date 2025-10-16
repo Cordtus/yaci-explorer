@@ -10,6 +10,7 @@ import { formatNumber, formatTimeAgo, formatHash } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
+import { JsonViewer } from '@/components/JsonViewer'
 
 const api = new YaciAPIClient()
 
@@ -50,6 +51,16 @@ const MESSAGE_COLORS = [
   'bg-indigo-500',
   'bg-teal-500',
 ]
+
+// Helper to check if a string is valid JSON
+function isJsonString(str: string): boolean {
+  try {
+    const parsed = JSON.parse(str)
+    return typeof parsed === 'object' && parsed !== null
+  } catch {
+    return false
+  }
+}
 
 export default function TransactionDetailPage() {
   const [mounted, setMounted] = useState(false)
@@ -353,18 +364,26 @@ export default function TransactionDetailPage() {
 
                                           <CollapsibleContent>
                                             <div className="px-3 pb-3 space-y-2">
-                                              {event.attributes.map((attr, attrIdx) => (
-                                                <div key={attrIdx} className="bg-muted/20 rounded p-2">
-                                                  <div className="flex items-start justify-between gap-2">
-                                                    <span className="text-xs font-medium text-muted-foreground min-w-[100px]">
-                                                      {attr.key}:
-                                                    </span>
-                                                    <span className="text-xs font-mono break-all flex-1 text-right">
-                                                      {attr.value}
-                                                    </span>
+                                              {event.attributes.map((attr, attrIdx) => {
+                                                const isJson = isJsonString(attr.value)
+
+                                                return (
+                                                  <div key={attrIdx} className={isJson ? "bg-muted/20 rounded p-2" : "bg-muted/20 rounded p-2"}>
+                                                    <div className="flex flex-col gap-2">
+                                                      <span className="text-xs font-medium text-muted-foreground">
+                                                        {attr.key}:
+                                                      </span>
+                                                      {isJson ? (
+                                                        <JsonViewer data={attr.value} maxHeight={400} />
+                                                      ) : (
+                                                        <span className="text-xs font-mono break-all">
+                                                          {attr.value}
+                                                        </span>
+                                                      )}
+                                                    </div>
                                                   </div>
-                                                </div>
-                                              ))}
+                                                )
+                                              })}
                                             </div>
                                           </CollapsibleContent>
                                         </div>

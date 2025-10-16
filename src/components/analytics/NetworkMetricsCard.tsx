@@ -60,14 +60,14 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
     avgBlockTime = blockTimes.reduce((a, b) => a + b, 0) / blockTimes.length
   }
 
-  // Calculate success rate
-  const successfulTxs = transactions.filter((tx: any) => tx.code === 0 || tx.code === null).length
+  // Calculate success rate (error field is null for successful transactions)
+  const successfulTxs = transactions.filter((tx: any) => !tx.error || tx.error === null).length
   const successRate = transactions.length > 0 ? (successfulTxs / transactions.length) * 100 : 100
 
-  // Calculate average gas used
+  // Calculate average gas used from fee field (fee.gasLimit contains the gas)
   const gasValues = transactions
-    .filter((tx: any) => tx.gas_used)
-    .map((tx: any) => parseInt(tx.gas_used))
+    .filter((tx: any) => tx.fee?.gasLimit)
+    .map((tx: any) => parseInt(tx.fee.gasLimit))
   const avgGasUsed = gasValues.length > 0
     ? Math.round(gasValues.reduce((a, b) => a + b, 0) / gasValues.length)
     : 0
@@ -103,7 +103,12 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
   })
 
   const latestBlock = blocks[0]
-  const validators = latestBlock?.data?.block?.last_commit?.signatures?.length || 0
+  // Try multiple paths for validator count
+  const validators =
+    latestBlock?.data?.block?.last_commit?.signatures?.length ||
+    latestBlock?.data?.block?.lastCommit?.signatures?.length ||
+    latestBlock?.data?.lastCommit?.signatures?.length ||
+    0
 
   return {
     latestHeight: latestBlock?.id || 0,

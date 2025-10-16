@@ -4,11 +4,11 @@ import { Link } from 'react-router'
 import { Blocks } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { YaciAPIClient } from '@/lib/api/client'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Pagination } from '@/components/ui/pagination'
 
 const api = new YaciAPIClient()
 
@@ -112,30 +112,13 @@ export default function BlocksPage() {
             </TableBody>
           </Table>
 
-          {data && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-muted-foreground">
-                Page {page + 1}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={!data.pagination.has_prev}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={!data.pagination.has_next}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+          {data && data.pagination.total > 0 && (
+            <Pagination
+              currentPage={page}
+              totalPages={Math.ceil(data.pagination.total / limit)}
+              onPageChange={setPage}
+              isLoading={isLoading}
+            />
           )}
         </CardContent>
       </Card>

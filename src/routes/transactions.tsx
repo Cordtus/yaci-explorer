@@ -14,6 +14,7 @@ import { YaciAPIClient } from '@/lib/api/client'
 import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Pagination } from '@/components/ui/pagination'
 
 const api = new YaciAPIClient()
 
@@ -427,30 +428,13 @@ export default function TransactionsPage() {
             </TableBody>
           </Table>
 
-          {data && data.data.length > 0 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-muted-foreground">
-                Page {page + 1} of {Math.ceil(data.pagination.total / limit)}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0 || isLoading}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={!data.pagination.has_next || isLoading}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+          {data && data.pagination.total > 0 && (
+            <Pagination
+              currentPage={page}
+              totalPages={Math.ceil(data.pagination.total / limit)}
+              onPageChange={setPage}
+              isLoading={isLoading}
+            />
           )}
         </CardContent>
       </Card>
