@@ -258,6 +258,30 @@ export class YaciAPIClient {
     return response.json()
   }
 
+  /**
+   * Fetches all distinct message types from the database
+   * @returns Promise resolving to array of distinct message type strings
+   */
+  async getDistinctMessageTypes(): Promise<string[]> {
+    const response = await fetch(
+      `${this.baseUrl}/messages_main?select=type&order=type.asc`
+    )
+    if (!response.ok) {
+      return []
+    }
+
+    const messages = await response.json()
+    const types = new Set<string>()
+
+    messages.forEach((msg: { type: string | null }) => {
+      if (msg.type) {
+        types.add(msg.type)
+      }
+    })
+
+    return Array.from(types).sort()
+  }
+
   private async getEVMTransactionData(txHash: string): Promise<any | null> {
     // Check if transaction contains EVM data by looking at message types
     const messages = await this.getTransactionMessages(txHash)

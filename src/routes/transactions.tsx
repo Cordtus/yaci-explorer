@@ -18,19 +18,6 @@ import { Pagination } from '@/components/ui/pagination'
 
 const api = new YaciAPIClient()
 
-// Common message types
-const MESSAGE_TYPES = [
-  { value: '/cosmos.bank.v1beta1.MsgSend', label: 'Bank Send' },
-  { value: '/cosmos.staking.v1beta1.MsgDelegate', label: 'Delegate' },
-  { value: '/cosmos.staking.v1beta1.MsgUndelegate', label: 'Undelegate' },
-  { value: '/cosmos.staking.v1beta1.MsgBeginRedelegate', label: 'Redelegate' },
-  { value: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward', label: 'Claim Rewards' },
-  { value: '/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission', label: 'Claim Commission' },
-  { value: '/cosmos.gov.v1beta1.MsgVote', label: 'Vote' },
-  { value: '/ibc.applications.transfer.v1.MsgTransfer', label: 'IBC Transfer' },
-  { value: '/cosmwasm.wasm.v1.MsgExecuteContract', label: 'Execute Contract' },
-]
-
 export default function TransactionsPage() {
   const [page, setPage] = useState(0)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -45,6 +32,13 @@ export default function TransactionsPage() {
   const [timeRangeMax, setTimeRangeMax] = useState('')
 
   const limit = 20
+
+  // Fetch distinct message types dynamically
+  const { data: messageTypes = [] } = useQuery({
+    queryKey: ['message-types'],
+    queryFn: () => api.getDistinctMessageTypes(),
+    staleTime: 60000, // Cache for 1 minute
+  })
 
   // Build filters object
   const buildFilters = () => {
@@ -202,21 +196,25 @@ export default function TransactionsPage() {
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Message Type</Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {MESSAGE_TYPES.map((type) => (
-                    <div key={type.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`type-${type.value}`}
-                        checked={messageTypeFilters.has(type.value)}
-                        onCheckedChange={() => handleMessageTypeToggle(type.value)}
-                      />
-                      <label
-                        htmlFor={`type-${type.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {type.label}
-                      </label>
-                    </div>
-                  ))}
+                  {messageTypes.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">Loading message types...</div>
+                  ) : (
+                    messageTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`type-${type}`}
+                          checked={messageTypeFilters.has(type)}
+                          onCheckedChange={() => handleMessageTypeToggle(type)}
+                        />
+                        <label
+                          htmlFor={`type-${type}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {getMessageTypeLabel(type)}
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
