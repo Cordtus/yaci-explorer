@@ -7,4 +7,5 @@ export default [
   route("transactions", "routes/transactions.tsx"),
   route("transactions/:hash", "routes/transactions.$hash.tsx"),
   route("analytics", "routes/analytics.tsx"),
+  route("addr/:id", "routes/addr.$id.tsx"),
 ] satisfies RouteConfig;
