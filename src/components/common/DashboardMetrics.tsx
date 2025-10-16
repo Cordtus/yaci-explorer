@@ -164,7 +164,7 @@ export function DashboardMetrics() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {gasEfficiency && `${formatNumber(gasEfficiency.transactionCount)} txs indexed`}
+              {gasEfficiency && `from recent ${formatNumber(gasEfficiency.transactionCount)} txs`}
             </p>
           </CardContent>
         </Card>
