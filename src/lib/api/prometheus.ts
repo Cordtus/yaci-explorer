@@ -104,11 +104,19 @@ function parsePrometheusText(text: string): ParsedMetrics {
 
 /**
  * Fetch all metrics from Prometheus endpoint
+ * Note: Prometheus endpoint should be proxied through Caddy/nginx for HTTPS
+ * For now, we disable browser-based Prometheus fetching to avoid mixed content errors
  */
 export async function fetchPrometheusMetrics(
-  endpoint: string = 'http://192.168.0.170:9105/metrics'
+  endpoint?: string
 ): Promise<ParsedMetrics> {
-  const response = await fetch(endpoint, {
+  // Disable Prometheus fetching from browser to avoid mixed content errors
+  // Metrics should be fetched server-side or through a proper HTTPS proxy
+  throw new Error('Prometheus metrics fetching disabled - requires HTTPS endpoint')
+
+  // Keeping this code commented for future HTTPS implementation
+  /*
+  const response = await fetch(endpoint!, {
     cache: 'no-store',
   })
 
@@ -118,6 +126,7 @@ export async function fetchPrometheusMetrics(
 
   const text = await response.text()
   return parsePrometheusText(text)
+  */
 }
 
 /**
