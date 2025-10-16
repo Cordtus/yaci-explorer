@@ -59,7 +59,7 @@ export function SearchBar() {
           navigate(`/transactions/${result.value.id}`)
           break
         case 'address':
-          navigate(`/address/${result.value.address}`)
+          navigate(`/addr/${result.value.address}`)
           break
         default:
           console.error('Unknown result type')

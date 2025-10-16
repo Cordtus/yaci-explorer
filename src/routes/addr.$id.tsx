@@ -37,20 +37,20 @@ export default function AddressDetailPage() {
 
   // Fetch address statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['address-stats', params.address],
+    queryKey: ['address-stats', params.id],
     queryFn: async () => {
-      return await api.getAddressStats(params.address!)
+      return await api.getAddressStats(params.id!)
     },
-    enabled: mounted && !!params.address,
+    enabled: mounted && !!params.id,
   })
 
   // Fetch transactions for this address
-  const { data: transactions, isLoading: txLoading } = useQuery({
-    queryKey: ['address-transactions', params.address, page],
+  const { data: transactions, isLoading: txLoading} = useQuery({
+    queryKey: ['address-transactions', params.id, page],
     queryFn: async () => {
-      return await api.getTransactionsByAddress(params.address!, pageSize, page * pageSize)
+      return await api.getTransactionsByAddress(params.id!, pageSize, page * pageSize)
     },
-    enabled: mounted && !!params.address,
+    enabled: mounted && !!params.id,
   })
 
   /**
@@ -69,7 +69,7 @@ export default function AddressDetailPage() {
    * @returns True if the address is the sender
    */
   const isSender = (tx: EnhancedTransaction): boolean => {
-    return tx.messages?.some(msg => msg.sender === params.address) ?? false
+    return tx.messages?.some(msg => msg.sender === params.id) ?? false
   }
 
   if (!mounted || statsLoading) {
@@ -118,13 +118,13 @@ export default function AddressDetailPage() {
         </div>
         <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
           <p className="font-mono text-sm break-all flex-1">
-            {params.address}
+            {params.id}
           </p>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0"
-            onClick={() => copyToClipboard(params.address!)}
+            onClick={() => copyToClipboard(params.id!)}
           >
             {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
