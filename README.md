@@ -102,7 +102,7 @@ npm run build
 npx serve -s build/client -l 3001
 ```
 
-**Prerequisites**: PostgreSQL, PostgREST, and Yaci indexer must be running separately. See CLAUDE.md for detailed setup.
+**Prerequisites**: PostgreSQL, PostgREST, and Yaci indexer must be running separately.
 
 ## Configuration
 
@@ -138,8 +138,6 @@ POSTGREST_PORT=3002 \
 EXPLORER_PORT=3003 \
 docker compose up -d
 ```
-
-See **MULTI_CHAIN.md** for detailed multi-chain deployment patterns and chain-specific configuration.
 
 ## Development
 
@@ -294,9 +292,8 @@ Contributions are welcome! Please follow these guidelines:
 
 ## Documentation
 
-- **CLAUDE.md** - Development guide for AI assistants and developers
-- **MULTI_CHAIN.md** - Multi-chain deployment patterns and chain-specific setup
 - **.env.example** - Complete environment variable reference
+- **src/config/chains.ts** - Chain-specific configurations
 
 ## License
 
