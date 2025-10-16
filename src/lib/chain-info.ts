@@ -1,6 +1,7 @@
 // Dynamic chain information detected from blockchain data
 
 import { YaciAPIClient } from './api/client'
+import { getChainConfig, type ChainFeatures } from '@/config/chains'
 
 export interface ChainInfo {
   chainId: string
@@ -8,13 +9,14 @@ export interface ChainInfo {
   baseDenom: string
   displayDenom: string
   decimals: number
+  features: ChainFeatures
 }
 
 let cachedChainInfo: ChainInfo | null = null
 
 /**
  * Detect chain information from actual blockchain data
- * This reads the chain ID from blocks and denom from transactions
+ * Uses chain registry config if available, falls back to auto-detection
  */
 export async function getChainInfo(api: YaciAPIClient): Promise<ChainInfo> {
   // Return cached if available
@@ -27,31 +29,32 @@ export async function getChainInfo(api: YaciAPIClient): Promise<ChainInfo> {
     const latestBlock = await api.getLatestBlock()
     const chainId = latestBlock?.data?.block?.header?.chainId || 'unknown'
 
-    // Get recent transaction to extract denom
-    const txs = await api.getTransactions(1, 0)
-    const baseDenom = txs?.data?.[0]?.fee?.amount?.[0]?.denom || 'unknown'
+    // Try to get config from registry
+    const config = getChainConfig(chainId)
 
-    // Convert base denom to display denom (remove 'a' prefix for atto- denoms)
-    const displayDenom = baseDenom.startsWith('a')
-      ? baseDenom.slice(1).toUpperCase()
-      : baseDenom.toUpperCase()
+    // Get actual denom from transactions (may differ from config)
+    let baseDenom = config.nativeDenom
+    try {
+      const txs = await api.getTransactions(1, 0)
+      const detectedDenom = txs?.data?.[0]?.fee?.amount?.[0]?.denom
+      if (detectedDenom) {
+        baseDenom = detectedDenom
+      }
+    } catch {
+      // Use config denom if detection fails
+    }
 
-    // Detect decimals (18 for atto- prefix, 6 for micro- prefix, 0 otherwise)
-    const decimals = baseDenom.startsWith('a')
-      ? 18
-      : baseDenom.startsWith('u')
-        ? 6
-        : 0
-
-    // Generate human-readable chain name from chain ID
-    const chainName = generateChainName(chainId)
+    // Use config values or fall back to auto-detection
+    const displayDenom = config.nativeSymbol || autoDetectDisplayDenom(baseDenom)
+    const decimals = config.decimals || autoDetectDecimals(baseDenom)
 
     cachedChainInfo = {
       chainId,
-      chainName,
+      chainName: config.name,
       baseDenom,
       displayDenom,
       decimals,
+      features: config.features,
     }
 
     return cachedChainInfo
@@ -64,21 +67,35 @@ export async function getChainInfo(api: YaciAPIClient): Promise<ChainInfo> {
       baseDenom: 'unknown',
       displayDenom: 'UNKNOWN',
       decimals: 6,
+      features: {
+        evm: false,
+        ibc: true,
+        wasm: false,
+      },
     }
   }
 }
 
 /**
- * Generate a human-readable chain name from chain ID
+ * Auto-detect display denom from base denom
  */
-function generateChainName(chainId: string): string {
-  // Common chain ID patterns
-  if (chainId === '9001') return 'EVM Testnet'
-  if (chainId.includes('testnet')) return chainId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
-  if (chainId.includes('mainnet')) return chainId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
+function autoDetectDisplayDenom(baseDenom: string): string {
+  if (baseDenom.startsWith('a')) {
+    return baseDenom.slice(1).toUpperCase()
+  }
+  if (baseDenom.startsWith('u')) {
+    return baseDenom.slice(1).toUpperCase()
+  }
+  return baseDenom.toUpperCase()
+}
 
-  // Default: use chain ID as-is
-  return `Chain ${chainId}`
+/**
+ * Auto-detect decimals from base denom
+ */
+function autoDetectDecimals(baseDenom: string): number {
+  if (baseDenom.startsWith('a')) return 18 // atto- prefix (10^-18)
+  if (baseDenom.startsWith('u')) return 6  // micro- prefix (10^-6)
+  return 0 // no prefix
 }
 
 /**
