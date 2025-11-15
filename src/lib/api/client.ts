@@ -347,11 +347,11 @@ export class YaciAPIClient {
     const messages = await response.json()
 
     // Get unique transaction IDs
-    const txIds = [...new Set(messages.map((msg: Message) => msg.id))]
+    const txIds: string[] = Array.from(new Set<string>(messages.map((msg: Message) => msg.id)))
 
     // Fetch full transaction details for each unique tx
     const transactions = await Promise.all(
-      txIds.slice(0, limit).map(async (txId: string) => {
+      txIds.slice(0, limit).map(async (txId) => {
         try {
           return await this.getTransaction(txId)
         } catch (error) {

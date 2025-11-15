@@ -69,7 +69,7 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
     .filter((tx: any) => tx.fee?.gasLimit)
     .map((tx: any) => parseInt(tx.fee.gasLimit))
   const avgGasUsed = gasValues.length > 0
-    ? Math.round(gasValues.reduce((a, b) => a + b, 0) / gasValues.length)
+    ? Math.round(gasValues.reduce((a: number, b: number) => a + b, 0) / gasValues.length)
     : 0
 
   // Get unique signer addresses from messages

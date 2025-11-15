@@ -194,11 +194,11 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
         {metadata.validatorAddress && (
           <DetailRow label="Validator" value={metadata.validatorAddress} copyable />
         )}
-        {amount && (
+        {amount && Array.isArray(amount) && amount.length > 0 && (
           <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
             <label className="text-xs font-medium text-green-600 uppercase tracking-wider block mb-2">Staked Amount</label>
             <div className="text-lg font-bold text-green-600">
-              {formatDenom(amount.amount, amount.denom, getDenomDisplay)}
+              {formatDenom(amount[0].amount, amount[0].denom, getDenomDisplay)}
             </div>
           </div>
         )}
@@ -221,11 +221,11 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
         {metadata.validatorAddress && (
           <DetailRow label="Validator" value={metadata.validatorAddress} copyable />
         )}
-        {amount && (
+        {amount && Array.isArray(amount) && amount.length > 0 && (
           <div className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
             <label className="text-xs font-medium text-orange-600 uppercase tracking-wider block mb-2">Unstaked Amount</label>
             <div className="text-lg font-bold text-orange-600">
-              {formatDenom(amount.amount, amount.denom, getDenomDisplay)}
+              {formatDenom(amount[0].amount, amount[0].denom, getDenomDisplay)}
             </div>
           </div>
         )}
@@ -254,11 +254,11 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
         {metadata.validatorDstAddress && (
           <DetailRow label="To Validator" value={metadata.validatorDstAddress} copyable />
         )}
-        {amount && (
+        {amount && Array.isArray(amount) && amount.length > 0 && (
           <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
             <label className="text-xs font-medium text-blue-600 uppercase tracking-wider block mb-2">Redelegated Amount</label>
             <div className="text-lg font-bold text-blue-600">
-              {formatDenom(amount.amount, amount.denom, getDenomDisplay)}
+              {formatDenom(amount[0].amount, amount[0].denom, getDenomDisplay)}
             </div>
           </div>
         )}

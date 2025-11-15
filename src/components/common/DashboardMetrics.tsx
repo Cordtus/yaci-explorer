@@ -88,14 +88,14 @@ export function DashboardMetrics() {
             <div className="text-2xl font-bold">
               {statsLoading ? (
                 <Skeleton className="h-8 w-24" />
-              ) : stats?.active_validators > 0 ? (
+              ) : stats && stats.active_validators && stats.active_validators > 0 ? (
                 stats.active_validators
               ) : (
                 <span className="text-muted-foreground text-base">-</span>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.active_validators > 0 ? 'Active set' : 'Fetching validator data...'}
+              {stats && stats.active_validators && stats.active_validators > 0 ? 'Active set' : 'Fetching validator data...'}
             </p>
           </CardContent>
         </Card>
