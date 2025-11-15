@@ -133,6 +133,20 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     rpcEndpoint: 'https://rpc.neutron.strange.love',
     restEndpoint: 'https://api.neutron.strange.love',
   },
+<<<<<<< Updated upstream
+=======
+  'republic_9001-1': {
+    name: 'Republic Devnet',
+    features: {
+      evm: true,
+      ibc: true,
+      wasm: false,
+    },
+    nativeDenom: 'atest',
+    nativeSymbol: 'TEST',
+    decimals: 18,
+  },
+>>>>>>> Stashed changes
 }
 
 /**
