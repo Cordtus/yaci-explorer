@@ -78,6 +78,7 @@ export interface Message {
   sender: string | null
   mentions: string[] | null // array of addresses mentioned
   metadata: any | null // parsed message fields as jsonb
+  data?: any // raw message data from transaction
 }
 
 /**

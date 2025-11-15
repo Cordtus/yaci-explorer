@@ -559,8 +559,6 @@ export class YaciAPIClient {
     if (activeValidators === 0) {
       activeValidators =
         latestBlock?.data?.block?.last_commit?.signatures?.length ||
-        latestBlock?.data?.block?.lastCommit?.signatures?.length ||
-        latestBlock?.data?.lastCommit?.signatures?.length ||
         0
     }
 
