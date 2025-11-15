@@ -3,14 +3,15 @@ version: '3.8'
 services:
   # PostgreSQL database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: yaci-explorer-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foobar}
       POSTGRES_DB: ${POSTGRES_DB:-yaci}
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:

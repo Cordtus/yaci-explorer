@@ -133,6 +133,17 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     rpcEndpoint: 'https://rpc.neutron.strange.love',
     restEndpoint: 'https://api.neutron.strange.love',
   },
+  'republic-1': {
+    name: 'Republic Network',
+    features: {
+      evm: false,
+      ibc: true,
+      wasm: false,
+    },
+    nativeDenom: 'urepub',
+    nativeSymbol: 'REPUB',
+    decimals: 6,
+  },
 }
 
 /**
