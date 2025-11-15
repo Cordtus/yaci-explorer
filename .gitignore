@@ -40,7 +40,3 @@ Thumbs.db
 
 # Vite
 .vite
-
-# Development docs (keep locally, not in repo)
-CLAUDE.md
-**/CLAUDE.md
