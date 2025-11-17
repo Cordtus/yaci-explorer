@@ -8,6 +8,7 @@ A modern, high-performance block explorer for Cosmos SDK chains with native EVM 
 - **High Performance**: Direct PostgreSQL integration via PostgREST for optimal query performance
 - **Real-time Updates**: Live blockchain data synchronization
 - **Dual Chain Support**: Native support for both Cosmos and EVM transactions
+- **IBC Denom Resolution**: Automatic resolution of IBC denoms by querying chain's IBC module, with browser caching
 - **Modern UI**: Clean, responsive design with dark mode support using Radix UI + Tailwind CSS
 - **Smart Search**: Unified search across blocks, transactions, and addresses
 - **Rich Analytics**: Chain statistics, transaction history, gas efficiency, and performance metrics
@@ -113,6 +114,7 @@ Key configuration variables (see `.env.example` for complete list):
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `CHAIN_GRPC_ENDPOINT` | gRPC endpoint of chain to index | `localhost:9090` |
+| `VITE_CHAIN_REST_ENDPOINT` | Chain REST API endpoint for IBC resolution | `http://localhost:1317` |
 | `POSTGRES_PASSWORD` | PostgreSQL password | `foobar` |
 | `VITE_POSTGREST_URL` | PostgREST API URL for frontend | `http://localhost:3000` |
 | `CHAIN_ID` | Chain identifier | Auto-detected |
