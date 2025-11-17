@@ -41,6 +41,18 @@ Thumbs.db
 # Vite
 .vite
 
-# Development docs (keep locally, not in repo)
+# Development docs and AI instructions
 CLAUDE.md
 **/CLAUDE.md
+.cursor/
+.cursorrules
+.github/copilot-instructions.md
+.aider*
+.claude/
+*.ai.md
+*-prompts.md
+*ANALYSIS*.md
+*IMPLEMENTATION*.md
+*MIGRATION*.md
+*PLAN*.md
+docs/IBC*.md
