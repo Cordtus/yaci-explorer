@@ -19,9 +19,6 @@ export default defineConfig({
       },
     },
   },
-  ssr: {
-    sourcemap: false,
-  },
   // Vite automatically exposes VITE_* environment variables to import.meta.env
   // No need for manual define - just set VITE_POSTGREST_URL in your .env file
 });
