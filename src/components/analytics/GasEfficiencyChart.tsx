@@ -111,9 +111,9 @@ export function GasEfficiencyChart() {
       <CardHeader>
         <CardTitle>Gas Usage Distribution</CardTitle>
         <CardDescription>
-          Efficiency: {efficiency.avgEfficiency.toFixed(1)}% | Total Used:{' '}
-          {(efficiency.totalUsed / 1e6).toFixed(2)}M | Total Limit:{' '}
-          {(efficiency.totalLimit / 1e6).toFixed(2)}M
+          Avg Gas Limit: {Math.round(efficiency.avgGasLimit).toLocaleString()} | Total Limit:{' '}
+          {(efficiency.totalGasLimit / 1e6).toFixed(2)}M | Transactions:{' '}
+          {efficiency.transactionCount.toLocaleString()}
         </CardDescription>
       </CardHeader>
       <CardContent>

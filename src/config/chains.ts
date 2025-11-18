@@ -168,6 +168,9 @@ export function hasChainFeature(
   feature: keyof ChainFeatures
 ): boolean {
   const config = getChainConfig(chainId)
+  if (feature === 'customModules') {
+    return Array.isArray(config.features.customModules) && config.features.customModules.length > 0
+  }
   return config.features[feature] || false
 }
 
