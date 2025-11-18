@@ -44,3 +44,5 @@ Thumbs.db
 # Development docs (keep locally, not in repo)
 CLAUDE.md
 **/CLAUDE.md
+.claude/
+docs/
