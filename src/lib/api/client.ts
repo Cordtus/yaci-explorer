@@ -344,10 +344,10 @@ export class YaciAPIClient {
       throw new Error('Failed to fetch transactions for address')
     }
 
-    const messages = await response.json()
+    const messages: Message[] = await response.json()
 
     // Get unique transaction IDs
-    const txIds = [...new Set(messages.map((msg: Message) => msg.id))]
+    const txIds: string[] = [...new Set(messages.map((msg: Message) => msg.id))]
 
     // Fetch full transaction details for each unique tx
     const transactions = await Promise.all(

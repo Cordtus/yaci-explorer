@@ -65,11 +65,11 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
   const successRate = transactions.length > 0 ? (successfulTxs / transactions.length) * 100 : 100
 
   // Calculate average gas used from fee field (fee.gasLimit contains the gas)
-  const gasValues = transactions
+  const gasValues: number[] = transactions
     .filter((tx: any) => tx.fee?.gasLimit)
-    .map((tx: any) => parseInt(tx.fee.gasLimit))
+    .map((tx: any) => parseInt(tx.fee.gasLimit, 10))
   const avgGasUsed = gasValues.length > 0
-    ? Math.round(gasValues.reduce((a, b) => a + b, 0) / gasValues.length)
+    ? Math.round(gasValues.reduce((a: number, b: number) => a + b, 0) / gasValues.length)
     : 0
 
   // Get unique signer addresses from messages

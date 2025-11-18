@@ -6,9 +6,11 @@ import { Copy, ArrowRight, Coins, Users, Vote, Lock } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 
+type CoinAmount = { denom: string; amount: string }
+
 interface MessageMetadata {
   // Bank
-  amount?: Array<{ denom: string; amount: string }>
+  amount?: CoinAmount | CoinAmount[]
   toAddress?: string
   fromAddress?: string
 
@@ -96,6 +98,11 @@ function parseMultiDenomAmount(amountStr: string): Array<{ amount: string; denom
   return amounts
 }
 
+function normalizeAmounts(amount?: CoinAmount | CoinAmount[]): CoinAmount[] {
+  if (!amount) return []
+  return Array.isArray(amount) ? amount : [amount]
+}
+
 function getEventAttribute(events: Array<{ event_type: string; attributes: Array<{ key: string; value: string }> }>, eventType: string, key: string): string | null {
   const event = events?.find(e => e.event_type === eventType)
   if (!event) return null
@@ -145,7 +152,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
     // Try to extract actual transferred amount from transfer event (more accurate than metadata)
     const transferAmountStr = getEventAttribute(events || [], 'transfer', 'amount')
     const transferAmounts = transferAmountStr ? parseMultiDenomAmount(transferAmountStr) : []
-    const displayAmounts = transferAmounts.length > 0 ? transferAmounts : metadata.amount || []
+    const displayAmounts = transferAmounts.length > 0 ? transferAmounts : normalizeAmounts(metadata.amount)
 
     return (
       <div className="space-y-2">
@@ -178,7 +185,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
 
   // Staking - Delegate
   if (type === '/cosmos.staking.v1beta1.MsgDelegate') {
-    const amount = metadata.amount
+    const amount = normalizeAmounts(metadata.amount)[0]
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-3">
@@ -208,7 +215,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
 
   // Staking - Undelegate
   if (type === '/cosmos.staking.v1beta1.MsgUndelegate') {
-    const amount = metadata.amount
+    const amount = normalizeAmounts(metadata.amount)[0]
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-3">
@@ -235,7 +242,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
 
   // Staking - Redelegate
   if (type === '/cosmos.staking.v1beta1.MsgBeginRedelegate') {
-    const amount = metadata.amount
+    const amount = normalizeAmounts(metadata.amount)[0]
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-3">
@@ -362,7 +369,9 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
     const transferAmounts = transferAmountStr ? parseMultiDenomAmount(transferAmountStr) : []
 
     // Fallback to metadata token if event data not available
-    const displayAmounts = transferAmounts.length > 0 ? transferAmounts : (metadata.token ? [metadata.token] : [])
+    const displayAmounts = transferAmounts.length > 0
+      ? transferAmounts
+      : (metadata.token ? [metadata.token] : normalizeAmounts(metadata.amount))
 
     return (
       <div className="space-y-2">

@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { getDenomMetadata, extractIBCHash } from '@/lib/denom'
+import { getIBCDenomFromCache } from '@/lib/ibc-resolver'
 
 interface DenomContextType {
   getDenomDisplay: (denom: string) => string
@@ -8,82 +9,37 @@ interface DenomContextType {
 
 const DenomContext = createContext<DenomContextType | undefined>(undefined)
 
-interface DenomMetadataRow {
-  denom: string
-  symbol: string
-  ibc_hash: string | null
-}
-
 /**
  * Global denom resolution cache
- * Loads from database at app startup and caches all denom mappings
+ * Uses static mappings for known denoms and browser cache for IBC denoms
  */
 export function DenomProvider({ children }: { children: ReactNode }) {
-  const [denomCache, setDenomCache] = useState<Map<string, string>>(new Map())
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const loadDenomMetadata = async () => {
-      try {
-        const postgrestUrl = import.meta.env.VITE_POSTGREST_URL
-        if (!postgrestUrl) {
-          throw new Error('VITE_POSTGREST_URL environment variable is not set')
-        }
-        const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol,ibc_hash`)
-
-        if (!response.ok) {
-          console.error('Failed to fetch denom metadata from database')
-          setIsLoading(false)
-          return
-        }
-
-        const metadata: DenomMetadataRow[] = await response.json()
-        const cache = new Map<string, string>()
-
-        // Build cache from database
-        metadata.forEach((row) => {
-          cache.set(row.denom, row.symbol)
-          // Also cache by IBC hash for faster lookups
-          if (row.ibc_hash) {
-            cache.set(`ibc_${row.ibc_hash}`, row.symbol)
-          }
-        })
-
-        setDenomCache(cache)
-        setIsLoading(false)
-      } catch (error) {
-        console.error('Error loading denom metadata:', error)
-        setIsLoading(false)
-      }
-    }
-
-    loadDenomMetadata()
-  }, [])
+  const [denomCache] = useState<Map<string, string>>(new Map())
+  const isLoading = false // No async loading needed - everything is local/cached
 
   const getDenomDisplay = (denom: string): string => {
-    // Check cache first
+    // Check in-memory cache first
     if (denomCache.has(denom)) {
       return denomCache.get(denom)!
     }
 
-    // For IBC denoms, check if we have a static mapping
+    // For IBC denoms, check browser cache
     if (denom.startsWith('ibc/')) {
       const hash = extractIBCHash(denom)
-      if (hash && denomCache.has(`ibc_${hash}`)) {
-        return denomCache.get(`ibc_${hash}`)!
+      if (hash) {
+        const cached = getIBCDenomFromCache(hash)
+        if (cached) {
+          return cached.symbol
+        }
       }
       // If not resolved, return the denom as-is (will be truncated by UI)
+      // The useIBCResolver hook will handle async resolution
       return denom
     }
 
-    // For native denoms, use metadata
+    // For native denoms, use static metadata
     const metadata = getDenomMetadata(denom)
-    const display = metadata.symbol
-
-    // Cache the result
-    setDenomCache(prev => new Map(prev).set(denom, display))
-
-    return display
+    return metadata.symbol
   }
 
   return (

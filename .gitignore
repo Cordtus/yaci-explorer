@@ -41,6 +41,8 @@ Thumbs.db
 # Vite
 .vite
 
-# Development docs (keep locally, not in repo)
+# Development docs and AI instructions
 CLAUDE.md
-**/CLAUDE.md
+AGENTS.md
+.claude/
+docs/
