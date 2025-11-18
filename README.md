@@ -1,66 +1,31 @@
 # Yaci Block Explorer
 
-A modern, high-performance block explorer for Cosmos SDK chains with native EVM support. Built with React Router 7 and designed to work seamlessly with the [Yaci indexer](https://github.com/manifest-network/yaci).
+A very basic block explorer for Cosmos SDK chains with native EVM support. Built to use the [Yaci indexer](https://github.com/manifest-network/yaci) as the backend to miniimze setup+config.
 
 ## Features
 
-- **Multi-Chain Support**: Works with any Cosmos SDK chain via automatic chain detection
-- **High Performance**: Direct PostgreSQL integration via PostgREST for optimal query performance
-- **Real-time Updates**: Live blockchain data synchronization
+- **Plug and Play Support**: Works with any Cosmos SDK chain via automatic chain detection
+- **Real-time Updates**: Live UI updates with new blocks
 - **Dual Chain Support**: Native support for both Cosmos and EVM transactions
 - **IBC Denom Resolution**: Automatic resolution of IBC denoms by querying chain's IBC module, with browser caching
-- **Modern UI**: Clean, responsive design with dark mode support using Radix UI + Tailwind CSS
-- **Smart Search**: Unified search across blocks, transactions, and addresses
+- **Address/Wallet Search**: Unified search across blocks, transactions, and addresses
 - **Rich Analytics**: Chain statistics, transaction history, gas efficiency, and performance metrics
 - **Dynamic Filtering**: Message type filters auto-populated from actual chain data
 - **Developer Friendly**: TypeScript, modern tooling, comprehensive documentation
 
-## Tech Stack
+## Dependencies
 
 - **Frontend**: React Router 7, React 18, TypeScript
 - **Styling**: Tailwind CSS, shadcn/ui (Radix UI components)
 - **State Management**: TanStack Query (React Query)
 - **Charts**: ECharts for analytics visualization
 - **Database**: PostgreSQL with PostgREST API
-- **Indexer**: [Yaci](https://github.com/manifest-network/yaci) - Go-based blockchain indexer with gRPC reflection
+- **Indexer**: [Yaci](https://github.com/manifest-network/yaci) - Go-based blockchain indexer with gRPC reflection for universal support
 - **Build Tool**: Vite 7
-
-## Architecture
-
-```
-┌─────────────────────────────┐
-│  React Router Frontend      │
-│   (This Repository)         │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│      PostgREST API          │
-│   (Auto-generated REST)     │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│       PostgreSQL            │
-│   (Indexed Blockchain Data) │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│      Yaci Indexer           │
-│  (gRPC → Database)          │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│    Cosmos SDK Chain         │
-│       (gRPC :9090)          │
-└─────────────────────────────┘
-```
 
 ## Documentation
 
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete guide for deploying to a new chain, switching chains, and production setup
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete guide for deploying to a new chain, redeploying existing setups and configuration.
 
 ## Quick Start
 
@@ -92,9 +57,7 @@ Services available:
 - **Prometheus Metrics**: http://localhost:2112
 - **PostgreSQL**: localhost:5432
 
-### Native Deployment
-
-For production deployment without Docker containers:
+### Dockerless Deployment
 
 ```bash
 # Install dependencies
@@ -111,7 +74,7 @@ npx serve -s build/client -l 3001
 
 ## Configuration
 
-> **For complete deployment and configuration details**, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+> **For full details**, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ### Environment Variables
 
@@ -157,39 +120,20 @@ src/
 │   ├── home.tsx         # Dashboard
 │   ├── blocks.tsx       # Blocks list
 │   ├── blocks.$id.tsx   # Block details
-│   ├── transactions.tsx # Transactions list with dynamic filters
+│   ├── transactions.tsx # Filterable Transactions list
 │   └── analytics.tsx    # Analytics dashboard
 ├── components/
-│   ├── ui/              # Base UI components (shadcn/ui)
+│   ├── ui/              # Base UI components
 │   ├── common/          # Shared components
 │   ├── analytics/       # Analytics/chart components
 │   └── JsonViewer.tsx   # Interactive JSON viewer
 ├── lib/
-│   ├── api/             # API clients (PostgREST, Prometheus)
+│   ├── api/             # API clients
 │   ├── utils.ts         # Helper functions
 │   └── chain-info.ts    # Chain auto-detection
 ├── config/
 │   └── chains.ts        # Multi-chain configurations
 └── types/               # TypeScript definitions
-```
-
-### Development Commands
-
-```bash
-# Development
-npm run dev              # Start dev server (port 5173)
-npm run build            # Production build
-npm run preview          # Preview production build
-
-# Code Quality
-npm run type-check       # TypeScript type checking
-npm run lint             # ESLint
-npm run lint:fix         # Auto-fix lint issues
-npm run format           # Prettier formatting
-
-# Maintenance
-npm run clean            # Remove build artifacts
-npm run reinstall        # Clean reinstall dependencies
 ```
 
 ### Local Development Setup
@@ -209,19 +153,12 @@ npm run dev
 
 ## API Endpoints
 
-The PostgREST API provides RESTful endpoints for all indexed data:
+The PostgREST API provides RESTful endpoints and support standard PostgREST query syntax:
 
 - `GET /blocks_raw` - Raw block data
 - `GET /transactions_main` - Parsed transactions
 - `GET /messages_main` - Transaction messages (dynamically queried for filters)
 - `GET /events_main` - Transaction events
-
-All endpoints support PostgREST query syntax:
-- **Filtering**: `?field=eq.value`, `?field=gte.100`
-- **Sorting**: `?order=field.desc`
-- **Pagination**: `?limit=20&offset=0`
-- **Selection**: `?select=field1,field2`
-- **Count**: Add header `Prefer: count=exact`
 
 Example:
 ```bash
@@ -243,20 +180,11 @@ The explorer automatically detects:
 - Chain ID from block headers
 - Native denomination from transactions
 - Decimal places from denom prefix (`u` = 6, `a` = 18)
-- Available message types from indexed data
+- Available message types from indexed data (list is dynamically generated)
 
-### Pre-configured Chains
+### Fallback config
 
-Optimized configurations for major chains:
-- Manifest Network (manifest-1)
-- Cosmos Hub (cosmoshub-4)
-- Juno (juno-1)
-- Osmosis (osmosis-1)
-- Stargaze (stargaze-1)
-- Evmos (evmos_9001-2)
-- Neutron (neutron-1)
-
-Add your chain to `src/config/chains.ts` for optimal UX:
+Add your chain to `src/config/chains.ts` (optional):
 
 ```typescript
 'your-chain-id': {
@@ -272,37 +200,6 @@ Add your chain to `src/config/chains.ts` for optimal UX:
 }
 ```
 
-### Tested Compatibility
-
-- **Cosmos SDK**: v0.45+ (uses gRPC reflection)
-- **CometBFT**: All versions
-- **EVM Support**: Chains with EVM module (e.g., Evmos, Mantra)
-- **CosmWasm**: Chains with WASM support (e.g., Juno, Neutron)
-- **IBC**: All IBC-enabled chains
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Add TSDoc comments to all new functions
-4. Test your changes locally
-5. Commit with descriptive messages
-6. Open a Pull Request
-
-### Code Standards
-
-- TSDoc/JSDoc comments for all exported functions
-- Type-safe TypeScript (avoid `any` types)
-- Follow existing code style (Prettier + ESLint)
-- Test UI changes across desktop and mobile
-
-## Documentation
-
-- **.env.example** - Complete environment variable reference
-- **src/config/chains.ts** - Chain-specific configurations
-
 ## License
 
 MIT License - see LICENSE file for details.
@@ -312,8 +209,3 @@ MIT License - see LICENSE file for details.
 - **Yaci Indexer**: https://github.com/manifest-network/yaci
 - **PostgREST**: https://postgrest.org/
 - **Cosmos SDK**: https://github.com/cosmos/cosmos-sdk
-
-## Support
-
-- **Explorer Issues**: [GitHub Issues](https://github.com/Cordtus/yaci-explorer/issues)
-- **Indexer Issues**: [Yaci Repository](https://github.com/manifest-network/yaci)
