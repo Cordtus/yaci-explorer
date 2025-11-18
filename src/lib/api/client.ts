@@ -29,6 +29,10 @@ export class YaciAPIClient {
     this.baseUrl = url
   }
 
+  getApiBaseUrl(): string {
+    return this.baseUrl
+  }
+
   private async fetchWithCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
     const cached = this.cache.get(key)
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {

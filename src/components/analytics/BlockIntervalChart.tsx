@@ -1,48 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@/lib/api/client'
-
-const client = new YaciAPIClient()
-
-interface BlockTimeData {
-  height: number
-  time: number
-  timestamp: string
-}
-
-async function getBlockIntervalData(limit = 100): Promise<BlockTimeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
-  const response = await fetch(
-    `${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`
-  )
-  const blocks = await response.json()
-
-  const data: BlockTimeData[] = []
-  for (let i = 0; i < blocks.length - 1; i++) {
-    const currentTime = new Date(blocks[i].data?.block?.header?.time).getTime()
-    const previousTime = new Date(blocks[i + 1].data?.block?.header?.time).getTime()
-    const diff = (currentTime - previousTime) / 1000
-
-    if (diff > 0 && diff < 100) {
-      data.push({
-        height: blocks[i].id,
-        time: diff,
-        timestamp: blocks[i].data?.block?.header?.time,
-      })
-    }
-  }
-
-  return data.reverse()
-}
+import { getBlockIntervals } from '@/lib/metrics'
 
 export function BlockIntervalChart() {
   const { data, isLoading } = useQuery({
     queryKey: ['block-intervals'],
-    queryFn: () => getBlockIntervalData(100),
+    queryFn: () => getBlockIntervals(100),
     refetchInterval: 30000, // Refresh every 30 seconds
   })
 

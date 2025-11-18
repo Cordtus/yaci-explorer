@@ -7,6 +7,7 @@ import { formatNumber } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
+import { getOverviewMetrics } from '@/lib/metrics'
 
 const api = new YaciAPIClient()
 
@@ -22,12 +23,9 @@ export function DashboardMetrics() {
   }, [])
 
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['chainStats'],
-    queryFn: async () => {
-      const result = await api.getChainStats()
-      return result
-    },
-    refetchInterval: 5000,
+    queryKey: ['overview-metrics'],
+    queryFn: getOverviewMetrics,
+    refetchInterval: 10000,
     enabled: mounted,
   })
 
@@ -45,9 +43,9 @@ export function DashboardMetrics() {
     enabled: mounted,
   })
 
-  const activeValidators = stats?.active_validators ?? 0
+  const activeValidators = stats?.activeValidators ?? 0
   const hasActiveValidators = activeValidators > 0
-  const avgBlockTime = stats?.avg_block_time ?? 0
+  const avgBlockTime = stats?.avgBlockTime ?? 0
 
   return (
     <>
@@ -60,7 +58,7 @@ export function DashboardMetrics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.latest_block || 0)}
+              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.latestBlock || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {avgBlockTime.toFixed(2)}s avg block time
@@ -75,7 +73,7 @@ export function DashboardMetrics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.total_transactions || 0)}
+              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.totalTransactions || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {formatNumber(stats?.tps || 0, 2)} TPS (indexed)
@@ -113,14 +111,14 @@ export function DashboardMetrics() {
             <div className="text-2xl font-bold">
               {statsLoading ? (
                 <Skeleton className="h-8 w-24" />
-              ) : stats?.total_supply && stats.total_supply !== '0' ? (
-                formatNumber(stats.total_supply)
+              ) : stats?.totalSupply ? (
+                stats.totalSupply
               ) : (
                 <span className="text-muted-foreground text-base">-</span>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.total_supply && stats.total_supply !== '0' ? 'Native Token' : 'Requires gRPC query'}
+              {stats?.totalSupply ? 'Native Token' : 'Requires chain REST endpoint'}
             </p>
           </CardContent>
         </Card>
