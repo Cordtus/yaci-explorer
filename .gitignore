@@ -43,17 +43,6 @@ Thumbs.db
 
 # Development docs and AI instructions
 CLAUDE.md
-**/CLAUDE.md
 AGENTS.md
-.cursor/
-.cursorrules
-.github/copilot-instructions.md
-.aider*
 .claude/
-*.ai.md
-*-prompts.md
-*ANALYSIS*.md
-*IMPLEMENTATION*.md
-*MIGRATION*.md
-*PLAN*.md
-docs/IBC*.md
+docs/
