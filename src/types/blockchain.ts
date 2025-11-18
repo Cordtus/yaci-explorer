@@ -33,6 +33,7 @@ export interface Block {
       }
       evidence: any
       last_commit: any
+      lastCommit?: any
     }
     block_id?: {
       hash: string
@@ -42,6 +43,7 @@ export interface Block {
       hash: string
       part_set_header: any
     }
+    lastCommit?: any
   }
 }
 
@@ -78,6 +80,7 @@ export interface Message {
   sender: string | null
   mentions: string[] | null // array of addresses mentioned
   metadata: any | null // parsed message fields as jsonb
+  data?: any // raw message payload (when available)
 }
 
 /**
