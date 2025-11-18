@@ -9,6 +9,19 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      // Suppress noisy sourcemap warnings from third-party deps
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'SOURCEMAP_ERROR') return
+        defaultHandler(warning)
+      },
+    },
+  },
+  ssr: {
+    sourcemap: false,
+  },
   // Vite automatically exposes VITE_* environment variables to import.meta.env
   // No need for manual define - just set VITE_POSTGREST_URL in your .env file
 });
