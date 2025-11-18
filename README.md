@@ -58,6 +58,10 @@ A modern, high-performance block explorer for Cosmos SDK chains with native EVM 
 └─────────────────────────────┘
 ```
 
+## Documentation
+
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete guide for deploying to a new chain, switching chains, and production setup
+
 ## Quick Start
 
 ### Docker Compose (Recommended)
@@ -106,6 +110,8 @@ npx serve -s build/client -l 3001
 **Prerequisites**: PostgreSQL, PostgREST, and Yaci indexer must be running separately.
 
 ## Configuration
+
+> **For complete deployment and configuration details**, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ### Environment Variables
 
