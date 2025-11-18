@@ -64,10 +64,10 @@ function isJsonString(str: string): boolean {
 
 export default function TransactionDetailPage() {
   const [mounted, setMounted] = useState(false)
-  const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
+  const [showRawData, setShowRawData] = useState<{[key: number]: boolean}>({})
   const [copied, setCopied] = useState(false)
-  const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({})
-  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [expandedMessages, setExpandedMessages] = useState<{[key: number]: boolean}>({})
+  const [expandedEvents, setExpandedEvents] = useState<{[key: number]: boolean}>({})
   const params = useParams()
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export default function TransactionDetailPage() {
                         <div key={msgIdx} className="mb-4">
                           {msgIdx > 0 && <div className="border-t my-4" />}
                           <MessageDetails
-                            type={message.type ?? 'Unknown'}
+                            type={message.type}
                             metadata={message.metadata}
                             events={groupedEvents}
                           />
@@ -317,7 +317,7 @@ export default function TransactionDetailPage() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-5 w-5"
-                                      onClick={() => message.sender && copyToClipboard(message.sender)}
+                                      onClick={() => copyToClipboard(message.sender)}
                                     >
                                       <Copy className="h-3 w-3" />
                                     </Button>

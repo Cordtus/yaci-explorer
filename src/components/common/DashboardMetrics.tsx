@@ -45,10 +45,6 @@ export function DashboardMetrics() {
     enabled: mounted,
   })
 
-  const activeValidators = stats?.active_validators ?? 0
-  const hasActiveValidators = activeValidators > 0
-  const avgBlockTime = stats?.avg_block_time ?? 0
-
   return (
     <>
       {/* Primary Stats */}
@@ -63,7 +59,7 @@ export function DashboardMetrics() {
               {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.latest_block || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {avgBlockTime.toFixed(2)}s avg block time
+              {stats?.avg_block_time.toFixed(2)}s avg block time
             </p>
           </CardContent>
         </Card>
@@ -92,14 +88,14 @@ export function DashboardMetrics() {
             <div className="text-2xl font-bold">
               {statsLoading ? (
                 <Skeleton className="h-8 w-24" />
-              ) : hasActiveValidators ? (
-                activeValidators
+              ) : stats?.active_validators > 0 ? (
+                stats.active_validators
               ) : (
                 <span className="text-muted-foreground text-base">-</span>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {hasActiveValidators ? 'Active set' : 'Fetching validator data...'}
+              {stats?.active_validators > 0 ? 'Active set' : 'Fetching validator data...'}
             </p>
           </CardContent>
         </Card>
