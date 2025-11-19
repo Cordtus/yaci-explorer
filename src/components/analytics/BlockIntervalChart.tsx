@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { getBlockIntervals } from '@/lib/metrics'
+import { type BlockTimeData } from '@/types/components/analytics/block-interval'
 
 export function BlockIntervalChart() {
   const { data, isLoading } = useQuery({

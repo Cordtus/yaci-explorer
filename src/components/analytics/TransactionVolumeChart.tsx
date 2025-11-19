@@ -2,12 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
-
-interface VolumeData {
-  time: string
-  count: number
-  gasUsed: number
-}
+import { type VolumeData } from '@/types/components/analytics/transaction-volume'
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
   const baseUrl = import.meta.env.VITE_POSTGREST_URL

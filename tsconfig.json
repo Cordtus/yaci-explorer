@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "src",
     "target": "es2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -19,12 +20,13 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/config/*": ["./src/config/*"]
+      "@/*": ["*"],
+      "@/types/*": ["types/*"],
+      "@/lib/*": ["lib/*"],
+      "@/components/*": ["components/*"],
+      "@/hooks/*": ["hooks/*"],
+      "@/config/*": ["config/*"],
+      "@/contexts/*": ["contexts/*"]
     }
   },
   "include": ["src", "react-router.config.ts", "vite-env.d.ts", "**/*.ts", "**/*.tsx"],

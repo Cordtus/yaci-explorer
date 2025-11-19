@@ -2,9 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getNetworkMetrics } from '@/lib/metrics'
+import { type NetworkMetrics } from '@/types/lib/metrics'
 
 export function NetworkMetricsCard() {
-  const { data: metrics, isLoading } = useQuery({
+  const { data: metrics, isLoading } = useQuery<NetworkMetrics>({
     queryKey: ['network-metrics'],
     queryFn: getNetworkMetrics,
     refetchInterval: 10000, // Poll every 10 seconds

@@ -1,13 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
-
-interface MessageTypeStats {
-  type: string
-  count: number
-  percentage: number
-  trend?: 'up' | 'down' | 'stable'
-}
+import { type MessageTypeStats } from '@/types/components/analytics/top-message-types'
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
   const baseUrl = import.meta.env.VITE_POSTGREST_URL

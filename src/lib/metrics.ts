@@ -1,31 +1,11 @@
 import { YaciAPIClient } from '@/lib/api/client'
-import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
+import { getChainInfo } from '@/lib/chain-info'
 import { createTTLCache } from '@/lib/cache'
+import { type OverviewMetrics, type NetworkMetrics } from '@/types/lib/metrics'
+import { type ChainInfo } from '@/types/lib/chain-info'
 
 const client = new YaciAPIClient()
 const cache = createTTLCache(30000) // 30s TTL for expensive calls
-
-interface OverviewMetrics {
-  latestBlock: number
-  totalTransactions: number
-  avgBlockTime: number
-  tps: number
-  activeValidators: number
-  totalSupply: string | null
-}
-
-interface NetworkMetrics {
-  latestHeight: number
-  totalTransactions: number
-  avgBlockTime: number
-  activeValidators: number
-  totalBlocks: number
-  lastBlockTime: string
-  txPerBlock: number
-  successRate: number
-  avgGasLimit: number
-  uniqueAddresses: number | null
-}
 
 const REST_ENDPOINT = import.meta.env.VITE_CHAIN_REST_ENDPOINT
 

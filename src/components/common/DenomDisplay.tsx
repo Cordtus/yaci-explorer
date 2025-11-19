@@ -1,11 +1,6 @@
 import { useDenomResolver } from '@/hooks/useDenomResolver'
 import { Truncate } from '@/components/ui/truncate'
-
-interface DenomDisplayProps {
-  denom: string
-  maxLength?: number
-  className?: string
-}
+import { type DenomDisplayProps } from '@/types/components/common/denom-display'
 
 /**
  * Component that displays a denomination with automatic IBC resolution
