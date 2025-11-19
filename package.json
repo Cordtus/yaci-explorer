@@ -18,7 +18,10 @@
     "clean": "rm -rf build .react-router node_modules/.vite",
     "clean:all": "rm -rf build .react-router node_modules",
     "reinstall": "npm run clean:all && npm install",
-    "deploy:build": "npm run clean && npm install && npm run typecheck && npm run build"
+    "configure:env": "bash ./scripts/configure-env.sh",
+    "deploy:build": "npm run clean && npm install && npm run typecheck && npm run build",
+    "reset:full": "bash ./scripts/full-reset.sh",
+    "redeploy:systemd": "bash ./scripts/redeploy-systemd.sh"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

@@ -11,10 +11,10 @@ git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
 cp .env.example .env
 ```
-2) Edit `.env` (minimum):
+2) Configure `.env` (minimum):
 ```bash
+npm run configure:env   # prompts for Postgres username/password/database
 CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
-POSTGRES_PASSWORD=your_secure_password
 ```
 3) Launch:
 ```bash
@@ -24,7 +24,7 @@ Access: http://localhost:3001
 4) Monitor:
 ```bash
 docker compose -f docker/docker-compose.yml logs -f yaci
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
 
@@ -74,7 +74,7 @@ docker compose -f docker/docker-compose.yml up -d
 ```bash
 docker compose -f docker/docker-compose.yml down
 docker compose -f docker/docker-compose.yml up -d postgres
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "TRUNCATE api.blocks_raw, api.transactions_main, api.messages_main, api.events_main;"
 docker compose -f docker/docker-compose.yml up -d
 ```
@@ -142,7 +142,7 @@ location /api/ { proxy_pass http://localhost:3000/; proxy_set_header Host $host;
 
 ### Backups (daily)
 ```bash
-docker exec yaci-explorer-postgres pg_dump -U postgres -d yaci -F c -f /tmp/backup.dump
+docker exec yaci-explorer-postgres pg_dump -U yaci -d yaci -F c -f /tmp/backup.dump
 docker cp yaci-explorer-postgres:/tmp/backup.dump /backups/backup_$(date +%Y%m%d_%H%M%S).dump
 find /backups -name "backup_*.dump" -mtime +7 -delete
 ```
@@ -192,9 +192,54 @@ docker compose -f docker/docker-compose.yml pull yaci && docker compose -f docke
 docker compose -f docker/docker-compose.yml up -d --build explorer
 
 # Indexing progress
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
+
+---
+
+## Resetting after a devnet/genesis restart
+Devnets often restart from height 1. When block numbers repeat, the indexer hits unique constraints and stalls, and the UI may show stale chain metadata. Reset the DB before re-indexing:
+
+### Docker (recommended)
+Use the helper script (stops services, wipes `postgres-data`, restarts):
+```bash
+./scripts/reset-devnet.sh
+# custom compose file:
+./scripts/reset-devnet.sh --compose-file path/to/compose.yml
+# non-interactive:
+SKIP_CONFIRM=1 ./scripts/reset-devnet.sh
+```
+
+### Manual Postgres reset
+1) Stop Yaci + PostgREST.  
+2) Truncate tables (or drop the DB):
+```sql
+TRUNCATE api.blocks_raw, api.transactions_main, api.transactions_raw, api.messages_main, api.events_main RESTART IDENTITY CASCADE;
+```
+3) Restart Yaci with `--live` so it re-ingests from height 1.  
+4) Refresh the UI (or use the reset banner) to clear cached chain info.
+
+### Bare-metal helper
+If you're not using docker-compose, run:
+```bash
+npm run reset:full   # or yarn reset:full
+```
+The script sources `.env`, ensures `psql`/`jq` are available, points the guard at your local Postgres host, and executes `scripts/chain-reset-guard.sh`. Restart the indexer afterward.
+
+Need a one-liner that also rebuilds and restarts services? Use:
+```bash
+npm run redeploy:systemd   # or yarn redeploy:systemd
+```
+Override service names with `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE` when calling it.
+This helper now invokes `scripts/update-yaci.sh` first, which clones/pulls `cordtus/yaci` (or whatever `YACI_REPO_URL`/`YACI_BRANCH` point to) and runs `YACI_BUILD_CMD` (default `make build`). Set `YACI_SOURCE_DIR` to the directory that your `yaci-indexer` systemd unit uses so the rebuilt binary is picked up on restart, or export `YACI_SKIP_UPDATE=true` to leave the running binary untouched.
+Both flows auto-create the configured `POSTGRES_DB` when it’s missing (bare metal via `scripts/full-reset.sh`, docker/systemd via `scripts/chain-reset-guard.sh`), so feel free to rename the database per-chain without manual SQL. If the credentials can’t create databases you’ll see a warning; create it once and rerun.
+
+### UI cache note
+On restart detection the UI can clear cached chain ID/denoms; a hard refresh also works if you do not see the banner.
+
+### Automatic guard
+Set `ENABLE_CHAIN_RESET_GUARD=true` (and `CHAIN_RPC_ENDPOINT` / `RESET_GUARD_*` as needed) to let the docker stack run `scripts/chain-reset-guard.sh` before Yaci starts. The guard compares the stored genesis hash and latest remote height—if it detects a rewind it truncates the main tables automatically (or, if `RESET_GUARD_AUTO_TRUNCATE=false`, it stops with a warning so you can intervene manually).
 
 ---
 
