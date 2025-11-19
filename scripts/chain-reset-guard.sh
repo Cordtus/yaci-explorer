@@ -8,6 +8,19 @@ log() {
   printf '[reset-guard] %s\n' "$*"
 }
 
+ensure_database() {
+  if PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Database ${PGDATABASE} not found on ${PGHOST}:${PGPORT}; attempting to create..."
+  if PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+    log "Created database ${PGDATABASE}."
+  else
+    log "Failed to create database ${PGDATABASE}; ensure the credentials have permission."
+  fi
+}
+
 if [ "${ENABLE_CHAIN_RESET_GUARD:-false}" != "true" ]; then
   log "Guard disabled; exiting."
   exit 0
@@ -20,12 +33,15 @@ if [ -z "$RPC_ENDPOINT" ]; then
 fi
 
 DB_URI="${RESET_GUARD_DB_URI:-}"
+NEEDS_DB_BOOTSTRAP=0
 if [ -z "$DB_URI" ]; then
   PGHOST="${POSTGRES_HOST:-postgres}"
   PGUSER="${POSTGRES_USER:-postgres}"
   PGPASSWORD="${POSTGRES_PASSWORD:-foobar}"
   PGDATABASE="${POSTGRES_DB:-yaci}"
-  DB_URI="postgres://${PGUSER}:${PGPASSWORD}@${PGHOST}:5432/${PGDATABASE}"
+  PGPORT="${POSTGRES_PORT:-5432}"
+  DB_URI="postgres://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}"
+  NEEDS_DB_BOOTSTRAP=1
 fi
 
 # Install dependencies if missing (for alpine busybox envs)
@@ -39,6 +55,10 @@ fi
 if ! command -v psql >/dev/null 2>&1; then
   log "psql client is required inside the guard container."
   exit 0
+fi
+
+if [ "$NEEDS_DB_BOOTSTRAP" -eq 1 ]; then
+  ensure_database
 fi
 
 RPC_BASE="${RPC_ENDPOINT%/}"

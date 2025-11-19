@@ -233,6 +233,7 @@ npm run redeploy:systemd   # or yarn redeploy:systemd
 ```
 Override service names with `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE` when calling it.
 This helper now invokes `scripts/update-yaci.sh` first, which clones/pulls `cordtus/yaci` (or whatever `YACI_REPO_URL`/`YACI_BRANCH` point to) and runs `YACI_BUILD_CMD` (default `make build`). Set `YACI_SOURCE_DIR` to the directory that your `yaci-indexer` systemd unit uses so the rebuilt binary is picked up on restart, or export `YACI_SKIP_UPDATE=true` to leave the running binary untouched.
+Both flows auto-create the configured `POSTGRES_DB` when it’s missing (bare metal via `scripts/full-reset.sh`, docker/systemd via `scripts/chain-reset-guard.sh`), so feel free to rename the database per-chain without manual SQL. If the credentials can’t create databases you’ll see a warning; create it once and rerun.
 
 ### UI cache note
 On restart detection the UI can clear cached chain ID/denoms; a hard refresh also works if you do not see the banner.

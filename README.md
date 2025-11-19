@@ -100,6 +100,7 @@ Add to `src/config/chains.ts` for custom symbols/features:
 - `./scripts/reset-devnet.sh` stops the docker stack, wipes the Postgres volume, and restarts everything for a fresh genesis.
 - Set `ENABLE_CHAIN_RESET_GUARD=true` (and provide `CHAIN_RPC_ENDPOINT`) to let the dockerized guard detect height rewinds/genesis changes and automatically truncate the index tables before Yaci starts.
 - When running bare metal (no docker-compose defaults), make sure `.env` reflects the actual PostgreSQL target: set `POSTGRES_DB` to the real database name (often matching the chain, e.g. `republic`), and either export `POSTGRES_HOST` / `POSTGRES_PORT` or provide `RESET_GUARD_DB_URI=postgres://user:pass@host:port/db`. The same URI used in `/etc/postgrest.conf` (PostgREST’s `db-uri`) can be copied directly so the reset guard truncates the correct database.
+- Both `scripts/full-reset.sh` (bare-metal) and `scripts/chain-reset-guard.sh` (docker/systemd) now attempt to create `POSTGRES_DB` automatically when it’s missing so renamed databases stay in sync across deployment styles. If the configured user lacks rights, you’ll see a warning and should create the DB manually.
 - The frontend reset banner (controlled via `VITE_RESET_NOTICE_*`) clears cached chain info/IBC metadata so the UI reflects the new chain immediately.
 
 ## License
