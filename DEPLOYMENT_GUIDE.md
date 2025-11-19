@@ -24,7 +24,7 @@ Access: http://localhost:3001
 4) Monitor:
 ```bash
 docker compose -f docker/docker-compose.yml logs -f yaci
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
 
@@ -74,7 +74,7 @@ docker compose -f docker/docker-compose.yml up -d
 ```bash
 docker compose -f docker/docker-compose.yml down
 docker compose -f docker/docker-compose.yml up -d postgres
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "TRUNCATE api.blocks_raw, api.transactions_main, api.messages_main, api.events_main;"
 docker compose -f docker/docker-compose.yml up -d
 ```
@@ -142,7 +142,7 @@ location /api/ { proxy_pass http://localhost:3000/; proxy_set_header Host $host;
 
 ### Backups (daily)
 ```bash
-docker exec yaci-explorer-postgres pg_dump -U postgres -d yaci -F c -f /tmp/backup.dump
+docker exec yaci-explorer-postgres pg_dump -U yaci -d yaci -F c -f /tmp/backup.dump
 docker cp yaci-explorer-postgres:/tmp/backup.dump /backups/backup_$(date +%Y%m%d_%H%M%S).dump
 find /backups -name "backup_*.dump" -mtime +7 -delete
 ```
@@ -192,7 +192,7 @@ docker compose -f docker/docker-compose.yml pull yaci && docker compose -f docke
 docker compose -f docker/docker-compose.yml up -d --build explorer
 
 # Indexing progress
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
 

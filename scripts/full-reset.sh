@@ -19,8 +19,8 @@ export ENABLE_CHAIN_RESET_GUARD="${ENABLE_CHAIN_RESET_GUARD:-true}"
 # Provide defaults for local Postgres hosts (docker script defaulted to "postgres")
 export POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-export POSTGRES_USER="${POSTGRES_USER:-postgres}"
-export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-foobar}"
+export POSTGRES_USER="${POSTGRES_USER:-yaci}"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-changeme}"
 export POSTGRES_DB="${POSTGRES_DB:-yaci}"
 
 if [[ -z "${CHAIN_RPC_ENDPOINT:-}" && -z "${RESET_GUARD_RPC_ENDPOINT:-}" ]]; then
