@@ -23,6 +23,13 @@ INDEXER_SERVICE="${YACI_INDEXER_SERVICE:-yaci-indexer.service}"
 POSTGREST_SERVICE="${POSTGREST_SERVICE:-postgrest.service}"
 EXPLORER_SERVICE="${YACI_EXPLORER_SERVICE:-yaci-explorer.service}"
 
+if [[ "${SKIP_ENV_PROMPTS:-false}" != "true" ]]; then
+  echo "[redeploy] Ensuring database credentials in .env..."
+  "${REPO_ROOT}/scripts/configure-env.sh"
+else
+  echo "[redeploy] SKIP_ENV_PROMPTS=true, skipping credential prompt."
+fi
+
 echo "[redeploy] Installing dependencies with $YARN_BIN..."
 "$YARN_BIN" install
 

@@ -17,7 +17,8 @@ Explorer UI for Cosmos SDK chains (with EVM support) backed by the [Yaci indexer
 git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
 cp .env.example .env
-# set CHAIN_GRPC_ENDPOINT and POSTGRES_PASSWORD in .env
+npm run configure:env # prompts for Postgres credentials; press enter to reuse previous values
+# set CHAIN_GRPC_ENDPOINT in .env
 docker compose -f docker/docker-compose.yml up -d
 ```
 UI: http://localhost:3001 • PostgREST: http://localhost:3000 • Prometheus: http://localhost:2112

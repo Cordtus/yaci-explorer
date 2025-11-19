@@ -11,10 +11,10 @@ git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
 cp .env.example .env
 ```
-2) Edit `.env` (minimum):
+2) Configure `.env` (minimum):
 ```bash
+npm run configure:env   # prompts for Postgres username/password/database
 CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
-POSTGRES_PASSWORD=your_secure_password
 ```
 3) Launch:
 ```bash
