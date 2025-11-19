@@ -78,37 +78,38 @@ prompt_value() {
   fi
 }
 
-set_env_var() {
-  local key="$1"
-  local value="$2"
-  python3 - <<'PY' "$ENV_FILE" "$key" "$value"
-import pathlib, re, sys
-path = pathlib.Path(sys.argv[1])
-key = sys.argv[2]
-value = sys.argv[3]
-text = path.read_text()
-pattern = re.compile(rf'^{re.escape(key)}=.*$', re.MULTILINE)
-replacement = f"{key}={value}"
-if pattern.search(text):
-    text = pattern.sub(replacement, text, count=1)
-else:
-    if text and not text.endswith("\n"):
-        text += "\n"
-    text += replacement + "\n"
-path.write_text(text)
-PY
-}
-
 pg_user="$(prompt_value 'Postgres username' "$current_user")"
 pg_password="$(prompt_value 'Postgres password' "$current_password" true)"
 pg_db="$(prompt_value 'Postgres database' "$current_db")"
 
-set_env_var POSTGRES_USER "$pg_user"
-set_env_var POSTGRES_PASSWORD "$pg_password"
-set_env_var POSTGRES_DB "$pg_db"
-
 db_uri="postgres://${pg_user}:${pg_password}@${current_host}:${current_port}/${pg_db}"
-set_env_var RESET_GUARD_DB_URI "$db_uri"
+
+python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$db_uri"
+import pathlib, sys
+env_path = pathlib.Path(sys.argv[1])
+updates = {
+    "POSTGRES_USER": sys.argv[2],
+    "POSTGRES_PASSWORD": sys.argv[3],
+    "POSTGRES_DB": sys.argv[4],
+    "RESET_GUARD_DB_URI": sys.argv[5],
+}
+lines = env_path.read_text().splitlines()
+seen = set()
+for idx, line in enumerate(lines):
+    if "=" not in line or line.lstrip().startswith("#"):
+        continue
+    key, _ = line.split("=", 1)
+    key = key.strip()
+    if key in updates:
+        lines[idx] = f"{key}={updates[key]}"
+        seen.add(key)
+remaining = [f"{k}={v}" for k, v in updates.items() if k not in seen]
+if remaining:
+    if lines and lines[-1].strip():
+        lines.append("")
+    lines.extend(remaining)
+env_path.write_text("\n".join(lines) + "\n")
+PY
 
 echo "[configure-env] Updated .env with:"
 echo "  POSTGRES_USER=$pg_user"
