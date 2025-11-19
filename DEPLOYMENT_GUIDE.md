@@ -198,6 +198,36 @@ docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
 
 ---
 
+## Resetting after a devnet/genesis restart
+Devnets often restart from height 1. When block numbers repeat, the indexer hits unique constraints and stalls, and the UI may show stale chain metadata. Reset the DB before re-indexing:
+
+### Docker (recommended)
+Use the helper script (stops services, wipes `postgres-data`, restarts):
+```bash
+./scripts/reset-devnet.sh
+# custom compose file:
+./scripts/reset-devnet.sh --compose-file path/to/compose.yml
+# non-interactive:
+SKIP_CONFIRM=1 ./scripts/reset-devnet.sh
+```
+
+### Manual Postgres reset
+1) Stop Yaci + PostgREST.  
+2) Truncate tables (or drop the DB):
+```sql
+TRUNCATE api.blocks_raw, api.transactions_main, api.transactions_raw, api.messages_main, api.events_main RESTART IDENTITY CASCADE;
+```
+3) Restart Yaci with `--live` so it re-ingests from height 1.  
+4) Refresh the UI (or use the reset banner) to clear cached chain info.
+
+### UI cache note
+On restart detection the UI can clear cached chain ID/denoms; a hard refresh also works if you do not see the banner.
+
+### Automatic guard
+Set `ENABLE_CHAIN_RESET_GUARD=true` (and `CHAIN_RPC_ENDPOINT` / `RESET_GUARD_*` as needed) to let the docker stack run `scripts/chain-reset-guard.sh` before Yaci starts. The guard compares the stored genesis hash and latest remote height—if it detects a rewind it truncates the main tables automatically (or, if `RESET_GUARD_AUTO_TRUNCATE=false`, it stops with a warning so you can intervene manually).
+
+---
+
 ## Schema (PostgREST)
 - `blocks_raw`: `id`, `data`
 - `transactions_main`: `id`, `height`, `timestamp`, `fee`, `gas_used`, `error`

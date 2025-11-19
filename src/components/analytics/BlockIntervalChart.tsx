@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { YaciAPIClient } from '@/lib/api/client'
+import { appConfig } from '@/config/app'
 
 const client = new YaciAPIClient()
 
@@ -11,7 +12,7 @@ interface BlockTimeData {
   timestamp: string
 }
 
-async function getBlockIntervalData(limit = 100): Promise<BlockTimeData[]> {
+async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
   const baseUrl = import.meta.env.VITE_POSTGREST_URL
   if (!baseUrl) {
     throw new Error('VITE_POSTGREST_URL environment variable is not set')
@@ -27,7 +28,7 @@ async function getBlockIntervalData(limit = 100): Promise<BlockTimeData[]> {
     const previousTime = new Date(blocks[i + 1].data?.block?.header?.time).getTime()
     const diff = (currentTime - previousTime) / 1000
 
-    if (diff > 0 && diff < 100) {
+    if (diff > 0 && diff < appConfig.analytics.blockIntervalMaxSeconds) {
       data.push({
         height: blocks[i].id,
         time: diff,
@@ -41,10 +42,11 @@ async function getBlockIntervalData(limit = 100): Promise<BlockTimeData[]> {
 
 export function BlockIntervalChart() {
   const { data, isLoading } = useQuery({
-    queryKey: ['block-intervals'],
-    queryFn: () => getBlockIntervalData(100),
-    refetchInterval: 30000, // Refresh every 30 seconds
+    queryKey: ['block-intervals', appConfig.analytics.blockIntervalLookback],
+    queryFn: () => getBlockIntervalData(appConfig.analytics.blockIntervalLookback),
+    refetchInterval: appConfig.analytics.blockIntervalRefetchMs,
   })
+  const lookbackLabel = appConfig.analytics.blockIntervalLookback.toLocaleString()
 
   if (isLoading || !data || data.length === 0) {
     return (
@@ -160,7 +162,7 @@ export function BlockIntervalChart() {
       <CardHeader>
         <CardTitle>Block Production Interval</CardTitle>
         <CardDescription>
-          Last 100 blocks | Avg: {avgBlockTime.toFixed(2)}s | Min: {minBlockTime.toFixed(2)}
+          Last {lookbackLabel} blocks | Avg: {avgBlockTime.toFixed(2)}s | Min: {minBlockTime.toFixed(2)}
           s | Max: {maxBlockTime.toFixed(2)}s
         </CardDescription>
       </CardHeader>

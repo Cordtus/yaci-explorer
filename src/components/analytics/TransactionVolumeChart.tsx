@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
+import { appConfig } from '@/config/app'
 
 interface VolumeData {
   time: string
@@ -9,7 +10,7 @@ interface VolumeData {
   gasUsed: number
 }
 
-async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
+async function getTransactionVolume(hours: number): Promise<VolumeData[]> {
   const baseUrl = import.meta.env.VITE_POSTGREST_URL
   if (!baseUrl) {
     throw new Error('VITE_POSTGREST_URL environment variable is not set')
@@ -58,10 +59,11 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
 
 export function TransactionVolumeChart() {
   const { data, isLoading } = useQuery({
-    queryKey: ['transaction-volume'],
-    queryFn: () => getTransactionVolume(24),
-    refetchInterval: 60000, // Refresh every minute
+    queryKey: ['transaction-volume', appConfig.analytics.transactionVolumeHours],
+    queryFn: () => getTransactionVolume(appConfig.analytics.transactionVolumeHours),
+    refetchInterval: appConfig.analytics.transactionVolumeRefetchMs,
   })
+  const hoursLabel = appConfig.analytics.transactionVolumeHours.toLocaleString()
 
   if (isLoading || !data || data.length === 0) {
     return (
@@ -71,7 +73,7 @@ export function TransactionVolumeChart() {
             <TrendingUp className="h-5 w-5" />
             Transaction Volume
           </CardTitle>
-          <CardDescription>24-hour transaction activity</CardDescription>
+          <CardDescription>{hoursLabel}-hour transaction activity</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -215,7 +217,7 @@ export function TransactionVolumeChart() {
           Transaction Volume
         </CardTitle>
         <CardDescription>
-          {totalTx.toLocaleString()} total • {avgTxPerHour} avg/hour • Peak: {peakHour.count} at {new Date(peakHour.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          Last {hoursLabel}h • {totalTx.toLocaleString()} total • {avgTxPerHour} avg/hour • Peak: {peakHour.count} at {new Date(peakHour.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4">

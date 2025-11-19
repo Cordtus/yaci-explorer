@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
   ChainStats
 } from '@/types/blockchain'
+import { appConfig } from '@/config/app'
 
 export class YaciAPIClient {
   private baseUrl: string
@@ -133,7 +134,7 @@ export class YaciAPIClient {
    * txs.data.forEach(tx => console.log(tx.id, tx.messages.length));
    */
   async getTransactions(
-    limit = 20,
+    limit = appConfig.transactions.pageSize,
     offset = 0,
     filters: {
       status?: 'success' | 'failed'

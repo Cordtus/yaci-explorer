@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router'
 import { Search, Blocks, Activity, Home, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SearchBar } from '@/components/common/search-bar'
+import { ResetNotice } from '@/components/common/reset-notice'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -53,6 +54,7 @@ export function Header() {
           </div>
         </div>
       </div>
+      <ResetNotice />
     </header>
   )
 }
