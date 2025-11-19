@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { appConfig } from '@/config/app'
 
 interface MessageTypeStats {
   type: string
@@ -15,9 +16,8 @@ async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
     throw new Error('VITE_POSTGREST_URL environment variable is not set')
   }
 
-  // Fetch message types from the last 10000 messages
   const response = await fetch(
-    `${baseUrl}/messages_main?select=type&order=id.desc&limit=10000`
+    `${baseUrl}/messages_main?select=type&order=id.desc&limit=${appConfig.analytics.messageSampleLimit}`
   )
 
   if (!response.ok) {
@@ -45,17 +45,18 @@ async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
       trend: 'stable' as const // In a real app, you'd compare with previous period
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 10) // Top 10
+    .slice(0, appConfig.analytics.messageTopN)
 
   return stats
 }
 
 export function TopMessageTypesCard() {
   const { data, isLoading } = useQuery({
-    queryKey: ['top-message-types'],
+    queryKey: ['top-message-types', appConfig.analytics.messageSampleLimit, appConfig.analytics.messageTopN],
     queryFn: getTopMessageTypes,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: appConfig.analytics.messageRefetchMs,
   })
+  const sampleLimitLabel = appConfig.analytics.messageSampleLimit.toLocaleString()
 
   if (isLoading || !data) {
     return (
@@ -118,7 +119,7 @@ export function TopMessageTypesCard() {
           Top Message Types
         </CardTitle>
         <CardDescription>
-          Distribution of the most frequently used message types (last 10,000 messages)
+          Distribution of the most frequently used message types (last {sampleLimitLabel} messages)
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -34,11 +34,25 @@ npx serve -s build/client -l 3001
 | Variable | Purpose | Default |
 | -- | -- | -- |
 | `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
+| `CHAIN_RPC_ENDPOINT` | Tendermint RPC (used by reset guard/banner) | `http://localhost:26657` |
 | `POSTGRES_PASSWORD` | DB password | `foobar` |
 | `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
 | `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
 | `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
 | `YACI_IMAGE` | Yaci image tag | `ghcr.io/cordtus/yaci:main` |
+| `ENABLE_CHAIN_RESET_GUARD` | Auto-wipe DB when chain restarts | `false` |
+| `RESET_GUARD_AUTO_TRUNCATE` | Whether the guard truncates automatically | `true` |
+
+### Frontend config overrides (`VITE_*`)
+All UI timing/limit constants can be tuned via env vars (see `.env.example`). Highlights:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `VITE_TX_PAGE_SIZE` | Transactions per page | `20` |
+| `VITE_SEARCH_ADDRESS_LIMIT` | Max address results checked | `20` |
+| `VITE_ANALYTICS_*` | Lookbacks + refresh intervals for charts/cards | (various) |
+| `VITE_RESET_NOTICE_ENABLED` | Toggle the chain-reset banner | `true` |
+| `VITE_QUERY_*` | React Query cache timings | `10s` / `5m` |
 
 Multi-chain: run separate compose stacks with unique `POSTGRES_PORT`, `POSTGREST_PORT`, `EXPLORER_PORT`.
 
@@ -78,6 +92,11 @@ Add to `src/config/chains.ts` for custom symbols/features:
   features: { evm: false, ibc: true, wasm: true },
 }
 ```
+
+## Devnet resets & guard
+- `./scripts/reset-devnet.sh` stops the docker stack, wipes the Postgres volume, and restarts everything for a fresh genesis.
+- Set `ENABLE_CHAIN_RESET_GUARD=true` (and provide `CHAIN_RPC_ENDPOINT`) to let the dockerized guard detect height rewinds/genesis changes and automatically truncate the index tables before Yaci starts.
+- The frontend reset banner (controlled via `VITE_RESET_NOTICE_*`) clears cached chain info/IBC metadata so the UI reflects the new chain immediately.
 
 ## License
 MIT (see LICENSE).

@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { YaciAPIClient } from '@/lib/api/client'
+import { appConfig } from '@/config/app'
 import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
@@ -31,7 +32,7 @@ export default function TransactionsPage() {
   const [timeRangeMin, setTimeRangeMin] = useState('')
   const [timeRangeMax, setTimeRangeMax] = useState('')
 
-  const limit = 20
+  const limit = appConfig.transactions.pageSize
 
   // Fetch distinct message types dynamically
   const { data: messageTypes = [] } = useQuery({
