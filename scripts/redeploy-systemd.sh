@@ -12,6 +12,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 YARN_BIN="${YARN_BIN:-yarn}"
+export npm_config_package_lock=false
 
 if ! command -v "$YARN_BIN" >/dev/null 2>&1; then
   echo "yarn is required (set YARN_BIN to override lookup)." >&2
