@@ -6,15 +6,15 @@ services:
     image: postgres:15-alpine
     container_name: yaci-explorer-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foobar}
+      POSTGRES_USER: ${POSTGRES_USER:-yaci}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB: ${POSTGRES_DB:-yaci}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yaci}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -27,9 +27,9 @@ services:
     image: postgrest/postgrest:v12.0.2
     container_name: yaci-explorer-postgrest
     environment:
-      PGRST_DB_URI: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-foobar}@postgres:5432/${POSTGRES_DB:-yaci}
+      PGRST_DB_URI: postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       PGRST_DB_SCHEMA: ${PGRST_DB_SCHEMA:-api}
-      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-postgres}
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-yaci}
       PGRST_SERVER_PORT: 3000
       PGRST_OPENAPI_SERVER_PROXY_URI: ${POSTGREST_PROXY_URI:-http://localhost:3000}
     ports:
@@ -47,7 +47,7 @@ services:
     container_name: yaci-explorer-indexer
     command: >
       extract postgres ${CHAIN_GRPC_ENDPOINT}
-      -p postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-foobar}@postgres:5432/${POSTGRES_DB:-yaci}
+      -p postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       --live
       --max-concurrency ${YACI_MAX_CONCURRENCY:-100}
       ${YACI_INSECURE:+-k}

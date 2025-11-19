@@ -34,7 +34,8 @@ npx serve -s build/client -l 3001
 | Variable | Purpose | Default |
 | -- | -- | -- |
 | `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
-| `POSTGRES_PASSWORD` | DB password | `foobar` |
+| `POSTGRES_USER` | Database role used by PostgREST/Yaci | `yaci` |
+| `POSTGRES_PASSWORD` | DB password for that role | `changeme` |
 | `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
 | `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
 | `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
