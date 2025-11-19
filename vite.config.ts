@@ -17,6 +17,7 @@ export default defineConfig({
   },
   build: {
     sourcemap: false,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       // Suppress noisy sourcemap warnings from third-party deps
       onwarn(warning, defaultHandler) {
