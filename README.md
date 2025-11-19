@@ -17,7 +17,7 @@ Explorer UI for Cosmos SDK chains (with EVM support) backed by the [Yaci indexer
 git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
 cp .env.example .env
-npm run configure:env # prompts for Postgres credentials; press enter to reuse previous values
+yarn configure:env # prompts for Postgres credentials; press enter to reuse previous values
 # set CHAIN_GRPC_ENDPOINT in .env
 docker compose -f docker/docker-compose.yml up -d
 ```
@@ -96,8 +96,8 @@ Add to `src/config/chains.ts` for custom symbols/features:
 ```
 
 ## Devnet resets & guard
-- `npm run reset:full` (or `yarn reset:full`) loads `.env`, supplies sane defaults for bare-metal Postgres hosts, and runs `scripts/full-reset.sh` (which wraps `chain-reset-guard.sh`). Use this when you're not running via docker-compose; restart Yaci afterwards to re-ingest.
-- `npm run redeploy:systemd` (or `yarn redeploy:systemd`) installs deps, runs the deploy build, executes the reset guard, and restarts the configured systemd services (`yaci-indexer`, `postgrest`, `yaci-explorer` by default). Override service names via `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE`.
+- `yarn reset:full` loads `.env`, supplies sane defaults for bare-metal Postgres hosts, and runs `scripts/full-reset.sh` (which wraps `chain-reset-guard.sh`). Use this when you're not running via docker-compose; restart Yaci afterwards to re-ingest.
+- `yarn redeploy:systemd` installs deps, runs the deploy build, executes the reset guard, and restarts the configured systemd services (`yaci-indexer`, `postgrest`, `yaci-explorer` by default). Override service names via `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE`.
 - `scripts/update-yaci.sh` keeps the `cordtus/yaci` indexer up to date (clone → fetch → `make build`). `redeploy:systemd` runs it automatically unless `YACI_SKIP_UPDATE=true`; configure the branch/clone directory via `YACI_SOURCE_DIR`, `YACI_BRANCH`, `YACI_REPO_URL`, and `YACI_BUILD_CMD` in `.env`.
 - `./scripts/reset-devnet.sh` stops the docker stack, wipes the Postgres volume, and restarts everything for a fresh genesis.
 - Set `ENABLE_CHAIN_RESET_GUARD=true` (and provide `CHAIN_RPC_ENDPOINT`) to let the dockerized guard detect height rewinds/genesis changes and automatically truncate the index tables before Yaci starts.
