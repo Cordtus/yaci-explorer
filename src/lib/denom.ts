@@ -2,26 +2,10 @@
  * Denomination utilities for Cosmos SDK chains
  * Handles IBC denoms, native denoms, and display formatting
  */
+import { type DenomMetadata, type DenomTrace } from '@/types/lib/denom'
 
 // Cache for IBC denom traces
 const denomTraceCache = new Map<string, DenomTrace>()
-
-export interface DenomTrace {
-  baseDenom: string
-  path: string
-  displayName?: string
-  symbol?: string
-  decimals?: number
-}
-
-export interface DenomMetadata {
-  denom: string
-  displayName: string
-  symbol: string
-  decimals: number
-  isIBC: boolean
-  ibcHash?: string
-}
 
 /**
  * Extract IBC hash from ibc/HASH format

@@ -5,9 +5,15 @@ import path from "path";
 export default defineConfig({
   plugins: [reactRouter()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      { find: "@/types", replacement: path.resolve(__dirname, "./src/types") },
+      { find: "@/lib", replacement: path.resolve(__dirname, "./src/lib") },
+      { find: "@/components", replacement: path.resolve(__dirname, "./src/components") },
+      { find: "@/hooks", replacement: path.resolve(__dirname, "./src/hooks") },
+      { find: "@/config", replacement: path.resolve(__dirname, "./src/config") },
+      { find: "@/contexts", replacement: path.resolve(__dirname, "./src/contexts") },
+    ],
   },
   build: {
     sourcemap: false,

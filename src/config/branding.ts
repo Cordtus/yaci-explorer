@@ -2,31 +2,8 @@
  * Branding and visual identity configuration
  * Override these via environment variables for chain-specific deployments
  */
-
-export interface BrandingConfig {
-  /** Application name displayed in header and title */
-  appName: string
-  /** Short name for mobile/compact views */
-  appNameShort: string
-  /** Logo URL or path to logo image */
-  logoUrl?: string
-  /** Favicon URL */
-  faviconUrl?: string
-  /** Primary brand color (HSL format: "222.2 47.4% 11.2%") */
-  primaryColor?: string
-  /** Accent color for highlights */
-  accentColor?: string
-  /** Footer text/credits */
-  footerText?: string
-  /** External links */
-  links?: {
-    website?: string
-    docs?: string
-    github?: string
-    discord?: string
-    twitter?: string
-  }
-}
+import { type BrandingConfig } from '@/types/config/branding'
+export type { BrandingConfig } from '@/types/config/branding'
 
 /**
  * Get branding configuration from environment variables or defaults

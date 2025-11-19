@@ -5,56 +5,7 @@ import { formatNumber, formatHash } from '@/lib/utils'
 import { Copy, ArrowRight, Coins, Users, Vote, Lock } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-
-type CoinAmount = { denom: string; amount: string }
-
-interface MessageMetadata {
-  // Bank
-  amount?: CoinAmount | CoinAmount[]
-  toAddress?: string
-  fromAddress?: string
-
-  // Staking
-  delegatorAddress?: string
-  validatorAddress?: string
-  validatorSrcAddress?: string
-  validatorDstAddress?: string
-
-  // Distribution
-  withdrawAddress?: string
-
-  // Governance
-  proposalId?: string
-  voter?: string
-  option?: string
-
-  // IBC
-  token?: { denom: string; amount: string }
-  receiver?: string
-  sender?: string
-  sourceChannel?: string
-  sourcePort?: string
-  destinationChannel?: string
-  destinationPort?: string
-
-  // CosmWasm
-  contract?: string
-  msg?: string
-
-  // Authz
-  grantee?: string
-  granter?: string
-  msgs?: Array<any>
-}
-
-interface MessageDetailsProps {
-  type: string
-  metadata?: MessageMetadata
-  events?: Array<{
-    event_type: string
-    attributes: Array<{ key: string; value: string }>
-  }>
-}
+import { type CoinAmount, type MessageDetailsProps, type MessageMetadata } from '@/types/components/message-details'
 
 function formatDenom(amount: string, denom: string, getDenomDisplay: (d: string) => string): string {
   const num = parseInt(amount)

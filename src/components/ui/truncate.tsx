@@ -1,15 +1,7 @@
 import * as React from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-
-interface TruncateProps {
-  children: string
-  maxLength?: number
-  startChars?: number
-  endChars?: number
-  className?: string
-  showTooltip?: boolean
-}
+import { type TruncateProps } from '@/types/components/ui/truncate'
 
 export function Truncate({
   children,

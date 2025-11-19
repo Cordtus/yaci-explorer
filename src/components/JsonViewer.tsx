@@ -7,19 +7,7 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface JsonViewerProps {
-  data: any
-  maxHeight?: number
-  className?: string
-}
-
-interface JsonNodeProps {
-  data: any
-  name?: string
-  level?: number
-  isLast?: boolean
-}
+import { type JsonNodeProps, type JsonViewerProps } from '@/types/components/json-viewer'
 
 function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
   const [isExpanded, setIsExpanded] = useState(level < 2) // Auto-expand first 2 levels

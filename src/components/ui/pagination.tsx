@@ -10,13 +10,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-
-interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  isLoading?: boolean
-}
+import { type PaginationProps } from '@/types/components/ui/pagination'
 
 /**
  * Generates array of page numbers to display with ellipsis

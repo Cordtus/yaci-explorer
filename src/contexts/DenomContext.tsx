@@ -1,18 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { getDenomMetadata, extractIBCHash } from '@/lib/denom'
-
-interface DenomContextType {
-  getDenomDisplay: (denom: string) => string
-  isLoading: boolean
-}
+import { type DenomContextType, type DenomMetadataRow } from '@/types/contexts/denom-context'
 
 const DenomContext = createContext<DenomContextType | undefined>(undefined)
-
-interface DenomMetadataRow {
-  denom: string
-  symbol: string
-  ibc_hash: string | null
-}
 
 /**
  * Global denom resolution cache
