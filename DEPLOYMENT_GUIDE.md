@@ -220,6 +220,19 @@ TRUNCATE api.blocks_raw, api.transactions_main, api.transactions_raw, api.messag
 3) Restart Yaci with `--live` so it re-ingests from height 1.  
 4) Refresh the UI (or use the reset banner) to clear cached chain info.
 
+### Bare-metal helper
+If you're not using docker-compose, run:
+```bash
+npm run reset:full   # or yarn reset:full
+```
+The script sources `.env`, ensures `psql`/`jq` are available, points the guard at your local Postgres host, and executes `scripts/chain-reset-guard.sh`. Restart the indexer afterward.
+
+Need a one-liner that also rebuilds and restarts services? Use:
+```bash
+npm run redeploy:systemd   # or yarn redeploy:systemd
+```
+Override service names with `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE` when calling it.
+
 ### UI cache note
 On restart detection the UI can clear cached chain ID/denoms; a hard refresh also works if you do not see the banner.
 

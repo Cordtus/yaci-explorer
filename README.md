@@ -94,6 +94,8 @@ Add to `src/config/chains.ts` for custom symbols/features:
 ```
 
 ## Devnet resets & guard
+- `npm run reset:full` (or `yarn reset:full`) loads `.env`, supplies sane defaults for bare-metal Postgres hosts, and runs `scripts/full-reset.sh` (which wraps `chain-reset-guard.sh`). Use this when you're not running via docker-compose; restart Yaci afterwards to re-ingest.
+- `npm run redeploy:systemd` (or `yarn redeploy:systemd`) installs deps, runs the deploy build, executes the reset guard, and restarts the configured systemd services (`yaci-indexer`, `postgrest`, `yaci-explorer` by default). Override service names via `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE`.
 - `./scripts/reset-devnet.sh` stops the docker stack, wipes the Postgres volume, and restarts everything for a fresh genesis.
 - Set `ENABLE_CHAIN_RESET_GUARD=true` (and provide `CHAIN_RPC_ENDPOINT`) to let the dockerized guard detect height rewinds/genesis changes and automatically truncate the index tables before Yaci starts.
 - The frontend reset banner (controlled via `VITE_RESET_NOTICE_*`) clears cached chain info/IBC metadata so the UI reflects the new chain immediately.
