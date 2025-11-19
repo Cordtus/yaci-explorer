@@ -260,7 +260,7 @@ sudo systemctl start postgrest
 **Install dependencies:**
 ```bash
 cd yaci-explorer
-npm install
+yarn install
 ```
 
 **Configure environment:**
@@ -271,14 +271,14 @@ export VITE_APP_NAME="Your Chain Explorer"
 
 **Build production bundle:**
 ```bash
-npm run build
+yarn build
 ```
 
 **Serve with static file server:**
 
 **Option A: Using serve:**
 ```bash
-npm install -g serve
+yarn global add serve
 serve -s build/client -l 3001
 ```
 
@@ -373,7 +373,7 @@ Add your chain to `src/config/chains.ts` for better recognition:
 
 Rebuild the explorer after editing:
 ```bash
-npm run build
+yarn build
 ```
 
 ### Branding Customization
@@ -632,8 +632,8 @@ docker compose up -d --build explorer
 ```bash
 cd yaci-explorer
 git pull
-npm install
-npm run build
+yarn install
+yarn build
 sudo systemctl restart nginx  # or your web server
 ```
 
