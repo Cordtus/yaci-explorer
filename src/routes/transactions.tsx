@@ -390,16 +390,20 @@ export default function TransactionsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/blocks/${tx.height}`}
-                          className="text-sm hover:text-primary"
-                        >
-                          {tx.height}
-                        </Link>
+                        {tx.height ? (
+                          <Link
+                            to={`/blocks/${tx.height}`}
+                            className="text-sm hover:text-primary"
+                          >
+                            {tx.height}
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <div className="text-sm">{formatTimeAgo(tx.timestamp)}</div>
+                        <div className="text-sm">
+                          {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                         </div>
                       </TableCell>
                       <TableCell>

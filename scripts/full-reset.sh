@@ -33,6 +33,12 @@ if ! command -v psql >/dev/null 2>&1; then
   exit 1
 fi
 
+DB_EXISTS=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'")
+if [[ -z "${DB_EXISTS}" ]]; then
+  echo "Database ${POSTGRES_DB} not found on ${POSTGRES_HOST}:${POSTGRES_PORT}; creating..."
+  PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
+fi
+
 if ! command -v jq >/dev/null 2>&1; then
   echo "jq is required on PATH to parse RPC responses." >&2
   exit 1

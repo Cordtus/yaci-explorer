@@ -134,6 +134,7 @@ export default function TransactionDetailPage() {
   }
 
   const isSuccess = !transaction.error
+  const feeAmounts = transaction.fee?.amount ?? []
 
   return (
     <div className="space-y-6">
@@ -166,6 +167,17 @@ export default function TransactionDetailPage() {
             {copied ? <CheckCircle className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </Button>
         </div>
+
+        {transaction.ingest_error && (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">Partial transaction data</p>
+            <p className="mt-1">
+              The indexer could not fetch full transaction details from the gRPC node.
+              Reason: {transaction.ingest_error.reason || transaction.ingest_error.message}.
+              Only the hash and error metadata are available.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -180,28 +192,42 @@ export default function TransactionDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Block Height</label>
                   <p className="text-lg">
-                    <Link
-                      to={`/blocks/${transaction.height}`}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      #{formatNumber(transaction.height)}
-                    </Link>
+                    {transaction.height ? (
+                      <Link
+                        to={`/blocks/${transaction.height}`}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        #{formatNumber(transaction.height)}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Unavailable</span>
+                    )}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Timestamp</label>
-                  <p className="text-sm">{formatTimeAgo(transaction.timestamp)}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(transaction.timestamp).toLocaleString()}</p>
+                  {transaction.timestamp ? (
+                    <>
+                      <p className="text-sm">{formatTimeAgo(transaction.timestamp)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.timestamp).toLocaleString()}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Unavailable</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Fee</label>
                   <p className="text-sm">
-                    {transaction.fee?.amount?.map((fee: any, idx: number) => (
-                      <span key={idx}>
-                        {formatNumber(fee.amount)} {fee.denom}
-                        {idx < transaction.fee.amount.length - 1 && ', '}
-                      </span>
-                    )) || 'N/A'}
+                    {feeAmounts.length > 0
+                      ? feeAmounts.map((fee: any, idx: number) => (
+                          <span key={idx}>
+                            {formatNumber(fee.amount)} {fee.denom}
+                            {idx < feeAmounts.length - 1 && ', '}
+                          </span>
+                        ))
+                      : 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -418,7 +444,11 @@ export default function TransactionDetailPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No messages found</p>
+                <p className="text-sm text-muted-foreground">
+                  {transaction.ingest_error
+                    ? 'The indexer could not decode this transaction from the RPC source.'
+                    : 'No messages found'}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -448,12 +478,16 @@ export default function TransactionDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Block</span>
-                  <Link
-                    to={`/blocks/${transaction.height}`}
-                    className="font-medium text-primary hover:text-primary/80"
-                  >
-                    #{formatNumber(transaction.height)}
-                  </Link>
+                  {transaction.height ? (
+                    <Link
+                      to={`/blocks/${transaction.height}`}
+                      className="font-medium text-primary hover:text-primary/80"
+                    >
+                      #{formatNumber(transaction.height)}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Unavailable</span>
+                  )}
                 </div>
               </div>
             </CardContent>

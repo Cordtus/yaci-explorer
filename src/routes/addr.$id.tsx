@@ -254,12 +254,16 @@ export default function AddressDetailPage() {
                             </Link>
                           </TableCell>
                           <TableCell>
-                            <Link
-                              to={`/blocks/${tx.height}`}
-                              className="text-primary hover:text-primary/80"
-                            >
-                              {formatNumber(tx.height)}
-                            </Link>
+                            {tx.height ? (
+                              <Link
+                                to={`/blocks/${tx.height}`}
+                                className="text-primary hover:text-primary/80"
+                              >
+                                {formatNumber(tx.height)}
+                              </Link>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
@@ -279,7 +283,7 @@ export default function AddressDetailPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {formatTimeAgo(tx.timestamp)}
+                            {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </TableCell>
                         </TableRow>
                       )

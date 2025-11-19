@@ -247,8 +247,39 @@ export class YaciAPIClient {
       rawResponse.json()
     ])
 
+    const rawTx = raw[0]
     const transaction = main[0]
+    const rawErrorData =
+      rawTx?.data && typeof rawTx.data === 'object' && 'error' in rawTx.data
+        ? rawTx.data
+        : null
+    const ingestError =
+      !transaction && rawErrorData
+        ? {
+            message: rawErrorData.error,
+            reason: rawErrorData.reason ?? null,
+            hash: rawErrorData.hash ?? hash
+          }
+        : null
+
     if (!transaction) {
+      if (ingestError) {
+        return {
+          id: rawTx?.id || hash,
+          fee: null,
+          memo: null,
+          error: ingestError.reason
+            ? `${ingestError.message}: ${ingestError.reason}`
+            : ingestError.message,
+          height: rawErrorData?.height ? Number(rawErrorData.height) : null,
+          timestamp: rawErrorData?.timestamp ?? null,
+          proposal_ids: null,
+          ingest_error: ingestError,
+          messages: [],
+          events: [],
+          raw_data: rawTx?.data
+        } as EnhancedTransaction
+      }
       throw new Error('Transaction not found')
     }
 
@@ -285,6 +316,7 @@ export class YaciAPIClient {
     return {
       ...transaction,
       error: actualError,
+      ingest_error: null,
       messages: messagesWithData,
       events,
       evm_data: evmData,
@@ -553,8 +585,8 @@ export class YaciAPIClient {
     // Calculate TPS from recent transactions
     const now = Date.now()
     const oneMinuteAgo = now - 60000
-    const txsLastMinute = recentTxs.filter((tx: Transaction) =>
-      new Date(tx.timestamp).getTime() > oneMinuteAgo
+    const txsLastMinute = recentTxs.filter(
+      (tx: Transaction) => tx.timestamp && new Date(tx.timestamp).getTime() > oneMinuteAgo
     )
 
     // Get validator count from Prometheus, fallback to block data
@@ -716,6 +748,9 @@ export class YaciAPIClient {
     // Group by date
     const volumeByDate = new Map<string, number>()
     transactions.forEach((tx: Transaction) => {
+      if (!tx.timestamp) {
+        return
+      }
       const date = new Date(tx.timestamp).toISOString().split('T')[0]
       volumeByDate.set(date, (volumeByDate.get(date) || 0) + 1)
     })
@@ -777,6 +812,9 @@ export class YaciAPIClient {
     // Group by hour
     const volumeByHour = new Map<string, number>()
     transactions.forEach((tx: Transaction) => {
+      if (!tx.timestamp) {
+        return
+      }
       const date = new Date(tx.timestamp)
       const hourKey = `${date.toISOString().split('T')[0]} ${date.getHours().toString().padStart(2, '0')}:00`
       volumeByHour.set(hourKey, (volumeByHour.get(hourKey) || 0) + 1)

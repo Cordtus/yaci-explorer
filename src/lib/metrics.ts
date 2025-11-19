@@ -53,7 +53,10 @@ async function getTransactionsLastMinute(): Promise<number> {
   if (!response.ok) return 0
   const txs = await response.json()
   const oneMinuteAgo = Date.now() - 60000
-  return txs.filter((tx: { timestamp: string }) => new Date(tx.timestamp).getTime() > oneMinuteAgo).length
+  return txs.filter((tx: { timestamp?: string | null }) => {
+    if (!tx.timestamp) return false
+    return new Date(tx.timestamp).getTime() > oneMinuteAgo
+  }).length
 }
 
 async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {

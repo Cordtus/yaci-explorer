@@ -25,6 +25,13 @@ EXPLORER_SERVICE="${YACI_EXPLORER_SERVICE:-yaci-explorer.service}"
 echo "[redeploy] Installing dependencies with $YARN_BIN..."
 "$YARN_BIN" install
 
+if [[ "${YACI_SKIP_UPDATE:-false}" == "true" ]]; then
+  echo "[redeploy] Skipping Yaci indexer update (YACI_SKIP_UPDATE=true)."
+else
+  echo "[redeploy] Updating Yaci indexer from ${YACI_BRANCH:-main}..."
+  "${REPO_ROOT}/scripts/update-yaci.sh"
+fi
+
 echo "[redeploy] Running deploy build..."
 "$YARN_BIN" deploy:build
 

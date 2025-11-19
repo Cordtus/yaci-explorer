@@ -147,7 +147,7 @@ export default function DashboardPage() {
                             {formatHash(tx.id, 8)}
                           </Link>
                           <div className="text-sm text-muted-foreground">
-                            {formatTimeAgo(tx.timestamp)}
+                            {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </div>
                         </div>
                       </div>
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                           {status.label}
                         </Badge>
                         <div className="text-xs text-muted-foreground">
-                          Block #{tx.height}
+                          {tx.height ? `Block #${tx.height}` : 'Block unknown'}
                         </div>
                       </div>
                     </div>
