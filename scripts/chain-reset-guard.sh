@@ -9,7 +9,10 @@ log() {
 }
 
 ensure_database() {
-  if PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" >/dev/null 2>&1; then
+  # Check existence by inspecting query output; psql returns exit code 0 even
+  # when SELECT finds no rows, so we must not rely on the exit status alone.
+  db_exists="$(PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" 2>/dev/null || true)"
+  if [ -n "$db_exists" ]; then
     return 0
   fi
 
@@ -20,7 +23,8 @@ ensure_database() {
   fi
 
   if [ "$(id -u)" -eq 0 ] && command -v sudo >/dev/null 2>&1; then
-    if sudo -u postgres psql -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" >/dev/null 2>&1; then
+    db_exists_super="$(sudo -u postgres psql -d postgres -Atqc \"SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'\" 2>/dev/null || true)"
+    if [ -n "$db_exists_super" ]; then
       return 0
     fi
     if sudo -u postgres psql -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then

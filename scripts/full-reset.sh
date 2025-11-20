@@ -51,7 +51,11 @@ ensure_database() {
       fi
     }
 
-    if run_as_postgres psql -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
+    # Check for existence by inspecting the query output (psql exits with 0 even
+    # when the SELECT returns no rows, so we must not rely on the exit code).
+    local db_exists
+    db_exists="$(run_as_postgres psql -d postgres -Atqc "${check_cmd}" 2>/dev/null || true)"
+    if [ -n "${db_exists}" ]; then
       return 0
     fi
 
