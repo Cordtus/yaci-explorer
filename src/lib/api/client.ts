@@ -8,6 +8,7 @@ import type {
   ChainStats
 } from '@/types/blockchain'
 import { appConfig } from '@/config/app'
+import { Transaction as EthersTransaction } from 'ethers'
 
 export class YaciAPIClient {
   private baseUrl: string
@@ -304,8 +305,8 @@ export class YaciAPIClient {
       this.getTransactionEvents(hash)
     ])
 
-    // Check for EVM data
-    const evmData = await this.getEVMTransactionData(hash)
+    // Check for EVM data, including parsing the raw MsgEthereumTx bytes if present
+    const evmData = await this.getEVMTransactionData(hash, raw[0], !actualError)
 
     // Add message data from raw transaction for "Show Raw Data" button
     const messagesWithData = messages.map((msg, idx) => ({
@@ -518,7 +519,7 @@ export class YaciAPIClient {
     return Array.from(types).sort()
   }
 
-  private async getEVMTransactionData(txHash: string): Promise<any | null> {
+  private async getEVMTransactionData(txHash: string, rawTx?: any, isSuccess?: boolean): Promise<any | null> {
     // Check if transaction contains EVM data by looking at message types
     const messages = await this.getTransactionMessages(txHash)
     const hasEVM = messages.some(msg =>
@@ -530,37 +531,95 @@ export class YaciAPIClient {
       return null
     }
 
-    // Parse EVM data from events
+    // Parse EVM-related attributes from events
     const events = await this.getTransactionEvents(txHash)
     const evmEvents = events.filter(e => e.event_type === 'ethereum_tx')
 
-    if (evmEvents.length === 0) {
-      return null
-    }
+    let gasUsed: number | undefined
+    let ethereumHashFromEvent: string | undefined
+    let toFromEvent: string | null | undefined
 
-    // Build EVM transaction object from events
-    const evmData: any = {}
-    evmEvents.forEach(event => {
+    evmEvents.forEach((event) => {
       switch (event.attr_key) {
-        case 'hash':
-          evmData.hash = event.attr_value
+        case 'txGasUsed':
+          if (event.attr_value) {
+            const parsed = parseInt(event.attr_value, 10)
+            if (!Number.isNaN(parsed)) {
+              gasUsed = parsed
+            }
+          }
           break
-        case 'from':
-          evmData.from_address = event.attr_value
+        case 'ethereumTxHash':
+          ethereumHashFromEvent = event.attr_value
           break
-        case 'to':
-          evmData.to_address = event.attr_value
-          break
-        case 'gas_used':
-          evmData.gas_used = parseInt(event.attr_value)
-          break
-        case 'contract_address':
-          evmData.contract_address = event.attr_value
+        case 'recipient':
+          toFromEvent = event.attr_value
           break
       }
     })
 
-    return Object.keys(evmData).length > 0 ? evmData : null
+    // Attempt to parse the raw Ethereum transaction bytes from the MsgEthereumTx message
+    let parsedTx: EthersTransaction | null = null
+    const rawMessages = rawTx?.data?.tx?.body?.messages
+    if (Array.isArray(rawMessages)) {
+      const ethMsg = rawMessages.find(
+        (m: any) => m?.['@type'] === '/cosmos.evm.vm.v1.MsgEthereumTx'
+      )
+      const rawHex: string | undefined = ethMsg?.raw || ethMsg?.value?.raw
+      if (rawHex && typeof rawHex === 'string') {
+        try {
+          parsedTx = EthersTransaction.from(rawHex)
+        } catch {
+          parsedTx = null
+        }
+      }
+    }
+
+    // If neither events nor raw tx yielded anything, bail out
+    if (!parsedTx && !ethereumHashFromEvent && typeof gasUsed === 'undefined') {
+      return null
+    }
+
+    const hash = ethereumHashFromEvent || parsedTx?.hash || txHash
+    const fromAddress = parsedTx?.from || ''
+    const toAddress = parsedTx?.to || toFromEvent || null
+    const value = parsedTx?.value ? parsedTx.value.toString() : '0'
+    const gasLimit = parsedTx?.gasLimit ? Number(parsedTx.gasLimit.toString()) : 0
+    const gasPrice = parsedTx?.gasPrice ? parsedTx.gasPrice.toString() : ''
+    const nonce = typeof parsedTx?.nonce === 'number' ? parsedTx.nonce : 0
+    const inputData = parsedTx?.data || ''
+    const type = typeof parsedTx?.type === 'number' ? parsedTx.type : 0
+
+    const maxFeePerGas = parsedTx?.maxFeePerGas ? parsedTx.maxFeePerGas.toString() : undefined
+    const maxPriorityFeePerGas = parsedTx?.maxPriorityFeePerGas
+      ? parsedTx.maxPriorityFeePerGas.toString()
+      : undefined
+
+    const accessList = parsedTx?.accessList
+      ? parsedTx.accessList.map((entry) => ({
+          address: entry.address,
+          storage_keys: entry.storageKeys,
+        }))
+      : undefined
+
+    return {
+      hash,
+      tx_hash: txHash,
+      from_address: fromAddress,
+      to_address: toAddress,
+      value,
+      gas_limit: gasLimit,
+      gas_price: gasPrice,
+      gas_used: gasUsed ?? 0,
+      nonce,
+      input_data: inputData,
+      contract_address: null,
+      status: isSuccess ? 1 : 0,
+      type,
+      max_fee_per_gas: maxFeePerGas,
+      max_priority_fee_per_gas: maxPriorityFeePerGas,
+      access_list: accessList,
+    }
   }
 
   // Stats methods
