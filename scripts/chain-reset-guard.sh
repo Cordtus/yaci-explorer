@@ -19,11 +19,19 @@ ensure_database() {
     return 0
   fi
 
-  if [ "$(id -u)" -eq 0 ] && command -v runuser >/dev/null 2>&1; then
-    if runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
-      log "Created database ${PGDATABASE} via postgres superuser."
-      runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null || true
-      return 0
+  if [ "$(id -u)" -eq 0 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+      if sudo -u postgres psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+        log "Created database ${PGDATABASE} via sudo -u postgres."
+        sudo -u postgres psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null || true
+        return 0
+      fi
+    elif command -v runuser >/dev/null 2>&1; then
+      if runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+        log "Created database ${PGDATABASE} via runuser -u postgres."
+        runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null || true
+        return 0
+      fi
     fi
   fi
 

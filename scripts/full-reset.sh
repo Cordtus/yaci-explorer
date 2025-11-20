@@ -49,18 +49,15 @@ ensure_database() {
   fi
 
   if [ "$(id -u)" -eq 0 ]; then
-    if command -v runuser >/dev/null 2>&1; then
-      if runuser -u postgres -- psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
-        return 0
-      fi
-      echo "Database ${POSTGRES_DB} not found; creating via runuser -u postgres..."
-      runuser -u postgres -- psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
-      runuser -u postgres -- psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
-      return 0
-    elif command -v sudo >/dev/null 2>&1; then
+    if command -v sudo >/dev/null 2>&1; then
       echo "Database ${POSTGRES_DB} not found; creating via sudo -u postgres..."
       sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
       sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
+      return 0
+    elif command -v runuser >/dev/null 2>&1; then
+      echo "Database ${POSTGRES_DB} not found; creating via runuser -u postgres..."
+      runuser -u postgres -- psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
+      runuser -u postgres -- psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
       return 0
     fi
   fi
