@@ -87,7 +87,7 @@ pg_port="$(prompt_value 'Postgres port' "$current_port")"
 db_uri="postgres://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
 
 python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$db_uri"
-import pathlib, sys
+import pathlib, shlex, sys
 env_path = pathlib.Path(sys.argv[1])
 updates = {
     "POSTGRES_USER": sys.argv[2],
@@ -114,7 +114,7 @@ for line in lines:
     sanitized.append(line)
 if sanitized and sanitized[-1].strip():
     sanitized.append("")
-sanitized.extend(f"{k}={v}" for k, v in updates.items())
+sanitized.extend(f"{k}={shlex.quote(v)}" for k, v in updates.items())
 env_path.write_text("\n".join(sanitized) + "\n")
 PY
 
