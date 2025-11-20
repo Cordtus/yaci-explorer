@@ -78,6 +78,29 @@ import type {
 } from '@yaci/database-client'
 ```
 
+## Documentation
+
+- [API.md](./API.md) - Complete PostgREST API documentation and frontend integration patterns
+- [migrations/](./migrations/) - SQL migrations for database views and functions
+
+## Database Views
+
+For optimal performance, apply the analytics views to your PostgreSQL database:
+
+```bash
+psql -d your_database -f migrations/001_analytics_views.sql
+```
+
+This creates pre-aggregated views for:
+- Daily/hourly transaction volume
+- Message type distribution
+- Chain statistics
+- Fee revenue
+- Block time analysis
+- Gas usage distribution
+
+See [API.md](./API.md) for detailed usage.
+
 ## License
 
 MIT
