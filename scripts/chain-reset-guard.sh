@@ -22,14 +22,26 @@ ensure_database() {
     return 0
   fi
 
-  if [ "$(id -u)" -eq 0 ] && command -v sudo >/dev/null 2>&1; then
-    db_exists_super="$(sudo -u postgres psql -d postgres -Atqc \"SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'\" 2>/dev/null || true)"
+  if [ "$(id -u)" -eq 0 ]; then
+    # Try as postgres OS user without sudo; prefer runuser/su, then fall back to
+    # invoking psql as the postgres role directly.
+    run_as_postgres() {
+      if command -v runuser >/dev/null 2>&1; then
+        runuser -u postgres -- "$@"
+      elif command -v su >/dev/null 2>&1; then
+        su - postgres -s /bin/sh -c "$*"
+      else
+        PGPASSWORD="${PGPASSWORD:-}" psql -U postgres "$@"
+      fi
+    }
+
+    db_exists_super="$(run_as_postgres psql -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" 2>/dev/null || true)"
     if [ -n "$db_exists_super" ]; then
       return 0
     fi
-    if sudo -u postgres psql -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+    if run_as_postgres psql -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
       log "Created database ${PGDATABASE} via postgres superuser."
-      sudo -u postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null 2>&1 || true
+      run_as_postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null 2>&1 || true
       return 0
     fi
   fi

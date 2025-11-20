@@ -37,17 +37,19 @@ ensure_database() {
   local check_cmd="SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'"
 
   # If running as root, prefer creating the role + database using the postgres
-  # superuser over the local socket so we never need a password prompt.
+  # superuser. Avoid sudo; use runuser/su when available, otherwise fall back to
+  # invoking psql directly as the postgres role.
   if [ "$(id -u)" -eq 0 ]; then
-    # Build a helper to run psql as the postgres OS user when sudo/runuser are available.
+    # Build a helper to run psql as the postgres OS user when runuser/su are available.
     run_as_postgres() {
-      if command -v sudo >/dev/null 2>&1; then
-        sudo -u postgres "$@"
-      elif command -v runuser >/dev/null 2>&1; then
+      if command -v runuser >/dev/null 2>&1; then
         runuser -u postgres -- "$@"
+      elif command -v su >/dev/null 2>&1; then
+        su - postgres -s /bin/sh -c "$*"
       else
-        # Fallback: assume we can invoke psql directly as postgres over the local socket.
-        "$@"
+        # Fallback: invoke psql as the postgres role directly.
+        PSQL_USER="${PSQL_USER:-postgres}"
+        PGPASSWORD="${PGPASSWORD:-}" psql -U "${PSQL_USER}" "$@"
       fi
     }
 
