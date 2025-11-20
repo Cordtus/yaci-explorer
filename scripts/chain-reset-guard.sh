@@ -89,6 +89,15 @@ if [ "$NEEDS_DB_BOOTSTRAP" -eq 1 ]; then
   ensure_database
 fi
 
+# On a fresh database, the index tables may not exist yet (migrations or the
+# indexer have not run). In that case, skip the guard gracefully instead of
+# failing with missing relation errors.
+schema_ok=$(psql "$DB_URI" -At -c "SELECT 1 FROM information_schema.tables WHERE table_schema='api' AND table_name='blocks_raw';" 2>/dev/null || true)
+if [ -z "$schema_ok" ]; then
+  log "Index tables not present yet; skipping reset guard until after first ingest."
+  exit 0
+fi
+
 RPC_BASE="${RPC_ENDPOINT%/}"
 
 fetch_rpc() {
