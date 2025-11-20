@@ -84,6 +84,17 @@ pg_db="$(prompt_value 'Postgres database' "$current_db")"
 pg_host="$(prompt_value 'Postgres host' "$current_host")"
 pg_port="$(prompt_value 'Postgres port' "$current_port")"
 
+# Remove accidental newlines/CRs from inputs
+sanitize() {
+  printf '%s' "$1" | tr -d '\r\n'
+}
+
+pg_user="$(sanitize "$pg_user")"
+pg_password="$(sanitize "$pg_password")"
+pg_db="$(sanitize "$pg_db")"
+pg_host="$(sanitize "$pg_host")"
+pg_port="$(sanitize "$pg_port")"
+
 db_uri="postgres://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
 
 python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$db_uri"
