@@ -81,17 +81,21 @@ prompt_value() {
 pg_user="$(prompt_value 'Postgres username' "$current_user")"
 pg_password="$(prompt_value 'Postgres password' "$current_password" true)"
 pg_db="$(prompt_value 'Postgres database' "$current_db")"
+pg_host="$(prompt_value 'Postgres host' "$current_host")"
+pg_port="$(prompt_value 'Postgres port' "$current_port")"
 
-db_uri="postgres://${pg_user}:${pg_password}@${current_host}:${current_port}/${pg_db}"
+db_uri="postgres://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
 
-python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$db_uri"
+python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$db_uri"
 import pathlib, sys
 env_path = pathlib.Path(sys.argv[1])
 updates = {
     "POSTGRES_USER": sys.argv[2],
     "POSTGRES_PASSWORD": sys.argv[3],
     "POSTGRES_DB": sys.argv[4],
-    "RESET_GUARD_DB_URI": sys.argv[5],
+    "POSTGRES_HOST": sys.argv[5],
+    "POSTGRES_PORT": sys.argv[6],
+    "RESET_GUARD_DB_URI": sys.argv[7],
     "SKIP_ENV_PROMPTS": "true",
 }
 lines = env_path.read_text().splitlines()
