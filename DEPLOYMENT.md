@@ -260,7 +260,7 @@ sudo systemctl start postgrest
 **Install dependencies:**
 ```bash
 cd yaci-explorer
-yarn install
+yarn install --production=false
 ```
 
 **Configure environment:**
@@ -632,7 +632,7 @@ docker compose up -d --build explorer
 ```bash
 cd yaci-explorer
 git pull
-yarn install
+yarn install --production=false
 yarn build
 sudo systemctl restart nginx  # or your web server
 ```

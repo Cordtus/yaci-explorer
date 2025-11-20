@@ -40,8 +40,8 @@ else
   echo "[redeploy] Credentials configured; run with FORCE_ENV_PROMPTS=true to reconfigure."
 fi
 
-echo "[redeploy] Installing dependencies with $YARN_BIN..."
-"$YARN_BIN" install
+echo "[redeploy] Installing dependencies with $YARN_BIN (including dev deps)..."
+"$YARN_BIN" install --production=false
 
 if [[ "${YACI_SKIP_UPDATE:-false}" == "true" ]]; then
   echo "[redeploy] Skipping Yaci indexer update (YACI_SKIP_UPDATE=true)."

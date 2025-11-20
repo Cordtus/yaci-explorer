@@ -26,7 +26,7 @@ UI: http://localhost:3001 • PostgREST: http://localhost:3000 • Prometheus: h
 ## Without Docker
 Prereq: running PostgreSQL + PostgREST + Yaci indexer.
 ```bash
-yarn install
+yarn install --production=false  # ensures devDependencies (react-router CLI) are available even if NODE_ENV=production
 yarn build
 npx serve -s build/client -l 3001
 ```
@@ -70,7 +70,7 @@ src/
 
 ## Development
 ```bash
-yarn install
+yarn install --production=false
 export VITE_POSTGREST_URL=http://localhost:3000
 yarn dev
 ```
