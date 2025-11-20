@@ -16,9 +16,18 @@ ensure_database() {
   log "Database ${PGDATABASE} not found on ${PGHOST}:${PGPORT}; attempting to create..."
   if PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
     log "Created database ${PGDATABASE}."
-  else
-    log "Failed to create database ${PGDATABASE}; ensure the credentials have permission."
+    return 0
   fi
+
+  if [ "$(id -u)" -eq 0 ] && command -v runuser >/dev/null 2>&1; then
+    if runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+      log "Created database ${PGDATABASE} via postgres superuser."
+      runuser -u postgres -- psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null || true
+      return 0
+    fi
+  fi
+
+  log "Failed to create database ${PGDATABASE}; ensure the provided credentials (or root access) can create databases."
 }
 
 if [ "${ENABLE_CHAIN_RESET_GUARD:-false}" != "true" ]; then

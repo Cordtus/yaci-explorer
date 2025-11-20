@@ -52,8 +52,6 @@ current_password="${POSTGRES_PASSWORD:-changeme}"
 current_db="${POSTGRES_DB:-yaci}"
 current_host="${POSTGRES_HOST:-localhost}"
 current_port="${POSTGRES_PORT:-5432}"
-current_superuser="${POSTGRES_SUPERUSER:-postgres}"
-current_superpass="${POSTGRES_SUPERPASS:-}"
 
 prompt_value() {
   local label="$1"
@@ -85,12 +83,10 @@ pg_password="$(prompt_value 'Postgres password' "$current_password" true)"
 pg_db="$(prompt_value 'Postgres database' "$current_db")"
 pg_host="$(prompt_value 'Postgres host' "$current_host")"
 pg_port="$(prompt_value 'Postgres port' "$current_port")"
-pg_superuser="$(prompt_value 'Postgres superuser (for DB creation)' "$current_superuser")"
-pg_superpass="$(prompt_value 'Superuser password' "$current_superpass" true)"
 
 db_uri="postgres://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
 
-python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$pg_superuser" "$pg_superpass" "$db_uri"
+python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$db_uri"
 import pathlib, shlex, sys
 env_path = pathlib.Path(sys.argv[1])
 updates = {
@@ -99,9 +95,7 @@ updates = {
     "POSTGRES_DB": sys.argv[4],
     "POSTGRES_HOST": sys.argv[5],
     "POSTGRES_PORT": sys.argv[6],
-    "POSTGRES_SUPERUSER": sys.argv[7],
-    "POSTGRES_SUPERPASS": sys.argv[8],
-    "RESET_GUARD_DB_URI": sys.argv[9],
+    "RESET_GUARD_DB_URI": sys.argv[7],
     "SKIP_ENV_PROMPTS": "true",
 }
 lines = env_path.read_text().splitlines()
