@@ -92,6 +92,7 @@ updates = {
     "POSTGRES_PASSWORD": sys.argv[3],
     "POSTGRES_DB": sys.argv[4],
     "RESET_GUARD_DB_URI": sys.argv[5],
+    "SKIP_ENV_PROMPTS": "true",
 }
 lines = env_path.read_text().splitlines()
 sanitized = []
