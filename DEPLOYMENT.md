@@ -148,8 +148,8 @@ sudo -u postgres psql
 
 ```sql
 CREATE DATABASE yaci;
-CREATE USER yaci_user WITH PASSWORD 'your-password';
-GRANT ALL PRIVILEGES ON DATABASE yaci TO yaci_user;
+CREATE USER yaci WITH PASSWORD 'your-password';
+GRANT ALL PRIVILEGES ON DATABASE yaci TO yaci;
 \q
 ```
 
@@ -165,7 +165,7 @@ go build -o yaci cmd/yaci/main.go
 **Run indexer:**
 ```bash
 ./yaci extract postgres <your-chain-grpc-host>:9090 \
-  -p "postgres://yaci_user:your-password@localhost:5432/yaci" \
+  -p "postgres://yaci:your-password@localhost:5432/yaci" \
   --live \
   --max-concurrency 100 \
   -k \
@@ -189,7 +189,7 @@ Type=simple
 User=yaci
 WorkingDirectory=/opt/yaci
 ExecStart=/opt/yaci/yaci extract postgres <grpc-host>:9090 \
-  -p "postgres://yaci_user:password@localhost:5432/yaci" \
+  -p "postgres://yaci:password@localhost:5432/yaci" \
   --live --max-concurrency 100 -k \
   --enable-prometheus --prometheus-addr 0.0.0.0:2112 -l info
 Restart=on-failure
@@ -218,9 +218,9 @@ sudo mv postgrest /usr/local/bin/
 
 **Create config file** (`postgrest.conf`):
 ```ini
-db-uri = "postgres://yaci_user:your-password@localhost:5432/yaci"
+db-uri = "postgres://yaci:your-password@localhost:5432/yaci"
 db-schemas = "api"
-db-anon-role = "yaci_user"
+db-anon-role = "yaci"
 server-port = 3000
 ```
 
@@ -420,7 +420,7 @@ POSTGRES_PASSWORD=$(openssl rand -base64 32)
 **3. Restrict database access:**
 ```bash
 # PostgreSQL pg_hba.conf
-host    yaci    yaci_user    127.0.0.1/32    scram-sha-256
+host    yaci    yaci         127.0.0.1/32    scram-sha-256
 ```
 
 **4. Firewall rules:**
@@ -484,7 +484,7 @@ sudo systemctl status nginx
 **Database health:**
 ```bash
 # Connection to PostgreSQL
-psql -U yaci_user -d yaci
+psql -U yaci -d yaci
 
 # Check data
 SELECT COUNT(*) FROM api.blocks_raw;
@@ -502,7 +502,7 @@ SELECT pg_size_pretty(pg_database_size('yaci'));
 docker exec yaci-explorer-postgres pg_dump -U postgres yaci > backup_$(date +%Y%m%d).sql
 
 # Native
-pg_dump -U yaci_user yaci > backup_$(date +%Y%m%d).sql
+pg_dump -U yaci yaci > backup_$(date +%Y%m%d).sql
 ```
 
 **Restore database:**
@@ -511,7 +511,7 @@ pg_dump -U yaci_user yaci > backup_$(date +%Y%m%d).sql
 cat backup_20250115.sql | docker exec -i yaci-explorer-postgres psql -U postgres yaci
 
 # Native
-psql -U yaci_user yaci < backup_20250115.sql
+psql -U yaci yaci < backup_20250115.sql
 ```
 
 **Automated backups (cron):**
@@ -525,7 +525,7 @@ Create `/usr/local/bin/backup-yaci.sh`:
 #!/bin/bash
 BACKUP_DIR=/var/backups/yaci
 DATE=$(date +%Y%m%d)
-pg_dump -U yaci_user yaci | gzip > $BACKUP_DIR/yaci_$DATE.sql.gz
+pg_dump -U yaci yaci | gzip > $BACKUP_DIR/yaci_$DATE.sql.gz
 # Keep last 7 days
 find $BACKUP_DIR -name "yaci_*.sql.gz" -mtime +7 -delete
 ```
@@ -548,7 +548,7 @@ journalctl -u yaci -f
 
 **Verify database has data:**
 ```bash
-psql -U postgres yaci  # or yaci_user for native
+psql -U postgres yaci  # or yaci for native
 SELECT COUNT(*) FROM api.blocks_raw;
 ```
 
@@ -718,12 +718,12 @@ journalctl -u postgrest -f
 ### Database Commands
 ```bash
 # Connect
-psql -U yaci_user yaci
+psql -U yaci yaci
 
 # Check data
 SELECT COUNT(*) FROM api.blocks_raw;
 SELECT COUNT(*) FROM api.transactions_main;
 
 # Backup
-pg_dump -U yaci_user yaci > backup.sql
+pg_dump -U yaci yaci > backup.sql
 ```

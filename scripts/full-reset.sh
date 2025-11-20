@@ -36,21 +36,58 @@ fi
 ensure_database() {
   local check_cmd="SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'"
 
-  # If running as root, use the postgres OS user over the local socket (no password prompt)
-  if [ "$(id -u)" -eq 0 ] && command -v sudo >/dev/null 2>&1; then
-    # If DB already exists, nothing to do
-    if sudo -u postgres psql -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
+  # If running as root, prefer creating the role + database using the postgres
+  # superuser over the local socket so we never need a password prompt.
+  if [ "$(id -u)" -eq 0 ]; then
+    # Build a helper to run psql as the postgres OS user when sudo/runuser are available.
+    run_as_postgres() {
+      if command -v sudo >/dev/null 2>&1; then
+        sudo -u postgres "$@"
+      elif command -v runuser >/dev/null 2>&1; then
+        runuser -u postgres -- "$@"
+      else
+        # Fallback: assume we can invoke psql directly as postgres over the local socket.
+        "$@"
+      fi
+    }
+
+    if run_as_postgres psql -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
       return 0
     fi
 
-    echo "Database ${POSTGRES_DB} not found; creating as postgres superuser..."
-    if sudo -u postgres psql -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null 2>&1; then
-      sudo -u postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null 2>&1 || true
+    echo "Database ${POSTGRES_DB} not found; creating role/user ${POSTGRES_USER} and database via postgres superuser..."
+
+    # Idempotent role + database creation. This ensures a single application user
+    # (POSTGRES_USER) owns the explorer database and can log in with POSTGRES_PASSWORD.
+    local bootstrap_sql
+    bootstrap_sql=$(
+      cat <<SQL
+DO \$do\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${POSTGRES_USER}') THEN
+    CREATE ROLE ${POSTGRES_USER} LOGIN PASSWORD '${POSTGRES_PASSWORD}' CREATEDB;
+  END IF;
+END
+\$do\$;
+DO \$do\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${POSTGRES_DB}') THEN
+    CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER};
+  END IF;
+END
+\$do\$;
+SQL
+    )
+
+    if printf '%s\n' "${bootstrap_sql}" | run_as_postgres psql -v ON_ERROR_STOP=1 -d postgres >/dev/null 2>&1; then
       return 0
     fi
+
+    echo "Warning: postgres superuser path failed to create database ${POSTGRES_DB} (or role ${POSTGRES_USER})." >&2
   fi
 
-  # Fallback: try with application user over configured host/port
+  # Fallback: try with application user over configured host/port. This will only
+  # succeed if the role/database were created by other means (e.g. docker-compose).
   if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
     return 0
   fi
