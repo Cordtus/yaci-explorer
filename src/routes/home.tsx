@@ -4,12 +4,12 @@ import { Link } from 'react-router'
 import { ArrowRight, Blocks, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
 
-const api = new YaciAPIClient()
+const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)

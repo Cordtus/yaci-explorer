@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 
-const client = new YaciAPIClient()
+const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({

@@ -10,13 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Pagination } from '@/components/ui/pagination'
 
-const api = new YaciAPIClient()
+const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function TransactionsPage() {
   const [page, setPage] = useState(0)
