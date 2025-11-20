@@ -22,6 +22,8 @@ export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 export POSTGRES_USER="${POSTGRES_USER:-yaci}"
 export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-changeme}"
 export POSTGRES_DB="${POSTGRES_DB:-yaci}"
+export POSTGRES_SUPERUSER="${POSTGRES_SUPERUSER:-postgres}"
+export POSTGRES_SUPERPASS="${POSTGRES_SUPERPASS:-}"
 
 if [[ -z "${CHAIN_RPC_ENDPOINT:-}" && -z "${RESET_GUARD_RPC_ENDPOINT:-}" ]]; then
   echo "CHAIN_RPC_ENDPOINT (or RESET_GUARD_RPC_ENDPOINT) must be set before running the reset guard." >&2
@@ -48,12 +50,22 @@ ensure_database() {
     return 0
   fi
 
-  if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-    DB_EXISTS=$(sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -Atqc "${check_cmd}" 2>/dev/null || true)
+  if [[ -n "${POSTGRES_SUPERPASS:-}" ]]; then
+    DB_EXISTS=$(PGPASSWORD="${POSTGRES_SUPERPASS}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_SUPERUSER}" -d postgres -Atqc "${check_cmd}" 2>/dev/null || true)
     if [[ -z "${DB_EXISTS}" ]]; then
-      echo "Database ${POSTGRES_DB} not found; creating via sudo -u postgres..."
-      sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
-      sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
+      echo "Database ${POSTGRES_DB} not found; creating via ${POSTGRES_SUPERUSER}..."
+      PGPASSWORD="${POSTGRES_SUPERPASS}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_SUPERUSER}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
+      PGPASSWORD="${POSTGRES_SUPERPASS}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_SUPERUSER}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
+    fi
+    return 0
+  fi
+
+  if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+    DB_EXISTS=$(sudo -u "${POSTGRES_SUPERUSER:-postgres}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -Atqc "${check_cmd}" 2>/dev/null || true)
+    if [[ -z "${DB_EXISTS}" ]]; then
+      echo "Database ${POSTGRES_DB} not found; creating via sudo -u ${POSTGRES_SUPERUSER:-postgres}..."
+      sudo -u "${POSTGRES_SUPERUSER:-postgres}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null
+      sudo -u "${POSTGRES_SUPERUSER:-postgres}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null || true
     fi
     return 0
   fi
