@@ -13,7 +13,7 @@ cp .env.example .env
 ```
 2) Configure `.env` (minimum):
 ```bash
-yarn configure:env   # prompts for Postgres username/password/database
+yarn configure:env   # prompts for Postgres username/password/database (redeploy reuses values unless FORCE_ENV_PROMPTS=true)
 CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
 ```
 3) Launch:
@@ -229,7 +229,7 @@ The script sources `.env`, ensures `psql`/`jq` are available, points the guard a
 
 Need a one-liner that also rebuilds and restarts services? Use:
 ```bash
-yarn redeploy:systemd
+yarn redeploy:systemd   # set FORCE_ENV_PROMPTS=true to re-run the credential helper
 ```
 Override service names with `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE` when calling it.
 This helper now invokes `scripts/update-yaci.sh` first, which clones/pulls `cordtus/yaci` (or whatever `YACI_REPO_URL`/`YACI_BRANCH` point to) and runs `YACI_BUILD_CMD` (default `make build`). Set `YACI_SOURCE_DIR` to the directory that your `yaci-indexer` systemd unit uses so the rebuilt binary is picked up on restart, or export `YACI_SKIP_UPDATE=true` to leave the running binary untouched.

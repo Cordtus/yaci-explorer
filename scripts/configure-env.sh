@@ -94,21 +94,23 @@ updates = {
     "RESET_GUARD_DB_URI": sys.argv[5],
 }
 lines = env_path.read_text().splitlines()
-seen = set()
-for idx, line in enumerate(lines):
-    if "=" not in line or line.lstrip().startswith("#"):
+sanitized = []
+for line in lines:
+    stripped = line.strip()
+    if not stripped:
+        sanitized.append(line)
         continue
-    key, _ = line.split("=", 1)
-    key = key.strip()
+    if stripped.startswith("#") or "=" not in stripped:
+        sanitized.append(line)
+        continue
+    key = stripped.split("=", 1)[0].strip()
     if key in updates:
-        lines[idx] = f"{key}={updates[key]}"
-        seen.add(key)
-remaining = [f"{k}={v}" for k, v in updates.items() if k not in seen]
-if remaining:
-    if lines and lines[-1].strip():
-        lines.append("")
-    lines.extend(remaining)
-env_path.write_text("\n".join(lines) + "\n")
+        continue  # drop any existing entry for this key
+    sanitized.append(line)
+if sanitized and sanitized[-1].strip():
+    sanitized.append("")
+sanitized.extend(f"{k}={v}" for k, v in updates.items())
+env_path.write_text("\n".join(sanitized) + "\n")
 PY
 
 echo "[configure-env] Updated .env with:"
