@@ -3,6 +3,7 @@ import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
 import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'
+import { TopEventTypesCard } from '@/components/analytics/TopEventTypesCard'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
 
 export default function AnalyticsPage() {
@@ -31,7 +32,10 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Additional metrics */}
-      <TopMessageTypesCard />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TopMessageTypesCard />
+        <TopEventTypesCard />
+      </div>
     </div>
   )
 }
