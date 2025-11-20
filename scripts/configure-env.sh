@@ -120,7 +120,7 @@ for line in lines:
     sanitized.append(line)
 if sanitized and sanitized[-1].strip():
     sanitized.append("")
-sanitized.extend(f"{k}={shlex.quote(v)}" for k, v in updates.items())
+sanitized.extend(f"{k}={shlex.quote(v)}" for k, v in updates.items() if v is not None)
 env_path.write_text("\n".join(sanitized) + "\n")
 PY
 
