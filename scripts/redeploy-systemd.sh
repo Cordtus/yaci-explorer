@@ -23,14 +23,21 @@ INDEXER_SERVICE="${YACI_INDEXER_SERVICE:-yaci-indexer.service}"
 POSTGREST_SERVICE="${POSTGREST_SERVICE:-postgrest.service}"
 EXPLORER_SERVICE="${YACI_EXPLORER_SERVICE:-yaci-explorer.service}"
 
+if [[ -f "${REPO_ROOT}/.env" ]]; then
+  # shellcheck disable=SC1091
+  set -a && source "${REPO_ROOT}/.env" && set +a
+fi
+
 if [[ ! -f "${REPO_ROOT}/.env" ]]; then
   echo "[redeploy] No .env found; launching credential helper..."
   "${REPO_ROOT}/scripts/configure-env.sh"
 elif [[ "${FORCE_ENV_PROMPTS:-false}" == "true" ]]; then
   echo "[redeploy] FORCE_ENV_PROMPTS=true; re-running credential helper..."
   "${REPO_ROOT}/scripts/configure-env.sh"
+elif [[ "${SKIP_ENV_PROMPTS:-false}" == "true" ]]; then
+  echo "[redeploy] SKIP_ENV_PROMPTS=true; using existing credentials without prompting."
 else
-  echo "[redeploy] Using existing database credentials from .env (set FORCE_ENV_PROMPTS=true to reconfigure)."
+  echo "[redeploy] Credentials configured; run with FORCE_ENV_PROMPTS=true to reconfigure."
 fi
 
 echo "[redeploy] Installing dependencies with $YARN_BIN..."

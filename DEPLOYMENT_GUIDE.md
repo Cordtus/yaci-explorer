@@ -13,7 +13,7 @@ cp .env.example .env
 ```
 2) Configure `.env` (minimum):
 ```bash
-yarn configure:env   # prompts for Postgres username/password/database (redeploy reuses values unless FORCE_ENV_PROMPTS=true)
+yarn configure:env   # prompts for Postgres username/password/database and sets SKIP_ENV_PROMPTS=true
 CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
 ```
 3) Launch:
