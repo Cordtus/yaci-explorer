@@ -19,10 +19,13 @@ ensure_database() {
     return 0
   fi
 
-  if [ "$(id -u)" -eq 0 ]; then
-    if PGPASSWORD="${PG_SUPER_PASS:-}" psql -h "$PGHOST" -p "$PGPORT" -U postgres -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
-      log "Created database ${PGDATABASE} as postgres superuser."
-      psql -h "$PGHOST" -p "$PGPORT" -U postgres -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null 2>&1 || true
+  if [ "$(id -u)" -eq 0 ] && command -v sudo >/dev/null 2>&1; then
+    if sudo -u postgres psql -h "$PGHOST" -p "$PGPORT" -d postgres -Atqc "SELECT 1 FROM pg_database WHERE datname='${PGDATABASE}'" >/dev/null 2>&1; then
+      return 0
+    fi
+    if sudo -u postgres psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "CREATE DATABASE ${PGDATABASE}" >/dev/null 2>&1; then
+      log "Created database ${PGDATABASE} via postgres superuser."
+      sudo -u postgres psql -h "$PGHOST" -p "$PGPORT" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${PGDATABASE} TO ${PGUSER};" >/dev/null 2>&1 || true
       return 0
     fi
   fi

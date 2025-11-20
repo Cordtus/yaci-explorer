@@ -36,27 +36,26 @@ fi
 ensure_database() {
   local check_cmd="SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'"
 
-  if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -Atqc "SELECT 1" >/dev/null 2>&1; then
-    DB_EXISTS=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -Atqc "${check_cmd}")
-    if [[ -z "${DB_EXISTS}" ]]; then
-      echo "Database ${POSTGRES_DB} not found on ${POSTGRES_HOST}:${POSTGRES_PORT}; attempting to create with ${POSTGRES_USER}..."
-      if ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null 2>&1; then
-        echo "Failed to create database with provided credentials."
-        return 1
-      fi
+  # If running as root, prefer using the postgres OS user to manage DBs
+  if [ "$(id -u)" -eq 0 ] && command -v sudo >/dev/null 2>&1; then
+    # If DB already exists, nothing to do
+    if sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
+      return 0
     fi
-    return 0
-  fi
 
-  if [ "$(id -u)" -eq 0 ]; then
-    echo "Database ${POSTGRES_DB} not found; creating directly as postgres superuser..."
-    if PGPASSWORD="${PG_SUPER_PASS:-}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null 2>&1; then
-      psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null 2>&1 || true
+    echo "Database ${POSTGRES_DB} not found; creating as postgres superuser..."
+    if sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "CREATE DATABASE ${POSTGRES_DB}" >/dev/null 2>&1; then
+      sudo -u postgres psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};" >/dev/null 2>&1 || true
       return 0
     fi
   fi
 
-  echo "Warning: unable to connect to postgres to create ${POSTGRES_DB}. Skipping existence check; ensure it exists before running the guard." >&2
+  # Fallback: try with application user
+  if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d postgres -Atqc "${check_cmd}" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "Warning: unable to create or verify database ${POSTGRES_DB}; ensure it exists before running the guard." >&2
   return 1
 }
 
