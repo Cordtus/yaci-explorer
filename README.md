@@ -2,82 +2,96 @@
 
 Explorer UI for Cosmos SDK chains (with EVM support) backed by the [Yaci indexer](https://github.com/manifest-network/yaci).
 
-## Highlights
-- Auto-detects chain ID, denoms, and message types from the chain
+## Features
+- Auto-detects chain ID, denoms, and message types
 - Cosmos + EVM transactions, live block updates, unified search
-- IBC denom resolution (optional REST endpoint), cached in-browser
-- Analytics: chain stats, gas efficiency, volume, top message types
-- Built with React Router 7, TypeScript, Tailwind/shadcn, TanStack Query, Vite
+- IBC denom resolution with in-browser caching
+- Analytics: chain stats, gas efficiency, volume, message types
+- Built with React Router 7, TypeScript, Tailwind/shadcn, TanStack Query
 
-## Docs
-- Deployment and ops: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+## Quick Start
 
-## Quick Start (Docker Compose)
+### Interactive Setup (Recommended)
 ```bash
 git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
+./scripts/setup.sh
+```
+
+The setup script will guide you through configuration and offer three deployment options:
+1. **Docker Compose** - Full stack with one command
+2. **Native** - Systemd services on bare metal
+3. **Frontend only** - Connect to existing PostgREST
+
+### Manual Docker Setup
+```bash
 cp .env.example .env
-# set CHAIN_GRPC_ENDPOINT and POSTGRES_PASSWORD in .env
+# Edit .env: set CHAIN_GRPC_ENDPOINT and POSTGRES_PASSWORD
 docker compose -f docker/docker-compose.yml up -d
 ```
-UI: http://localhost:3001 • PostgREST: http://localhost:3000 • Prometheus: http://localhost:2112
 
-## Without Docker
-Prereq: running PostgreSQL + PostgREST + Yaci indexer.
+**Services:**
+- Explorer UI: http://localhost:3001
+- PostgREST API: http://localhost:3000
+- Prometheus metrics: http://localhost:2112
+
+## Configuration
+
+Only two variables are required:
+
+| Variable | Description |
+|----------|-------------|
+| `CHAIN_GRPC_ENDPOINT` | gRPC endpoint of the chain to index |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+
+Optional:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_POSTGREST_URL` | PostgREST URL for frontend | `/api` |
+| `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC resolution | - |
+| `YACI_MAX_CONCURRENCY` | Concurrent block processing | `100` |
+
+## Development
+
 ```bash
 yarn install
-yarn build
-npx serve -s build/client -l 3001
+yarn dev                    # Start dev server on :5173
+yarn build                  # Production build
+yarn typecheck              # Type check
+yarn lint                   # Lint code
 ```
-
-## Key Env Vars (see `.env.example`)
-| Variable | Purpose | Default |
-| -- | -- | -- |
-| `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
-| `POSTGRES_PASSWORD` | DB password | `foobar` |
-| `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
-| `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
-| `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
-| `YACI_IMAGE` | Yaci image tag | `ghcr.io/cordtus/yaci:main` |
-
-Multi-chain: run separate compose stacks with unique `POSTGRES_PORT`, `POSTGREST_PORT`, `EXPLORER_PORT`.
 
 ## Project Structure
 ```
 src/
-  routes/         # file-based pages
-  components/     # ui, common, analytics, JsonViewer
-  lib/            # api clients, utils, chain-info
-  config/         # chain presets
-  types/          # TypeScript defs
+  routes/         # Page components
+  components/     # UI components
+  lib/            # API client, utilities
+  contexts/       # React contexts
+packages/
+  database-client # PostgREST API client package
+docker/
+  docker-compose.yml
+  explorer/       # Dockerfile & nginx config
+scripts/
+  setup.sh        # Interactive deployment
 ```
 
-## Development
+## API
+
+The explorer uses PostgREST to query the PostgreSQL database populated by Yaci:
+
 ```bash
-yarn install
-export VITE_POSTGREST_URL=http://localhost:3000
-yarn dev
-```
-Scripts: `yarn typecheck`, `yarn lint`, `yarn build`.
+# Recent blocks
+curl "http://localhost:3000/blocks_raw?order=id.desc&limit=10"
 
-## API (PostgREST)
-- `/blocks_raw` – raw blocks
-- `/transactions_main` – parsed transactions
-- `/messages_main` – messages (for filters)
-- `/events_main` – events
-Example: `curl "http://localhost:3000/blocks_raw?order=id.desc&limit=10"`
+# Transaction by hash
+curl "http://localhost:3000/transactions_main?id=eq.HASH"
 
-## Chain Config (optional)
-Add to `src/config/chains.ts` for custom symbols/features:
-```ts
-'your-chain-id': {
-  name: 'Your Chain',
-  nativeDenom: 'utoken',
-  nativeSymbol: 'TOKEN',
-  decimals: 6,
-  features: { evm: false, ibc: true, wasm: true },
-}
+# Messages for address
+curl "http://localhost:3000/messages_main?mentions=cs.{ADDRESS}"
 ```
 
 ## License
-MIT (see LICENSE).
+
+MIT
