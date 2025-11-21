@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { appConfig } from '@/config/app'
 
-const client = new YaciAPIClient()
+const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 interface BlockTimeData {
   height: number

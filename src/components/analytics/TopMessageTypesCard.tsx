@@ -1,7 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { appConfig } from '@/config/app'
+import { YaciAPIClient } from '@yaci/database-client'
+
+const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 interface MessageTypeStats {
   type: string
@@ -11,52 +13,32 @@ interface MessageTypeStats {
 }
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  // Use the client's getTransactionTypeDistribution method
+  const typeData = await client.getTransactionTypeDistribution()
 
-  const response = await fetch(
-    `${baseUrl}/messages_main?select=type&order=id.desc&limit=${appConfig.analytics.messageSampleLimit}`
-  )
+  // Calculate total and percentages
+  const total = typeData.reduce((sum, d) => sum + d.count, 0)
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch message types')
-  }
-
-  const messages = await response.json()
-
-  // Count occurrences
-  const typeCounts: { [key: string]: number } = {}
-  messages.forEach((msg: any) => {
-    const type = msg.type || 'Unknown'
+  const stats: MessageTypeStats[] = typeData.map(({ type, count }) => {
     // Simplify type names (remove module path)
     const simplifiedType = type.split('.').pop() || type
-    typeCounts[simplifiedType] = (typeCounts[simplifiedType] || 0) + 1
-  })
-
-  // Convert to array and calculate percentages
-  const total = messages.length
-  const stats: MessageTypeStats[] = Object.entries(typeCounts)
-    .map(([type, count]) => ({
-      type,
+    return {
+      type: simplifiedType,
       count,
       percentage: (count / total) * 100,
-      trend: 'stable' as const // In a real app, you'd compare with previous period
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, appConfig.analytics.messageTopN)
+      trend: 'stable' as const
+    }
+  })
 
   return stats
 }
 
 export function TopMessageTypesCard() {
   const { data, isLoading } = useQuery({
-    queryKey: ['top-message-types', appConfig.analytics.messageSampleLimit, appConfig.analytics.messageTopN],
+    queryKey: ['top-message-types'],
     queryFn: getTopMessageTypes,
-    refetchInterval: appConfig.analytics.messageRefetchMs,
+    refetchInterval: 60000,
   })
-  const sampleLimitLabel = appConfig.analytics.messageSampleLimit.toLocaleString()
 
   if (isLoading || !data) {
     return (
@@ -119,7 +101,7 @@ export function TopMessageTypesCard() {
           Top Message Types
         </CardTitle>
         <CardDescription>
-          Distribution of the most frequently used message types (last {sampleLimitLabel} messages)
+          Distribution of the most frequently used message types
         </CardDescription>
       </CardHeader>
       <CardContent>

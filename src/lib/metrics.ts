@@ -1,11 +1,19 @@
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient, createTTLCache } from '@yaci/database-client'
 import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
-import { createTTLCache } from '@/lib/cache'
+import { subMinutes, subHours, subDays } from 'date-fns'
 
-const client = new YaciAPIClient()
+const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 const cache = createTTLCache(30000) // 30s TTL for expensive calls
 
-interface OverviewMetrics {
+// Types
+export type TimeUnit = 'minutes' | 'hours' | 'days'
+
+export interface TimeRange {
+  value: number
+  unit: TimeUnit
+}
+
+export interface OverviewMetrics {
   latestBlock: number
   totalTransactions: number
   avgBlockTime: number
@@ -14,7 +22,7 @@ interface OverviewMetrics {
   totalSupply: string | null
 }
 
-interface NetworkMetrics {
+export interface NetworkMetrics {
   latestHeight: number
   totalTransactions: number
   avgBlockTime: number
@@ -27,8 +35,39 @@ interface NetworkMetrics {
   uniqueAddresses: number | null
 }
 
-const REST_ENDPOINT = import.meta.env.VITE_CHAIN_REST_ENDPOINT
+export interface BlockInterval {
+  height: number
+  time: number
+  timestamp: string
+}
 
+// Configuration
+const REST_ENDPOINT = import.meta.env.VITE_CHAIN_REST_ENDPOINT
+const BASE_URL = client.getBaseUrl()
+
+// Time utilities
+function getStartDate(range: TimeRange): Date {
+  const now = new Date()
+  switch (range.unit) {
+    case 'minutes':
+      return subMinutes(now, range.value)
+    case 'hours':
+      return subHours(now, range.value)
+    case 'days':
+      return subDays(now, range.value)
+  }
+}
+
+function getTimeRangeMs(range: TimeRange): number {
+  const multipliers = {
+    minutes: 60 * 1000,
+    hours: 60 * 60 * 1000,
+    days: 24 * 60 * 60 * 1000,
+  }
+  return range.value * multipliers[range.unit]
+}
+
+// Generic fetch helper
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init)
   if (!response.ok) {
@@ -37,8 +76,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-const BASE_URL = client.getApiBaseUrl()
-
+// Core data fetchers
 async function getTotalTransactions(): Promise<number> {
   const response = await fetch(`${BASE_URL}/transactions_main?select=id&limit=1`, {
     headers: { Prefer: 'count=exact' },
@@ -48,15 +86,38 @@ async function getTotalTransactions(): Promise<number> {
   return totalHeader ? parseInt(totalHeader.split('/')[1]) : 0
 }
 
-async function getTransactionsLastMinute(): Promise<number> {
-  const response = await fetch(`${BASE_URL}/transactions_main?order=timestamp.desc&limit=200`)
+/**
+ * Get transaction count within a time range
+ * @param range - Time range specification (e.g., { value: 1, unit: 'minutes' })
+ * @returns Number of transactions in the specified time range
+ */
+export async function getTransactionsInTimeRange(range: TimeRange): Promise<number> {
+  const cacheKey = `tx-count-${range.value}-${range.unit}`
+  const cached = cache.get<number>(cacheKey)
+  if (cached !== null) return cached
+
+  const startDate = getStartDate(range)
+  const response = await fetch(
+    `${BASE_URL}/transactions_main?timestamp=gte.${startDate.toISOString()}&select=id&limit=1`,
+    { headers: { Prefer: 'count=exact' } }
+  )
+
   if (!response.ok) return 0
-  const txs = await response.json()
-  const oneMinuteAgo = Date.now() - 60000
-  return txs.filter((tx: { timestamp?: string | null }) => {
-    if (!tx.timestamp) return false
-    return new Date(tx.timestamp).getTime() > oneMinuteAgo
-  }).length
+  const totalHeader = response.headers.get('Content-Range')
+  const count = totalHeader ? parseInt(totalHeader.split('/')[1]) : 0
+
+  cache.set(cacheKey, count)
+  return count
+}
+
+/**
+ * Calculate transactions per second based on a time range
+ * @param range - Time range to calculate TPS over
+ */
+export async function getTPS(range: TimeRange = { value: 1, unit: 'minutes' }): Promise<number> {
+  const count = await getTransactionsInTimeRange(range)
+  const seconds = getTimeRangeMs(range) / 1000
+  return count / seconds
 }
 
 async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
@@ -73,10 +134,14 @@ async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
   }
 
   const latestBlock = await client.getLatestBlock()
+  return getValidatorCountFromBlock(latestBlock)
+}
+
+function getValidatorCountFromBlock(block: any): number {
   return (
-    latestBlock?.data?.block?.last_commit?.signatures?.length ||
-    latestBlock?.data?.block?.lastCommit?.signatures?.length ||
-    latestBlock?.data?.lastCommit?.signatures?.length ||
+    block?.data?.block?.last_commit?.signatures?.length ||
+    block?.data?.block?.lastCommit?.signatures?.length ||
+    block?.data?.lastCommit?.signatures?.length ||
     0
   )
 }
@@ -97,7 +162,6 @@ async function getTotalSupply(chainInfo: ChainInfo): Promise<string | null> {
 }
 
 async function getUniqueAddresses(): Promise<number | null> {
-  // Use PostgREST distinct on sender in messages_main
   const response = await fetch(
     `${BASE_URL}/messages_main?select=sender&distinct=sender&sender=not.is.null&limit=1`,
     { headers: { Prefer: 'count=exact' } }
@@ -107,17 +171,49 @@ async function getUniqueAddresses(): Promise<number | null> {
   return totalHeader ? parseInt(totalHeader.split('/')[1]) : null
 }
 
+/**
+ * Calculate average block time from a series of blocks
+ */
+function calculateAvgBlockTime(blocks: any[], maxBlocks = 50): number {
+  const blockTimes: number[] = []
+  const limit = Math.min(blocks.length - 1, maxBlocks)
+
+  for (let i = 0; i < limit; i++) {
+    const currentTime = new Date(blocks[i].data?.block?.header?.time).getTime()
+    const previousTime = new Date(blocks[i + 1].data?.block?.header?.time).getTime()
+    const diff = (currentTime - previousTime) / 1000
+    if (diff > 0 && diff < 100) blockTimes.push(diff)
+  }
+
+  if (blockTimes.length === 0) return 0
+  return blockTimes.reduce((a, b) => a + b, 0) / blockTimes.length
+}
+
+/**
+ * Calculate average gas limit from transactions
+ */
+function calculateAvgGasLimit(transactions: any[]): number {
+  const gasValues = transactions
+    .filter((tx: any) => tx.fee?.gasLimit)
+    .map((tx: any) => parseInt(tx.fee.gasLimit, 10))
+
+  if (gasValues.length === 0) return 0
+  return Math.round(gasValues.reduce((a, b) => a + b, 0) / gasValues.length)
+}
+
+// Public API
+
 export async function getOverviewMetrics(): Promise<OverviewMetrics> {
   const cached = cache.get<OverviewMetrics>('overview')
   if (cached) return cached
 
   const chainInfo = await getChainInfo(client)
-  const [latestBlock, blockTimeAnalysis, totalTx, txLastMinute, activeValidators, totalSupply] =
+  const [latestBlock, blockTimeAnalysis, totalTx, tps, activeValidators, totalSupply] =
     await Promise.all([
       client.getLatestBlock(),
       client.getBlockTimeAnalysis(100),
       getTotalTransactions(),
-      getTransactionsLastMinute(),
+      getTPS({ value: 1, unit: 'minutes' }),
       getActiveValidators(chainInfo),
       getTotalSupply(chainInfo),
     ])
@@ -126,7 +222,7 @@ export async function getOverviewMetrics(): Promise<OverviewMetrics> {
     latestBlock: latestBlock?.id || 0,
     totalTransactions: totalTx,
     avgBlockTime: blockTimeAnalysis.avg > 0 ? blockTimeAnalysis.avg : 0,
-    tps: txLastMinute / 60,
+    tps,
     activeValidators,
     totalSupply,
   }
@@ -139,12 +235,9 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
   const cached = cache.get<NetworkMetrics>('network-metrics')
   if (cached) return cached
 
-  const [blocksResponse, txResponse, messagesResponse] = await Promise.all([
+  const [blocksResponse, txResponse] = await Promise.all([
     fetch(`${BASE_URL}/blocks_raw?order=id.desc&limit=100`, { headers: { Prefer: 'count=exact' } }),
     fetch(`${BASE_URL}/transactions_main?order=height.desc&limit=1000`, { headers: { Prefer: 'count=exact' } }),
-    fetch(`${BASE_URL}/messages_main?select=sender&sender=not.is.null&limit=2000`, {
-      headers: { Prefer: 'count=exact' },
-    }),
   ])
 
   const blocks = await blocksResponse.json()
@@ -152,37 +245,16 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
   const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0')
   const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0')
 
-  // Average block time over recent blocks
-  let avgBlockTime = 0
-  const blockTimes: number[] = []
-  for (let i = 0; i < Math.min(blocks.length - 1, 50); i++) {
-    const currentTime = new Date(blocks[i].data?.block?.header?.time).getTime()
-    const previousTime = new Date(blocks[i + 1].data?.block?.header?.time).getTime()
-    const diff = (currentTime - previousTime) / 1000
-    if (diff > 0 && diff < 100) blockTimes.push(diff)
-  }
-  if (blockTimes.length > 0) {
-    avgBlockTime = blockTimes.reduce((a, b) => a + b, 0) / blockTimes.length
-  }
+  const avgBlockTime = calculateAvgBlockTime(blocks)
 
   const successfulTxs = transactions.filter((tx: any) => !tx.error || tx.error === null).length
   const successRate = transactions.length > 0 ? (successfulTxs / transactions.length) * 100 : 100
 
-  const gasValues: number[] = transactions
-    .filter((tx: any) => tx.fee?.gasLimit)
-    .map((tx: any) => parseInt(tx.fee.gasLimit, 10))
-  const avgGasLimit = gasValues.length > 0
-    ? Math.round(gasValues.reduce((a: number, b: number) => a + b, 0) / gasValues.length)
-    : 0
-
+  const avgGasLimit = calculateAvgGasLimit(transactions)
   const uniqueAddresses = await getUniqueAddresses()
 
   const latestBlock = blocks[0]
-  const activeValidators =
-    latestBlock?.data?.block?.last_commit?.signatures?.length ||
-    latestBlock?.data?.block?.lastCommit?.signatures?.length ||
-    latestBlock?.data?.lastCommit?.signatures?.length ||
-    0
+  const activeValidators = getValidatorCountFromBlock(latestBlock)
 
   const metrics: NetworkMetrics = {
     latestHeight: latestBlock?.id || 0,
@@ -201,16 +273,16 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
   return metrics
 }
 
-export async function getBlockIntervals(limit = 100) {
+export async function getBlockIntervals(limit = 100): Promise<BlockInterval[]> {
   const cacheKey = `block-intervals-${limit}`
-  const cached = cache.get<Array<{ height: number; time: number; timestamp: string }>>(cacheKey)
+  const cached = cache.get<BlockInterval[]>(cacheKey)
   if (cached) return cached
 
-  // getBlockTimeAnalysis returns aggregates; pull series directly from blocks_raw
   const response = await fetch(`${BASE_URL}/blocks_raw?order=id.desc&limit=${limit}`)
   if (!response.ok) return []
+
   const blocks = await response.json()
-  const intervals: Array<{ height: number; time: number; timestamp: string }> = []
+  const intervals: BlockInterval[] = []
 
   for (let i = 0; i < blocks.length - 1; i++) {
     const currentTime = new Date(blocks[i].data?.block?.header?.time).getTime()
@@ -229,3 +301,9 @@ export async function getBlockIntervals(limit = 100) {
   cache.set(cacheKey, series)
   return series
 }
+
+// Convenience functions for common time ranges
+export const getTransactionsLastMinute = () => getTransactionsInTimeRange({ value: 1, unit: 'minutes' })
+export const getTransactionsLastHour = () => getTransactionsInTimeRange({ value: 1, unit: 'hours' })
+export const getTransactionsLastDay = () => getTransactionsInTimeRange({ value: 1, unit: 'days' })
+export const getTransactionsLast7Days = () => getTransactionsInTimeRange({ value: 7, unit: 'days' })

@@ -5,12 +5,12 @@ import { Blocks } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 
-const api = new YaciAPIClient()
+const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function BlocksPage() {
   const [page, setPage] = useState(0)

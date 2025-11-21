@@ -5,11 +5,11 @@ import { ArrowLeft, Copy, CheckCircle, Activity, Blocks as BlocksIcon } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const api = new YaciAPIClient()
+const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)

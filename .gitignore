@@ -44,3 +44,7 @@ Thumbs.db
 # Development docs (keep locally, not in repo)
 CLAUDE.md
 **/CLAUDE.md
+AGENTS.md
+.claude/
+docs/
+packages/database-client/dist/
