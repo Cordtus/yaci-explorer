@@ -727,6 +727,42 @@ export class YaciAPIClient {
     return revenueByDenom
   }
 
+  async getFeeRevenueOverTime(days = 7): Promise<Array<{ date: string; revenue: Record<string, number> }>> {
+    const { data: transactions } = await this.query<any>('transactions_main', {
+      select: 'fee,timestamp',
+      order: 'height.desc',
+      limit: 10000
+    })
+
+    const revenueByDate: Record<string, Record<string, number>> = {}
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+
+    transactions.forEach((tx: any) => {
+      if (!tx.timestamp || !tx.fee?.amount) return
+
+      const txDate = new Date(tx.timestamp)
+      if (txDate < cutoffDate) return
+
+      const dateKey = txDate.toISOString().split('T')[0]
+
+      if (!revenueByDate[dateKey]) {
+        revenueByDate[dateKey] = {}
+      }
+
+      if (Array.isArray(tx.fee.amount)) {
+        tx.fee.amount.forEach((coin: { denom: string; amount: string }) => {
+          const amount = parseFloat(coin.amount) || 0
+          revenueByDate[dateKey][coin.denom] = (revenueByDate[dateKey][coin.denom] || 0) + amount
+        })
+      }
+    })
+
+    return Object.entries(revenueByDate)
+      .map(([date, revenue]) => ({ date, revenue }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }
+
   async getFailedTransactionStats(): Promise<{
     totalFailed: number
     failureRate: number
@@ -792,7 +828,7 @@ export class YaciAPIClient {
     return distribution
   }
 
-  async getGasEfficiency(limit = 1000): Promise<{ avgGasLimit: number; transactionCount: number }> {
+  async getGasEfficiency(limit = 1000): Promise<{ avgGasLimit: number; totalGasLimit: number; transactionCount: number }> {
     const { data: transactions } = await this.query<any>('transactions_main', {
       select: 'gas_wanted',
       order: 'height.desc',
@@ -800,7 +836,7 @@ export class YaciAPIClient {
     })
 
     if (transactions.length === 0) {
-      return { avgGasLimit: 0, transactionCount: 0 }
+      return { avgGasLimit: 0, totalGasLimit: 0, transactionCount: 0 }
     }
 
     const totalGas = transactions.reduce((sum: number, tx: any) => {
@@ -809,6 +845,7 @@ export class YaciAPIClient {
 
     return {
       avgGasLimit: Math.round(totalGas / transactions.length),
+      totalGasLimit: totalGas,
       transactionCount: transactions.length
     }
   }
