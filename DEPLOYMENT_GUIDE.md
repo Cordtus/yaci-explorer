@@ -37,29 +37,36 @@ PostgREST exposes endpoints automatically from the DB schema.
 ---
 
 ## Configuration
-### Env vars
-Required:
+
+### Core env vars
+Required for the default `docker-compose` stack:
 | Var | Purpose | Example |
 | --- | --- | --- |
-| `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `chain.example.com:9090` |
-| `POSTGRES_PASSWORD` | DB password | `changeme` |
+| `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint (gRPC, no `http://`) | `chain.example.com:9090` |
+| `POSTGRES_PASSWORD` | Postgres password for the local DB | `changeme` |
 
-Optional:
+Useful options:
 | Var | Default | Notes |
 | --- | --- | --- |
-| `CHAIN_ID` / `CHAIN_NAME` | auto | Override detection |
-| `VITE_CHAIN_REST_ENDPOINT` | unset | Needed for IBC denom resolution |
-| `YACI_MAX_CONCURRENCY` | 100 | Raise/lower for sync speed |
-| `YACI_LOG_LEVEL` | info | use debug for troubleshooting |
-| `YACI_INSECURE` | -k | Remove if TLS on gRPC |
-| Ports: `EXPLORER_PORT` 3001, `POSTGREST_PORT` 3000, `POSTGRES_PORT` 5432, `YACI_METRICS_PORT` 2112 | change to avoid clashes |
+| `CHAIN_ID` / `CHAIN_NAME` | auto | Override chain metadata shown in the UI |
+| `VITE_CHAIN_REST_ENDPOINT` | unset | REST endpoint for IBC/denom resolution |
+| `YACI_MAX_CONCURRENCY` | 100 | Raise/lower for sync speed vs load |
+| `YACI_LOG_LEVEL` | info | Use `debug` for troubleshooting the indexer |
+| `YACI_INSECURE` | `-k` | Remove if gRPC uses TLS |
+| Ports: `EXPLORER_PORT` 3001, `POSTGREST_PORT` 3000, `POSTGRES_PORT` 5432, `YACI_METRICS_PORT` 2112 | Adjust to avoid clashes |
 
-### Frontend options (optional)
-`src/config/chains.ts`: add chain for custom symbol/feature flags (auto-detection works without it).
-`src/components/layout/header.tsx`: adjust branding/logo.
+### Frontend options
+- `src/config/chains.ts`: add a chain entry for custom symbol/feature flags (auto-detection works without it).
+- `src/components/layout/header.tsx`: update branding/logo/navigation if you fork the UI.
 
-### Indexer flags (edit `docker/docker-compose.yml`)
-Common flags: `--live` (default), `--start-height N`, `--end-height N`, `--max-concurrency N`, `-k` (skip TLS), `-l debug`.
+### Indexer flags (advanced)
+
+The `yaci` container is wired via `docker/docker-compose.yml`. Common flags:
+- `--live` – enabled by default; continue indexing as new blocks arrive.
+- `--start` / `--stop` – optional bounded range when running the standalone binary.
+- `--max-concurrency N` – from `YACI_MAX_CONCURRENCY`.
+- `-k` – skip TLS verification (controlled via `YACI_INSECURE`).
+- `-l debug` – more verbose logs for troubleshooting.
 
 ---
 
@@ -105,12 +112,15 @@ scrape_configs:
 ```
 
 ### Historical range
-Add to `yaci` command:
-```yaml
---start-height 1000000
---end-height 2000000
+By default the indexer:
+- Backfills from the first missing block in the DB up to the current tip.
+- Continues in `--live` mode as new blocks are produced.
+
+To run a bounded range with the standalone binary, add:
+```bash
+yaci extract postgres <grpc-endpoint> -p <dsn> --start 1000000 --stop 2000000
 ```
-`--live` continues past `--end-height`; omit to stop.
+With `--live`, the indexer continues past `--stop` once the initial range is filled.
 
 ### Local Yaci build
 ```bash
@@ -119,6 +129,62 @@ cd yaci && docker build -t yaci:local -f docker/Dockerfile .
 cd ../yaci-explorer && echo "YACI_IMAGE=yaci:local" >> .env
 docker compose -f docker/docker-compose.yml up -d
 ```
+
+---
+
+## Fly.io Deployment (indexer + explorer)
+
+You can run the same stack on Fly.io by splitting services into separate apps.
+
+### 1) Postgres + PostgREST on Fly
+- Create a Fly Postgres cluster (`fly pg create`) or use an existing one (e.g. `republic-yaci-pg`).
+- Get the internal DSN:
+  ```bash
+  fly pg connection -a republic-yaci-pg
+  ```
+- For PostgREST, set (example):
+  ```bash
+  PGRST_DB_URI=postgres://postgres:<PASSWORD>@republic-yaci-pg.flycast:5432/postgres?sslmode=disable
+  PGRST_DB_SCHEMA=api
+  PGRST_DB_ANON_ROLE=postgres
+  ```
+  Make sure the URI includes a database name (e.g. `/postgres` or `/yaci`) and `sslmode=disable` for `*.flycast`.
+
+### 2) Yaci indexer app on Fly
+- Deploy the `yaci` image (from `manifest-network/yaci` or your fork) using the Dockerfile in that repo.
+- Configure secrets (example for Republic):
+  ```bash
+  fly secrets set \
+    YACI_GRPC_ENDPOINT="rpc.republicai.io:9090" \
+    YACI_POSTGRES_DSN="postgres://postgres:<PASSWORD>@republic-yaci-pg.flycast:5432/postgres?sslmode=disable" \
+    -a your-yaci-app
+  ```
+- `YACI_GRPC_ENDPOINT` must be `host:port` with no `http://`, and must point to a gRPC endpoint (not REST). For `rpc.republicai.io:9090`, TLS is enabled even on the non-standard port.
+- `YACI_POSTGRES_DSN` should be copied from `fly pg connection` and adjusted as above.
+- The entrypoint typically runs `yaci extract postgres ... --live`, which:
+  - Backfills from the first missing height up to the current chain tip.
+  - Continues live as new blocks arrive.
+- Advanced knobs (set via Fly secrets if needed):
+  - `YACI_START` / `YACI_STOP` → `--start` / `--stop` block heights.
+  - `YACI_REINDEX=true` → `--reindex` (force a full reprocess; only safe if the node still has older blocks).
+- Run **only one** indexer against a given DB; multiple indexers on the same DB can cause conflicts (for example, “start block is greater than stop block” when two processes race on the same range).
+- To reset indexing on Fly, connect and truncate:
+  ```bash
+  fly pg connect -a republic-yaci-pg
+  TRUNCATE api.blocks_raw, api.transactions_raw, api.transactions_main,
+           api.messages_raw, api.messages_main, api.events_raw, api.events_main
+           RESTART IDENTITY;
+  ```
+
+### 3) Explorer app on Fly
+- Build the explorer as usual (`npm run build`) and deploy the static app (or use the provided Dockerfile).
+- Set frontend env in `.env` / Fly:
+  ```bash
+  VITE_POSTGREST_URL=https://<postgrest-app>.fly.dev        # or https://your-domain/api via proxy
+  CHAIN_GRPC_ENDPOINT=rpc.republicai.io:9090                # same gRPC host:port as the indexer
+  CHAIN_RPC_ENDPOINT=http://your-rpc-host:26657             # optional, for RPC/REST features
+  ```
+- Point `VITE_CHAIN_REST_ENDPOINT` to a public REST endpoint for IBC/denom metadata as in the local guide.
 
 ---
 
@@ -203,6 +269,8 @@ docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
 - `transactions_main`: `id`, `height`, `timestamp`, `fee`, `gas_used`, `error`
 - `messages_main`: `id`, `message_index`, `type`, `sender`, `mentions`, `metadata`
 - `events_main`: `id`, `event_index`, `event_type`, `attr_key`, `attr_value`
+
+These tables can live in any PostgreSQL instance (local Docker, Fly Postgres, managed cloud DB); as long as the Yaci indexer writes to this schema and PostgREST exposes it, the explorer remains unchanged.
 
 ---
 
