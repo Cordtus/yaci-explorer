@@ -118,6 +118,15 @@ export interface EVMTransaction {
     address: string
     storage_keys: string[]
   }>
+  decoded_input?: {
+    methodId: string
+    methodName: string
+    params: Array<{
+      name: string
+      type: string
+      value: any
+    }>
+  } | null
 }
 
 export interface EVMLog {

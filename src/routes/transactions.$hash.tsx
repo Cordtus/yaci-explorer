@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { MessageDetails } from '@/components/MessageDetails'
 import { JsonViewer } from '@/components/JsonViewer'
 import { AddressChip } from '@/components/AddressChip'
+import { EVMTransactionCard } from '@/components/EVMTransactionCard'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 
@@ -548,39 +549,7 @@ export default function TransactionDetailPage() {
 
           {/* EVM Data if available */}
           {transaction.evm_data && (
-            <Card>
-              <CardHeader>
-                <CardTitle>EVM Transaction</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  {transaction.evm_data.hash && (
-                    <div>
-                      <label className="text-muted-foreground">EVM Hash</label>
-                      <p className="font-mono text-xs break-all">{transaction.evm_data.hash}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.from_address && (
-                    <div>
-                      <label className="text-muted-foreground">From</label>
-                      <p className="font-mono text-xs">{formatHash(transaction.evm_data.from_address, 8)}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.to_address && (
-                    <div>
-                      <label className="text-muted-foreground">To</label>
-                      <p className="font-mono text-xs">{formatHash(transaction.evm_data.to_address, 8)}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.gas_used && (
-                    <div>
-                      <label className="text-muted-foreground">Gas Used</label>
-                      <p className="font-mono text-xs">{formatNumber(transaction.evm_data.gas_used)}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <EVMTransactionCard evmData={transaction.evm_data} />
           )}
         </div>
       </div>

@@ -9,7 +9,77 @@ import type {
   EvmTxMap,
   EvmAddressActivity
 } from './types'
-import { Transaction as EthersTransaction } from 'ethers'
+import { Transaction as EthersTransaction, Interface, AbiCoder } from 'ethers'
+
+// Common ERC-20/ERC-721 function signatures
+const COMMON_SIGNATURES: Record<string, { name: string; params: string[] }> = {
+  '0xa9059cbb': { name: 'transfer', params: ['address to', 'uint256 amount'] },
+  '0x23b872dd': { name: 'transferFrom', params: ['address from', 'address to', 'uint256 amount'] },
+  '0x095ea7b3': { name: 'approve', params: ['address spender', 'uint256 amount'] },
+  '0x70a08231': { name: 'balanceOf', params: ['address account'] },
+  '0xdd62ed3e': { name: 'allowance', params: ['address owner', 'address spender'] },
+  '0x18160ddd': { name: 'totalSupply', params: [] },
+  '0x313ce567': { name: 'decimals', params: [] },
+  '0x06fdde03': { name: 'name', params: [] },
+  '0x95d89b41': { name: 'symbol', params: [] },
+  '0x40c10f19': { name: 'mint', params: ['address to', 'uint256 amount'] },
+  '0x42966c68': { name: 'burn', params: ['uint256 amount'] },
+  '0x79cc6790': { name: 'burnFrom', params: ['address from', 'uint256 amount'] },
+  '0xa457c2d7': { name: 'decreaseAllowance', params: ['address spender', 'uint256 subtractedValue'] },
+  '0x39509351': { name: 'increaseAllowance', params: ['address spender', 'uint256 addedValue'] },
+  '0x6352211e': { name: 'ownerOf', params: ['uint256 tokenId'] },
+  '0x42842e0e': { name: 'safeTransferFrom', params: ['address from', 'address to', 'uint256 tokenId'] },
+  '0xb88d4fde': { name: 'safeTransferFrom', params: ['address from', 'address to', 'uint256 tokenId', 'bytes data'] },
+  '0xa22cb465': { name: 'setApprovalForAll', params: ['address operator', 'bool approved'] },
+  '0xe985e9c5': { name: 'isApprovedForAll', params: ['address owner', 'address operator'] },
+  '0x081812fc': { name: 'getApproved', params: ['uint256 tokenId'] },
+  '0xc87b56dd': { name: 'tokenURI', params: ['uint256 tokenId'] },
+  '0xd0e30db0': { name: 'deposit', params: [] },
+  '0x2e1a7d4d': { name: 'withdraw', params: ['uint256 amount'] },
+  '0x': { name: 'Native Transfer', params: [] },
+}
+
+// Decode function input data
+function decodeInputData(inputData: string): { methodId: string; methodName: string; params: Array<{ name: string; type: string; value: any }> } | null {
+  if (!inputData || inputData === '0x' || inputData.length < 10) {
+    return inputData === '0x' || !inputData
+      ? { methodId: '0x', methodName: 'Native Transfer', params: [] }
+      : null
+  }
+
+  const methodId = inputData.slice(0, 10).toLowerCase()
+  const sig = COMMON_SIGNATURES[methodId]
+
+  if (!sig) {
+    return { methodId, methodName: 'Unknown', params: [] }
+  }
+
+  const params: Array<{ name: string; type: string; value: any }> = []
+
+  if (sig.params.length > 0 && inputData.length > 10) {
+    try {
+      const types = sig.params.map(p => p.split(' ')[0])
+      const abiCoder = new AbiCoder()
+      const decoded = abiCoder.decode(types, '0x' + inputData.slice(10))
+
+      sig.params.forEach((param, idx) => {
+        const [type, name] = param.split(' ')
+        let value = decoded[idx]
+
+        // Format bigints as strings
+        if (typeof value === 'bigint') {
+          value = value.toString()
+        }
+
+        params.push({ name: name || `param${idx}`, type, value })
+      })
+    } catch {
+      // Decoding failed, return without params
+    }
+  }
+
+  return { methodId, methodName: sig.name, params }
+}
 
 export interface TransactionFilters {
   status?: 'success' | 'failed'
@@ -446,6 +516,9 @@ export class YaciAPIClient {
       storage_keys: entry.storageKeys,
     }))
 
+    // Decode function input data
+    const decodedInput = decodeInputData(inputData)
+
     return {
       hash,
       tx_hash: txHash,
@@ -463,6 +536,7 @@ export class YaciAPIClient {
       max_fee_per_gas: maxFeePerGas,
       max_priority_fee_per_gas: maxPriorityFeePerGas,
       access_list: accessList,
+      decoded_input: decodedInput,
     }
   }
 
