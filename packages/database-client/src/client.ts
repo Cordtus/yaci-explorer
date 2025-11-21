@@ -5,7 +5,9 @@ import type {
   Message,
   Event,
   PaginatedResponse,
-  ChainStats
+  ChainStats,
+  EvmTxMap,
+  EvmAddressActivity
 } from './types'
 import { Transaction as EthersTransaction } from 'ethers'
 
@@ -48,7 +50,6 @@ export class YaciAPIClient {
   private baseUrl: string
   private cache = new Map<string, { data: any; timestamp: number }>()
   private cacheTimeout = 10000
-  private defaultPageSize = 20
 
   // ============================================================================
   // CORE
@@ -61,9 +62,6 @@ export class YaciAPIClient {
     this.baseUrl = baseUrl
     if (options?.cacheTimeout) {
       this.cacheTimeout = options.cacheTimeout
-    }
-    if (options?.defaultPageSize) {
-      this.defaultPageSize = options.defaultPageSize
     }
   }
 
@@ -454,33 +452,78 @@ export class YaciAPIClient {
     limit = 50,
     offset = 0
   ): Promise<PaginatedResponse<EnhancedTransaction>> {
-    const { data: messages } = await this.query<Message>('messages_main', {
+    // Get all messages involving this address
+    const { data: addressMessages } = await this.query<Message>('messages_main', {
       filters: { or: `(sender.eq.${address},mentions.cs.%7B${address}%7D)` },
-      order: 'id.desc',
-      limit: limit * 10
+      order: 'id.desc'
     })
 
-    const txIds = [...new Set(messages.map(msg => msg.id))]
+    // Extract unique tx IDs and paginate
+    const allTxIds = [...new Set(addressMessages.map(msg => msg.id))]
+    const paginatedTxIds = allTxIds.slice(offset, offset + limit)
 
-    const transactions = await Promise.all(
-      txIds.slice(0, limit).map(async txId => {
-        try {
-          return await this.getTransaction(txId)
-        } catch {
-          return null
+    if (paginatedTxIds.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          total: allTxIds.length,
+          limit,
+          offset,
+          has_next: false,
+          has_prev: offset > 0
         }
-      })
-    )
+      }
+    }
 
-    const validTransactions = transactions.filter((tx): tx is EnhancedTransaction => tx !== null)
+    // Batch fetch all data in parallel (4 queries instead of N*4)
+    const idFilters = paginatedTxIds.map(id => `id.eq.${id}`).join(',')
+
+    const [txResult, msgResult, eventResult] = await Promise.all([
+      this.query<Transaction>('transactions_main', {
+        filters: { or: `(${idFilters})` },
+        order: 'height.desc'
+      }),
+      this.query<Message>('messages_main', {
+        filters: { or: `(${idFilters})` },
+        order: 'message_index.asc'
+      }),
+      this.query<Event>('events_main', {
+        filters: { or: `(${idFilters})` },
+        order: 'event_index.asc,attr_index.asc'
+      })
+    ])
+
+    // Group messages and events by tx ID
+    const messagesByTx = new Map<string, Message[]>()
+    const eventsByTx = new Map<string, Event[]>()
+
+    msgResult.data.forEach(msg => {
+      const existing = messagesByTx.get(msg.id) || []
+      existing.push(msg)
+      messagesByTx.set(msg.id, existing)
+    })
+
+    eventResult.data.forEach(event => {
+      const existing = eventsByTx.get(event.id) || []
+      existing.push(event)
+      eventsByTx.set(event.id, existing)
+    })
+
+    // Assemble enhanced transactions
+    const enhanced: EnhancedTransaction[] = txResult.data.map(tx => ({
+      ...tx,
+      messages: messagesByTx.get(tx.id) || [],
+      events: eventsByTx.get(tx.id) || [],
+      ingest_error: null
+    }))
 
     return {
-      data: validTransactions,
+      data: enhanced,
       pagination: {
-        total: txIds.length,
+        total: allTxIds.length,
         limit,
         offset,
-        has_next: txIds.length > limit,
+        has_next: offset + limit < allTxIds.length,
         has_prev: offset > 0
       }
     }
@@ -534,6 +577,110 @@ export class YaciAPIClient {
       total_sent: sentCount,
       total_received: receivedCount
     }
+  }
+
+  /**
+   * Get messages for an address using the optimized RPC function
+   * This uses the database function get_messages_for_address which is more efficient
+   * than the manual OR filter approach
+   * @example
+   * const messages = await client.getMessagesForAddressRPC('manifest1...')
+   */
+  async getMessagesForAddressRPC(address: string): Promise<Message[]> {
+    return this.rpc<Message[]>('get_messages_for_address', { _address: address })
+  }
+
+  // ============================================================================
+  // EVM
+  // ============================================================================
+
+  /**
+   * Get EVM transaction by Ethereum hash (0x...)
+   * Useful for search - allows finding Cosmos tx from EVM hash
+   * @example
+   * const evmTx = await client.getEvmTxByHash('0x123...')
+   * if (evmTx) navigate(`/transactions/${evmTx.tx_id}`)
+   */
+  async getEvmTxByHash(ethereumHash: string): Promise<EvmTxMap | null> {
+    const { data } = await this.query<EvmTxMap>('evm_tx_map', {
+      filters: { ethereum_tx_hash: `eq.${ethereumHash}` }
+    })
+    return data[0] || null
+  }
+
+  /**
+   * Get EVM address activity stats
+   * Returns tx_count, first_seen, last_seen for an EVM address
+   * @example
+   * const activity = await client.getEvmAddressActivity('0x35d367...6Aab154b')
+   * // { address: '0x...', tx_count: 42, first_seen: '2024-01-01', last_seen: '2024-12-01' }
+   */
+  async getEvmAddressActivity(address: string): Promise<EvmAddressActivity | null> {
+    const { data } = await this.query<EvmAddressActivity>('evm_address_activity', {
+      filters: { address: `eq.${address}` }
+    })
+    return data[0] || null
+  }
+
+  /**
+   * List EVM transactions with optional filters
+   * @example
+   * // Get all EVM txs
+   * const txs = await client.getEvmTransactions({ limit: 20 })
+   *
+   * // Filter by recipient
+   * const toAddress = await client.getEvmTransactions({ recipient: '0x...' })
+   */
+  async getEvmTransactions(options: {
+    limit?: number
+    offset?: number
+    recipient?: string
+    minHeight?: number
+    maxHeight?: number
+  } = {}): Promise<PaginatedResponse<EvmTxMap>> {
+    const filters: Record<string, string> = {}
+
+    if (options.recipient) {
+      filters.recipient = `eq.${options.recipient}`
+    }
+    if (options.minHeight) {
+      filters.height = `gte.${options.minHeight}`
+    }
+    if (options.maxHeight) {
+      filters.height = `lte.${options.maxHeight}`
+    }
+
+    const { data, total } = await this.query<EvmTxMap>('evm_tx_map', {
+      order: 'height.desc',
+      limit: options.limit || 20,
+      offset: options.offset || 0,
+      count: true,
+      filters
+    })
+
+    return {
+      data,
+      pagination: {
+        total: total || data.length,
+        limit: options.limit || 20,
+        offset: options.offset || 0,
+        has_next: (options.offset || 0) + (options.limit || 20) < (total || data.length),
+        has_prev: (options.offset || 0) > 0
+      }
+    }
+  }
+
+  /**
+   * Get top EVM addresses by transaction count
+   * @example
+   * const topAddresses = await client.getTopEvmAddresses(10)
+   */
+  async getTopEvmAddresses(limit = 10): Promise<EvmAddressActivity[]> {
+    const { data } = await this.query<EvmAddressActivity>('evm_address_activity', {
+      order: 'tx_count.desc',
+      limit
+    })
+    return data
   }
 
   // ============================================================================
@@ -979,7 +1126,23 @@ export class YaciAPIClient {
       } catch {}
     }
 
-    // Transaction hash (64 chars hex)
+    // EVM transaction hash (0x + 64 hex chars)
+    // Check this BEFORE regular tx hash since it's more specific
+    if (/^0x[a-fA-F0-9]{64}$/.test(trimmedQuery)) {
+      try {
+        const evmTx = await this.getEvmTxByHash(trimmedQuery)
+        if (evmTx) {
+          // Return the Cosmos tx_id so frontend can navigate to /transactions/{tx_id}
+          results.push({
+            type: 'evm_transaction',
+            value: evmTx,
+            score: 100
+          })
+        }
+      } catch {}
+    }
+
+    // Transaction hash (64 chars hex, no 0x prefix)
     if (trimmedQuery.length === 64 && /^[a-fA-F0-9]+$/.test(trimmedQuery)) {
       try {
         const tx = await this.getTransaction(trimmedQuery)
@@ -996,9 +1159,21 @@ export class YaciAPIClient {
 
     if (isBech32Address || isEthAddress || isValidatorAddress) {
       try {
+        // For EVM addresses, also check evm_address_activity
+        if (isEthAddress) {
+          const evmActivity = await this.getEvmAddressActivity(trimmedQuery)
+          if (evmActivity && evmActivity.tx_count > 0) {
+            results.push({
+              type: 'evm_address',
+              value: evmActivity,
+              score: 95
+            })
+          }
+        }
+
         const stats = await this.getAddressStats(trimmedQuery)
         if (stats.transaction_count > 0) {
-          results.push({ type: 'address', value: { address: trimmedQuery }, score: 90 })
+          results.push({ type: 'address', value: stats, score: 90 })
         }
       } catch {
         results.push({ type: 'address', value: { address: trimmedQuery }, score: 80 })

@@ -240,3 +240,27 @@ export interface SearchResult {
   value: any
   score: number
 }
+
+/**
+ * EVM transaction mapping from evm_tx_map view
+ * Maps Cosmos tx_id to EVM transaction details
+ */
+export interface EvmTxMap {
+  tx_id: string
+  height: number
+  timestamp: string
+  ethereum_tx_hash: string
+  recipient: string | null
+  gas_used: number
+}
+
+/**
+ * EVM address activity from evm_address_activity view
+ * Aggregated stats for an EVM address
+ */
+export interface EvmAddressActivity {
+  address: string
+  tx_count: number
+  first_seen: string
+  last_seen: string
+}

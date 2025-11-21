@@ -16,7 +16,9 @@ export type {
   EVMLog,
   TokenTransfer,
   Contract,
-  Address
+  Address,
+  EvmTxMap,
+  EvmAddressActivity
 } from './types'
 
 // Utility exports

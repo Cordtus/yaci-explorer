@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
 import { JsonViewer } from '@/components/JsonViewer'
+import { AddressChip } from '@/components/AddressChip'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 
 const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
@@ -52,6 +55,38 @@ const MESSAGE_COLORS = [
   'bg-teal-500',
 ]
 
+// Event type colors for visual distinction
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  transfer: 'bg-green-100 text-green-800 border-green-200',
+  message: 'bg-blue-100 text-blue-800 border-blue-200',
+  coin_spent: 'bg-orange-100 text-orange-800 border-orange-200',
+  coin_received: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  tx: 'bg-purple-100 text-purple-800 border-purple-200',
+  ethereum_tx: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+}
+
+// Group events by event_type for the UI
+function groupEventsByType(events: any[]) {
+  const grouped = new Map<string, any[]>()
+  events.forEach(event => {
+    const type = event.event_type
+    if (!grouped.has(type)) {
+      grouped.set(type, [])
+    }
+    grouped.get(type)!.push(event)
+  })
+  return Array.from(grouped.entries()).map(([type, evts]) => ({
+    type,
+    events: evts,
+    count: evts.length
+  }))
+}
+
+// Check if value looks like an address
+function isAddress(value: string): boolean {
+  return /^(manifest1|0x)[a-zA-Z0-9]{20,}$/.test(value)
+}
+
 // Helper to check if a string is valid JSON
 function isJsonString(str: string): boolean {
   try {
@@ -67,7 +102,8 @@ export default function TransactionDetailPage() {
   const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
   const [copied, setCopied] = useState(false)
   const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({})
-  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [expandedEventTypes, setExpandedEventTypes] = useState<Record<string, boolean>>({})
+  const [eventFilter, setEventFilter] = useState('')
   const params = useParams()
 
   useEffect(() => {
@@ -283,22 +319,28 @@ export default function TransactionDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Messages & Events - Enhanced Nested View */}
+          {/* Messages & Events - Enhanced View */}
           <Card>
             <CardHeader>
-              <CardTitle>Messages & Events ({transaction.messages?.length || 0} messages)</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Messages & Events ({transaction.messages?.length || 0} messages)</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               {transaction.messages && transaction.messages.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {transaction.messages.map((message, msgIdx) => {
                     const messageColor = MESSAGE_COLORS[msgIdx % MESSAGE_COLORS.length]
-                    // Include events where msg_index matches OR is null (null means it applies to message 0)
                     const messageEvents = transaction.events?.filter(e =>
                       e.msg_index === msgIdx || (e.msg_index === null && msgIdx === 0)
                     ) || []
                     const groupedEvents = groupEvents(messageEvents)
+                    const eventsByType = groupEventsByType(groupedEvents)
                     const isExpanded = expandedMessages[msgIdx]
+
+                    // Extract key info for summary
+                    const msgType = message.type?.split('.').pop() || 'Unknown'
+                    const sender = message.sender || message.data?.from_address
 
                     return (
                       <Collapsible
@@ -307,8 +349,7 @@ export default function TransactionDetailPage() {
                         onOpenChange={() => setExpandedMessages(prev => ({ ...prev, [msgIdx]: !prev[msgIdx] }))}
                       >
                         <div className="border rounded-lg overflow-hidden">
-                          {/* Accent line */}
-                          <div className={`h-0.5 ${messageColor} w-1/3`} />
+                          <div className={`h-1 ${messageColor}`} />
 
                           <CollapsibleTrigger className="w-full p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between">
@@ -318,98 +359,145 @@ export default function TransactionDetailPage() {
                                 ) : (
                                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 )}
-                                <span className="text-sm font-medium">Message #{msgIdx}</span>
-                                <Badge variant="outline" className="font-mono text-xs">
-                                  {message.type || 'Unknown'}
-                                </Badge>
-                                {groupedEvents.length > 0 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {groupedEvents.length} events
+                                <div className="text-left">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold">{msgType}</span>
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                      #{msgIdx}
+                                    </Badge>
+                                  </div>
+                                  {sender && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      From: {sender.slice(0, 12)}...{sender.slice(-6)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {eventsByType.map(({ type, count }) => (
+                                  <Badge
+                                    key={type}
+                                    variant="outline"
+                                    className={`text-xs ${EVENT_TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
+                                  >
+                                    {type} ({count})
                                   </Badge>
-                                )}
+                                ))}
                               </div>
                             </div>
                           </CollapsibleTrigger>
 
                           <CollapsibleContent>
-                            <div className="px-4 pb-4 space-y-4">
-                              {/* Message Details */}
-                              {message.sender && (
-                                <div className="bg-muted/30 rounded-lg p-3">
-                                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sender</label>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <code className="text-sm font-mono">{message.sender}</code>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-5 w-5"
-                                      onClick={() => message.sender && copyToClipboard(message.sender)}
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                            <div className="px-4 pb-4 space-y-4 border-t">
+                              {/* Sender with AddressChip */}
+                              {sender && (
+                                <div className="pt-4">
+                                  <AddressChip address={sender} label="From" />
                                 </div>
                               )}
 
-                              {/* Events nested under message */}
-                              {groupedEvents.length > 0 && (
-                                <div className="space-y-2 pl-4 border-l-2 border-muted">
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                    Events
-                                  </p>
-                                  {groupedEvents.map((event, evtIdx) => {
-                                    const eventKey = `${msgIdx}-${event.event_index}`
-                                    const isEventExpanded = expandedEvents[eventKey]
+                              {/* Events grouped by type */}
+                              {eventsByType.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                      Events ({groupedEvents.length})
+                                    </p>
+                                    {groupedEvents.length > 3 && (
+                                      <div className="flex items-center gap-2">
+                                        <Filter className="h-3 w-3 text-muted-foreground" />
+                                        <Input
+                                          placeholder="Filter events..."
+                                          value={eventFilter}
+                                          onChange={(e) => setEventFilter(e.target.value)}
+                                          className="h-7 w-40 text-xs"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {eventsByType.map(({ type, events: typeEvents }) => {
+                                    const typeKey = `${msgIdx}-${type}`
+                                    const isTypeExpanded = expandedEventTypes[typeKey]
+                                    const filteredEvents = eventFilter
+                                      ? typeEvents.filter(e =>
+                                          e.attributes.some(a =>
+                                            a.key.toLowerCase().includes(eventFilter.toLowerCase()) ||
+                                            a.value.toLowerCase().includes(eventFilter.toLowerCase())
+                                          )
+                                        )
+                                      : typeEvents
+
+                                    if (filteredEvents.length === 0) return null
 
                                     return (
                                       <Collapsible
-                                        key={eventKey}
-                                        open={isEventExpanded}
-                                        onOpenChange={() => setExpandedEvents(prev => ({ ...prev, [eventKey]: !prev[eventKey] }))}
+                                        key={typeKey}
+                                        open={isTypeExpanded}
+                                        onOpenChange={() => setExpandedEventTypes(prev => ({
+                                          ...prev,
+                                          [typeKey]: !prev[typeKey]
+                                        }))}
                                       >
-                                        <div className="border rounded-lg overflow-hidden bg-card">
-                                          <div className={`h-0.5 ${messageColor} opacity-60 w-1/4`} />
-
+                                        <div className="border rounded-lg overflow-hidden">
                                           <CollapsibleTrigger className="w-full p-3 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center justify-between text-left">
+                                            <div className="flex items-center justify-between">
                                               <div className="flex items-center gap-2">
-                                                {isEventExpanded ? (
+                                                {isTypeExpanded ? (
                                                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                                 ) : (
                                                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
                                                 )}
-                                                <Badge variant="outline" className="text-xs">
-                                                  {event.event_type}
+                                                <Badge
+                                                  variant="outline"
+                                                  className={`text-xs ${EVENT_TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
+                                                >
+                                                  {type}
                                                 </Badge>
                                                 <span className="text-xs text-muted-foreground">
-                                                  {event.attributes.length} attributes
+                                                  {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
                                                 </span>
                                               </div>
                                             </div>
                                           </CollapsibleTrigger>
 
                                           <CollapsibleContent>
-                                            <div className="px-3 pb-3 space-y-2">
-                                              {event.attributes.map((attr, attrIdx) => {
-                                                const isJson = isJsonString(attr.value)
+                                            <div className="border-t">
+                                              {filteredEvents.map((event, evtIdx) => (
+                                                <div key={evtIdx} className="border-b last:border-b-0">
+                                                  <Table>
+                                                    <TableHeader>
+                                                      <TableRow className="bg-muted/30">
+                                                        <TableHead className="w-1/3 text-xs py-2">Key</TableHead>
+                                                        <TableHead className="text-xs py-2">Value</TableHead>
+                                                      </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                      {event.attributes.map((attr, attrIdx) => {
+                                                        const isJson = isJsonString(attr.value)
+                                                        const addrMatch = isAddress(attr.value)
 
-                                                return (
-                                                  <div key={attrIdx} className={isJson ? "bg-muted/20 rounded p-2" : "bg-muted/20 rounded p-2"}>
-                                                    <div className="flex flex-col gap-2">
-                                                      <span className="text-xs font-medium text-muted-foreground">
-                                                        {attr.key}:
-                                                      </span>
-                                                      {isJson ? (
-                                                        <JsonViewer data={attr.value} maxHeight={400} />
-                                                      ) : (
-                                                        <span className="text-xs font-mono break-all">
-                                                          {attr.value}
-                                                        </span>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                )
-                                              })}
+                                                        return (
+                                                          <TableRow key={attrIdx}>
+                                                            <TableCell className="font-medium text-xs py-2 text-muted-foreground">
+                                                              {attr.key}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs py-2">
+                                                              {isJson ? (
+                                                                <JsonViewer data={attr.value} maxHeight={200} />
+                                                              ) : addrMatch ? (
+                                                                <AddressChip address={attr.value} truncate />
+                                                              ) : (
+                                                                <span className="font-mono break-all">{attr.value}</span>
+                                                              )}
+                                                            </TableCell>
+                                                          </TableRow>
+                                                        )
+                                                      })}
+                                                    </TableBody>
+                                                  </Table>
+                                                </div>
+                                              ))}
                                             </div>
                                           </CollapsibleContent>
                                         </div>

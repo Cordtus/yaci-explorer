@@ -48,3 +48,4 @@ AGENTS.md
 .claude/
 docs/
 packages/database-client/dist/
+test-results/

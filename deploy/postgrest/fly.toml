@@ -1,0 +1,33 @@
+app = "republic-postgrest"
+primary_region = "sjc"
+
+[build]
+  image = "postgrest/postgrest:v12.0.2"
+
+[env]
+  PGRST_DB_SCHEMAS = "api"
+  PGRST_DB_ANON_ROLE = "web_anon"
+  PGRST_SERVER_PORT = "3000"
+  PGRST_LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 250
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/"
+
+[deploy]
+  strategy = "rolling"
