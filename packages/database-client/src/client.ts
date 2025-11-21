@@ -792,6 +792,27 @@ export class YaciAPIClient {
     return distribution
   }
 
+  async getGasEfficiency(limit = 1000): Promise<{ avgGasLimit: number; transactionCount: number }> {
+    const { data: transactions } = await this.query<any>('transactions_main', {
+      select: 'gas_wanted',
+      order: 'height.desc',
+      limit
+    })
+
+    if (transactions.length === 0) {
+      return { avgGasLimit: 0, transactionCount: 0 }
+    }
+
+    const totalGas = transactions.reduce((sum: number, tx: any) => {
+      return sum + (parseInt(tx.gas_wanted) || 0)
+    }, 0)
+
+    return {
+      avgGasLimit: Math.round(totalGas / transactions.length),
+      transactionCount: transactions.length
+    }
+  }
+
   // ============================================================================
   // SEARCH
   // ============================================================================

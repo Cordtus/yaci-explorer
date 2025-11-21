@@ -46,3 +46,4 @@ CLAUDE.md
 AGENTS.md
 .claude/
 docs/
+packages/database-client/dist/
