@@ -1,6 +1,6 @@
 // Main exports
 export { YaciAPIClient } from './client'
-export type { YaciAPIClientOptions } from './client'
+export type { YaciAPIClientOptions, QueryOptions } from './client'
 
 // Type exports
 export type {
