@@ -204,6 +204,23 @@ export class YaciAPIClient {
       message_type?: string
     } = {}
   ): Promise<PaginatedResponse<EnhancedTransaction>> {
+    // If filtering by message_type, get tx IDs from messages_main first
+    let txIdFilter: string[] | null = null
+    if (filters.message_type) {
+      const { data: messages } = await this.query<Message>('messages_main', {
+        select: 'id',
+        filters: { type: `eq.${filters.message_type}` },
+        order: 'id.desc'
+      })
+      txIdFilter = [...new Set(messages.map(m => m.id))]
+      if (txIdFilter.length === 0) {
+        return {
+          data: [],
+          pagination: { total: 0, limit, offset, has_next: false, has_prev: offset > 0 }
+        }
+      }
+    }
+
     const queryFilters: Record<string, string> = {}
 
     if (filters.status === 'success') {
@@ -228,6 +245,12 @@ export class YaciAPIClient {
     }
     if (filters.timestamp_max) {
       queryFilters['timestamp'] = `lte.${filters.timestamp_max}`
+    }
+
+    // Apply message_type filter via tx IDs
+    if (txIdFilter) {
+      const idFilters = txIdFilter.map(id => `id.eq.${id}`).join(',')
+      queryFilters['or'] = `(${idFilters})`
     }
 
     const { data: transactions, total } = await this.query<Transaction>('transactions_main', {

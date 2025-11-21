@@ -26,9 +26,6 @@ export default function BlocksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Blocks</h1>
-          <p className="text-muted-foreground">
-            Browse the latest blocks on the blockchain
-          </p>
         </div>
       </div>
 
@@ -47,27 +44,26 @@ export default function BlocksPage() {
                 <TableHead>Block Hash</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Transactions</TableHead>
-                <TableHead>Proposer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={4}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     Error loading blocks
                   </TableCell>
                 </TableRow>
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No blocks found
                   </TableCell>
                 </TableRow>
@@ -100,11 +96,6 @@ export default function BlocksPage() {
                       <Badge variant="secondary">
                         {block.data?.txs?.length || 0} txs
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs">
-                        {formatHash(block.data.block.header.proposer_address, 8)}
-                      </code>
                     </TableCell>
                   </TableRow>
                 ))
