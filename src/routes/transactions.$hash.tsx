@@ -43,27 +43,6 @@ function groupEvents(events: any[]) {
   }))
 }
 
-// Accent colors for different message types
-const MESSAGE_COLORS = [
-  'bg-blue-500',
-  'bg-purple-500',
-  'bg-green-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-cyan-500',
-  'bg-indigo-500',
-  'bg-teal-500',
-]
-
-// Event type colors for visual distinction
-const EVENT_TYPE_COLORS: Record<string, string> = {
-  transfer: 'bg-green-100 text-green-800 border-green-200',
-  message: 'bg-blue-100 text-blue-800 border-blue-200',
-  coin_spent: 'bg-orange-100 text-orange-800 border-orange-200',
-  coin_received: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  tx: 'bg-purple-100 text-purple-800 border-purple-200',
-  ethereum_tx: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-}
 
 // Group events by event_type for the UI
 function groupEventsByType(events: any[]) {
@@ -330,7 +309,6 @@ export default function TransactionDetailPage() {
               {transaction.messages && transaction.messages.length > 0 ? (
                 <div className="space-y-4">
                   {transaction.messages.map((message, msgIdx) => {
-                    const messageColor = MESSAGE_COLORS[msgIdx % MESSAGE_COLORS.length]
                     const messageEvents = transaction.events?.filter(e =>
                       e.msg_index === msgIdx || (e.msg_index === null && msgIdx === 0)
                     ) || []
@@ -349,8 +327,6 @@ export default function TransactionDetailPage() {
                         onOpenChange={() => setExpandedMessages(prev => ({ ...prev, [msgIdx]: !prev[msgIdx] }))}
                       >
                         <div className="border rounded-lg overflow-hidden">
-                          <div className={`h-1 ${messageColor}`} />
-
                           <CollapsibleTrigger className="w-full p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -373,16 +349,8 @@ export default function TransactionDetailPage() {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {eventsByType.map(({ type, count }) => (
-                                  <Badge
-                                    key={type}
-                                    variant="outline"
-                                    className={`text-xs ${EVENT_TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
-                                  >
-                                    {type} ({count})
-                                  </Badge>
-                                ))}
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {groupedEvents.length} events
                               </div>
                             </div>
                           </CollapsibleTrigger>
@@ -448,14 +416,11 @@ export default function TransactionDetailPage() {
                                                 ) : (
                                                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
                                                 )}
-                                                <Badge
-                                                  variant="outline"
-                                                  className={`text-xs ${EVENT_TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
-                                                >
+                                                <span className="text-xs font-medium">
                                                   {type}
-                                                </Badge>
+                                                </span>
                                                 <span className="text-xs text-muted-foreground">
-                                                  {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+                                                  ({filteredEvents.length})
                                                 </span>
                                               </div>
                                             </div>
