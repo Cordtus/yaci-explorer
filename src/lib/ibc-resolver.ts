@@ -26,9 +26,9 @@ export interface IBCDenomInfo {
 	ibcHash: string
 }
 
-// Browser storage key for IBC cache
-const IBC_CACHE_KEY = 'yaci_ibc_denom_cache'
-const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
+// Browser storage keys for IBC cache
+export const IBC_CACHE_KEY = 'yaci_ibc_denom_cache'
+export const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
 
 /**
  * Get the chain's REST API endpoint from environment

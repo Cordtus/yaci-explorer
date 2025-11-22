@@ -12,6 +12,7 @@ import { useState } from 'react'
 
 import { Header } from '@/components/layout/header'
 import { DenomProvider } from '@/contexts/DenomContext'
+import { appConfig } from '@/config/app'
 import stylesheet from "./styles/globals.css?url";
 
 export const links: LinksFunction = () => [
@@ -51,8 +52,8 @@ export default function Root() {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 10 * 1000, // 10 seconds
-        gcTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: appConfig.queries.staleTimeMs,
+        gcTime: appConfig.queries.gcTimeMs,
         refetchOnWindowFocus: false,
       },
     },

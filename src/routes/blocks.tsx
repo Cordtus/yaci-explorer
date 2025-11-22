@@ -5,12 +5,12 @@ import { Blocks } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { YaciAPIClient } from '@/lib/api/client'
+import { YaciAPIClient } from '@yaci/database-client'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 
-const api = new YaciAPIClient()
+const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function BlocksPage() {
   const [page, setPage] = useState(0)
@@ -26,9 +26,6 @@ export default function BlocksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Blocks</h1>
-          <p className="text-muted-foreground">
-            Browse the latest blocks on the blockchain
-          </p>
         </div>
       </div>
 
@@ -47,27 +44,26 @@ export default function BlocksPage() {
                 <TableHead>Block Hash</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Transactions</TableHead>
-                <TableHead>Proposer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={4}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     Error loading blocks
                   </TableCell>
                 </TableRow>
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No blocks found
                   </TableCell>
                 </TableRow>
@@ -100,11 +96,6 @@ export default function BlocksPage() {
                       <Badge variant="secondary">
                         {block.data?.txs?.length || 0} txs
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs">
-                        {formatHash(block.data.block.header.proposer_address, 8)}
-                      </code>
                     </TableCell>
                   </TableRow>
                 ))

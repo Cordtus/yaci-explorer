@@ -51,6 +51,12 @@ export interface Block {
  * Transaction data from transactions_main table
  * Represents a blockchain transaction with fees, status, and timing information
  */
+export interface TransactionIngestError {
+  message: string
+  reason?: string | null
+  hash?: string
+}
+
 export interface Transaction {
   id: string // tx hash
   fee: {
@@ -61,12 +67,13 @@ export interface Transaction {
     gasLimit: string // Note: yaci uses gasLimit not gas_limit
     payer?: string
     granter?: string
-  }
+  } | null
   memo: string | null
   error: string | null
-  height: number // bigint in DB
-  timestamp: string // timestamp with time zone
+  height: number | null // bigint in DB
+  timestamp: string | null // timestamp with time zone
   proposal_ids: string[] | null // Note: plural
+  ingest_error?: TransactionIngestError | null
 }
 
 /**
@@ -184,6 +191,7 @@ export interface Address {
 export interface EnhancedTransaction extends Transaction {
   messages: Message[]
   events: Event[]
+  raw_data?: any
   evm_data?: EVMTransaction
   logs?: EVMLog[]
   token_transfers?: TokenTransfer[]

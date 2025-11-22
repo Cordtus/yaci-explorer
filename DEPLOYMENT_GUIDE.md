@@ -11,10 +11,10 @@ git clone https://github.com/Cordtus/yaci-explorer.git
 cd yaci-explorer
 cp .env.example .env
 ```
-2) Edit `.env` (minimum):
+2) Configure `.env` (minimum):
 ```bash
+yarn configure:env   # prompts for Postgres username/password/database and sets SKIP_ENV_PROMPTS=true
 CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
-POSTGRES_PASSWORD=your_secure_password
 ```
 3) Launch:
 ```bash
@@ -24,47 +24,117 @@ Access: http://localhost:3001
 4) Monitor:
 ```bash
 docker compose -f docker/docker-compose.yml logs -f yaci
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
 
 ---
 
 ## Architecture
-Chain (gRPC) → Yaci indexer → PostgreSQL → PostgREST → Explorer UI.
-PostgREST exposes endpoints automatically from the DB schema.
 
----
+```
+Chain (gRPC) -> Yaci Indexer -> PostgreSQL -> PostgREST -> Explorer UI
+```
 
-## Configuration
-### Env vars
-Required:
-| Var | Purpose | Example |
-| --- | --- | --- |
-| `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `chain.example.com:9090` |
-| `POSTGRES_PASSWORD` | DB password | `changeme` |
+The explorer uses the `@yaci/database-client` package for all PostgREST API interactions.
 
-Optional:
-| Var | Default | Notes |
-| --- | --- | --- |
-| `CHAIN_ID` / `CHAIN_NAME` | auto | Override detection |
-| `VITE_CHAIN_REST_ENDPOINT` | unset | Needed for IBC denom resolution |
-| `YACI_MAX_CONCURRENCY` | 100 | Raise/lower for sync speed |
-| `YACI_LOG_LEVEL` | info | use debug for troubleshooting |
-| `YACI_INSECURE` | -k | Remove if TLS on gRPC |
-| Ports: `EXPLORER_PORT` 3001, `POSTGREST_PORT` 3000, `POSTGRES_PORT` 5432, `YACI_METRICS_PORT` 2112 | change to avoid clashes |
+## Deployment Options
 
-### Frontend options (optional)
-`src/config/chains.ts`: add chain for custom symbol/feature flags (auto-detection works without it).
-`src/components/layout/header.tsx`: adjust branding/logo.
+### 1. Docker Compose (Recommended)
 
-### Indexer flags (edit `docker/docker-compose.yml`)
-Common flags: `--live` (default), `--start-height N`, `--end-height N`, `--max-concurrency N`, `-k` (skip TLS), `-l debug`.
+Everything runs in containers. Best for quick setup and cloud deployments.
 
----
+```bash
+./scripts/setup.sh
+# Select option 1
+```
 
-## Switching Chains
-- Fresh start (recommended):
+Or manually:
+```bash
+cp .env.example .env
+# Edit .env with your settings
+docker compose -f docker/docker-compose.yml up -d
+```
+
+### 2. Native (Systemd)
+
+Installs services directly on the host. Best for VPS deployments.
+
+```bash
+sudo ./scripts/setup.sh
+# Select option 2
+```
+
+This installs and configures:
+- PostgreSQL
+- PostgREST
+- Yaci indexer
+- Node.js frontend server
+
+### 3. Frontend Only
+
+Connect to an existing PostgREST instance.
+
+```bash
+./scripts/setup.sh
+# Select option 3
+```
+
+## Fly.io Deployment
+
+### 1. Create Postgres Cluster
+```bash
+fly postgres create --name yaci-pg
+```
+
+### 2. Deploy Yaci Indexer
+```bash
+cd /path/to/yaci
+fly launch --name yaci-indexer
+fly secrets set YACI_POSTGRES_DSN="postgres://..." YACI_GRPC_ENDPOINT="..."
+```
+
+### 3. Deploy Explorer
+```bash
+fly launch --name yaci-explorer
+# Set VITE_POSTGREST_URL to your PostgREST endpoint
+```
+
+## Reverse Proxy (Production)
+
+For production, put a reverse proxy in front:
+
+**Caddy:**
+```
+yourdomain.com {
+    reverse_proxy /api/* localhost:3000 {
+        header_up -/api
+    }
+    reverse_proxy localhost:3001
+}
+```
+
+**Nginx:**
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location /api/ {
+        proxy_pass http://localhost:3000/;
+    }
+
+    location / {
+        proxy_pass http://localhost:3001;
+    }
+}
+```
+
+## Database Reset
+
+To completely reset and re-index:
+
+**Docker:**
 ```bash
 docker compose -f docker/docker-compose.yml down -v
 # update CHAIN_GRPC_ENDPOINT in .env
@@ -74,7 +144,7 @@ docker compose -f docker/docker-compose.yml up -d
 ```bash
 docker compose -f docker/docker-compose.yml down
 docker compose -f docker/docker-compose.yml up -d postgres
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "TRUNCATE api.blocks_raw, api.transactions_main, api.messages_main, api.events_main;"
 docker compose -f docker/docker-compose.yml up -d
 ```
@@ -117,49 +187,60 @@ Add to `yaci` command:
 git clone https://github.com/manifest-network/yaci.git
 cd yaci && docker build -t yaci:local -f docker/Dockerfile .
 cd ../yaci-explorer && echo "YACI_IMAGE=yaci:local" >> .env
-docker compose -f docker/docker-compose.yml up -d
 ```
 
----
-
-## Production Tips
-### Minimal `.env`
+**Native:**
 ```bash
-CHAIN_GRPC_ENDPOINT=your-chain.example.com:9090
-VITE_CHAIN_REST_ENDPOINT=https://rest.yourchain.com
-POSTGRES_PASSWORD=strong_password
-VITE_POSTGREST_URL=/api
-YACI_MAX_CONCURRENCY=100
-YACI_LOG_LEVEL=info
-YACI_IMAGE=ghcr.io/cordtus/yaci:v1.0.0
+sudo -u postgres dropdb yaci
+sudo -u postgres createdb yaci
+sudo systemctl restart yaci
 ```
 
-### Reverse proxy (nginx)
-```nginx
-location / { proxy_pass http://localhost:3001; proxy_set_header Host $host; }
-location /api/ { proxy_pass http://localhost:3000/; proxy_set_header Host $host; }
-```
+## Monitoring
 
-### Backups (daily)
+- **Prometheus metrics:** http://localhost:2112/metrics
+- **Check indexer logs:**
+  - Docker: `docker logs yaci-indexer -f`
+  - Native: `journalctl -u yaci -f`
+
+## Troubleshooting
+
+### "Failed to connect to gRPC"
+- Verify `CHAIN_GRPC_ENDPOINT` is correct
+- Check if the chain node is running and accessible
+- For local chains in Docker, use `host.docker.internal:9090`
+
+### "Connection refused" to PostgREST
+- Wait for PostgreSQL to be healthy
+- Check that migrations completed (Yaci creates the `api` schema)
+
+### Explorer shows no data
+- Verify Yaci is indexing: check logs for "Extracting blocks"
+- Check PostgREST is running: `curl http://localhost:3000/blocks_raw?limit=1`
+
+## Advanced Configuration
+
+### Multiple Chains
+
+Run separate stacks with different ports in separate directories.
+
+### Custom Yaci Build
+
 ```bash
-docker exec yaci-explorer-postgres pg_dump -U postgres -d yaci -F c -f /tmp/backup.dump
+docker exec yaci-explorer-postgres pg_dump -U yaci -d yaci -F c -f /tmp/backup.dump
 docker cp yaci-explorer-postgres:/tmp/backup.dump /backups/backup_$(date +%Y%m%d_%H%M%S).dump
 find /backups -name "backup_*.dump" -mtime +7 -delete
 ```
 
-### Security checklist
-- Change `POSTGRES_PASSWORD`
-- Remove `YACI_INSECURE=-k` if TLS works
-- HTTPS proxy, firewall DB port
-- Use `/api` proxy for PostgREST
-- Pin `YACI_IMAGE`
-- Add log rotation and backups
+### IBC Denomination Resolution
+
+Set `VITE_CHAIN_REST_ENDPOINT` in .env to your chain's REST API for automatic IBC denom resolution.
 
 ### Sizing (rough)
 - Small/test: 2 vCPU, 4GB RAM, 50GB, `YACI_MAX_CONCURRENCY=50`
 - Medium: 4 vCPU, 8GB RAM, 200GB, `YACI_MAX_CONCURRENCY=100`
 - Large: 8 vCPU, 16GB RAM, 500GB+, `YACI_MAX_CONCURRENCY=200`
-Storage: ~1–5GB per million blocks (varies by tx volume).
+Storage: ~1-5GB per million blocks (varies by tx volume).
 
 ### Prometheus alerts (example)
 ```yaml
@@ -192,9 +273,54 @@ docker compose -f docker/docker-compose.yml pull yaci && docker compose -f docke
 docker compose -f docker/docker-compose.yml up -d --build explorer
 
 # Indexing progress
-docker exec -it yaci-explorer-postgres psql -U postgres -d yaci -c \
+docker exec -it yaci-explorer-postgres psql -U yaci -d yaci -c \
   "SELECT MAX(id) FROM api.blocks_raw;"
 ```
+
+---
+
+## Resetting after a devnet/genesis restart
+Devnets often restart from height 1. When block numbers repeat, the indexer hits unique constraints and stalls, and the UI may show stale chain metadata. Reset the DB before re-indexing:
+
+### Docker (recommended)
+Use the helper script (stops services, wipes `postgres-data`, restarts):
+```bash
+./scripts/reset-devnet.sh
+# custom compose file:
+./scripts/reset-devnet.sh --compose-file path/to/compose.yml
+# non-interactive:
+SKIP_CONFIRM=1 ./scripts/reset-devnet.sh
+```
+
+### Manual Postgres reset
+1) Stop Yaci + PostgREST.
+2) Truncate tables (or drop the DB):
+```sql
+TRUNCATE api.blocks_raw, api.transactions_main, api.transactions_raw, api.messages_main, api.events_main RESTART IDENTITY CASCADE;
+```
+3) Restart Yaci with `--live` so it re-ingests from height 1.
+4) Refresh the UI (or use the reset banner) to clear cached chain info.
+
+### Bare-metal helper
+If you're not using docker-compose, run:
+```bash
+yarn reset:full
+```
+The script sources `.env`, ensures `psql`/`jq` are available, points the guard at your local Postgres host, and executes `scripts/chain-reset-guard.sh`. Restart the indexer afterward.
+
+Need a one-liner that also rebuilds and restarts services? Use:
+```bash
+yarn redeploy:systemd   # set FORCE_ENV_PROMPTS=true to re-run the credential helper
+```
+Override service names with `YACI_INDEXER_SERVICE`, `POSTGREST_SERVICE`, and `YACI_EXPLORER_SERVICE` when calling it.
+This helper now invokes `scripts/update-yaci.sh` first, which clones/pulls `cordtus/yaci` (or whatever `YACI_REPO_URL`/`YACI_BRANCH` point to) and runs `YACI_BUILD_CMD` (default `make build`). Set `YACI_SOURCE_DIR` to the directory that your `yaci-indexer` systemd unit uses so the rebuilt binary is picked up on restart, or export `YACI_SKIP_UPDATE=true` to leave the running binary untouched.
+Both flows auto-create the configured `POSTGRES_DB` when it's missing (bare metal via `scripts/full-reset.sh`, docker/systemd via `scripts/chain-reset-guard.sh`), so feel free to rename the database per-chain without manual SQL. If the credentials can't create databases you'll see a warning; create it once and rerun.
+
+### UI cache note
+On restart detection the UI can clear cached chain ID/denoms; a hard refresh also works if you do not see the banner.
+
+### Automatic guard
+Set `ENABLE_CHAIN_RESET_GUARD=true` (and `CHAIN_RPC_ENDPOINT` / `RESET_GUARD_*` as needed) to let the docker stack run `scripts/chain-reset-guard.sh` before Yaci starts. The guard compares the stored genesis hash and latest remote height - if it detects a rewind it truncates the main tables automatically (or, if `RESET_GUARD_AUTO_TRUNCATE=false`, it stops with a warning so you can intervene manually).
 
 ---
 
