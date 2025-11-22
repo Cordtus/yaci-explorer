@@ -390,7 +390,7 @@ export default function TransactionDetailPage() {
                                     const isTypeExpanded = expandedEventTypes[typeKey]
                                     const filteredEvents = eventFilter
                                       ? typeEvents.filter(e =>
-                                          e.attributes.some(a =>
+                                          e.attributes.some((a: { key: string; value: string }) =>
                                             a.key.toLowerCase().includes(eventFilter.toLowerCase()) ||
                                             a.value.toLowerCase().includes(eventFilter.toLowerCase())
                                           )
@@ -439,7 +439,7 @@ export default function TransactionDetailPage() {
                                                       </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                      {event.attributes.map((attr, attrIdx) => {
+                                                      {event.attributes.map((attr: { key: string; value: string }, attrIdx: number) => {
                                                         const isJson = isJsonString(attr.value)
                                                         const addrMatch = isAddress(attr.value)
 

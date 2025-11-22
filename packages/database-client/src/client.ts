@@ -461,6 +461,9 @@ export class YaciAPIClient {
     let gasUsed: number | undefined
     let ethereumHashFromEvent: string | undefined
     let toFromEvent: string | null | undefined
+    let senderFromEvent: string | undefined
+    let amountFromEvent: string | undefined
+    let txTypeFromEvent: number | undefined
 
     evmEvents.forEach((event) => {
       switch (event.attr_key) {
@@ -475,6 +478,18 @@ export class YaciAPIClient {
           break
         case 'recipient':
           toFromEvent = event.attr_value
+          break
+        case 'sender':
+          senderFromEvent = event.attr_value
+          break
+        case 'amount':
+          amountFromEvent = event.attr_value
+          break
+        case 'txType':
+          if (event.attr_value) {
+            const parsed = parseInt(event.attr_value, 10)
+            if (!Number.isNaN(parsed)) txTypeFromEvent = parsed
+          }
           break
       }
     })
@@ -501,14 +516,17 @@ export class YaciAPIClient {
     }
 
     const hash = ethereumHashFromEvent || parsedTx?.hash || txHash
-    const fromAddress = parsedTx?.from || ''
+    const fromAddress = parsedTx?.from || senderFromEvent || ''
     const toAddress = parsedTx?.to || toFromEvent || null
-    const value = parsedTx?.value ? parsedTx.value.toString() : '0'
+    // Use event amount if available and raw tx value is 0 or missing
+    const rawValue = parsedTx?.value ? parsedTx.value.toString() : '0'
+    const value = (rawValue === '0' && amountFromEvent) ? amountFromEvent : rawValue
     const gasLimit = parsedTx?.gasLimit ? Number(parsedTx.gasLimit.toString()) : 0
     const gasPrice = parsedTx?.gasPrice ? parsedTx.gasPrice.toString() : ''
     const nonce = typeof parsedTx?.nonce === 'number' ? parsedTx.nonce : 0
     const inputData = parsedTx?.data || ''
-    const type = typeof parsedTx?.type === 'number' ? parsedTx.type : 0
+    // Prefer event txType if available, then parsed tx type
+    const type = txTypeFromEvent ?? (typeof parsedTx?.type === 'number' ? parsedTx.type : 0)
     const maxFeePerGas = parsedTx?.maxFeePerGas?.toString()
     const maxPriorityFeePerGas = parsedTx?.maxPriorityFeePerGas?.toString()
     const accessList = parsedTx?.accessList?.map((entry) => ({

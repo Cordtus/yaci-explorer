@@ -18,7 +18,7 @@ function formatWei(wei: string, decimals = 18): string {
   const wholePart = value / divisor
   const fractionalPart = value % divisor
 
-  if (fractionalPart === 0n) {
+  if (fractionalPart === BigInt(0)) {
     return wholePart.toString()
   }
 
@@ -47,6 +47,53 @@ function getTxTypeLabel(type: number): string {
     case 1: return 'Access List (EIP-2930)'
     case 2: return 'Dynamic Fee (EIP-1559)'
     default: return `Type ${type}`
+  }
+}
+
+// Determine transaction action based on input data and decoded info
+function getTransactionAction(evmData: EVMTransaction): { label: string; description: string } {
+  // No input data = native transfer
+  if (!evmData.input_data || evmData.input_data === '0x') {
+    return {
+      label: 'Native Transfer',
+      description: `Transfer ${formatWei(evmData.value)} ETH`
+    }
+  }
+
+  // Contract creation
+  if (!evmData.to_address) {
+    return {
+      label: 'Contract Creation',
+      description: 'Deploy new smart contract'
+    }
+  }
+
+  // Decoded method
+  if (evmData.decoded_input) {
+    const method = evmData.decoded_input.methodName
+    if (method === 'transfer') {
+      const to = evmData.decoded_input.params.find(p => p.name === 'to')?.value
+      const amount = evmData.decoded_input.params.find(p => p.name === 'amount')?.value
+      return {
+        label: 'Token Transfer',
+        description: amount ? `Transfer ${formatWei(String(amount))} tokens` : 'Transfer tokens'
+      }
+    }
+    if (method === 'approve') {
+      return {
+        label: 'Token Approval',
+        description: 'Approve spender allowance'
+      }
+    }
+    return {
+      label: method.charAt(0).toUpperCase() + method.slice(1),
+      description: `Call ${method}() function`
+    }
+  }
+
+  return {
+    label: 'Contract Interaction',
+    description: 'Execute contract method'
   }
 }
 
@@ -83,6 +130,8 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     ? (BigInt(evmData.gas_price) * BigInt(evmData.gas_used)).toString()
     : '0'
 
+  const action = getTransactionAction(evmData)
+
   return (
     <Card>
       <CardHeader>
@@ -94,6 +143,23 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Transaction Summary */}
+        <div className="bg-muted/50 p-4 rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-lg">{action.label}</div>
+              <div className="text-sm text-muted-foreground">{action.description}</div>
+            </div>
+            <div className="text-right">
+              <div className="font-mono font-medium">
+                {formatWei(evmData.value)} ETH
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Fee: {formatWei(transactionFee)} ETH
+              </div>
+            </div>
+          </div>
+        </div>
         {/* Transaction Hash */}
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">EVM Hash:</span>
@@ -245,13 +311,6 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
           </Collapsible>
         )}
 
-        {/* Native transfer indicator */}
-        {(!evmData.input_data || evmData.input_data === '0x') && evmData.value !== '0' && (
-          <div className="bg-muted/50 p-3 rounded text-sm">
-            <Badge variant="secondary">Native Transfer</Badge>
-            <span className="ml-2 text-muted-foreground">Simple value transfer</span>
-          </div>
-        )}
 
         {/* Access List */}
         {evmData.access_list && evmData.access_list.length > 0 && (
