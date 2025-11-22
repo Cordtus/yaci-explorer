@@ -76,14 +76,9 @@ export function DenomProvider({ children }: { children: ReactNode }) {
       return denom
     }
 
-    // For native denoms, use metadata
+    // For native denoms, use static metadata (no setState during render)
     const metadata = getDenomMetadata(denom)
-    const display = metadata.symbol
-
-    // Cache the result
-    setDenomCache(prev => new Map(prev).set(denom, display))
-
-    return display
+    return metadata.symbol
   }
 
   return (
