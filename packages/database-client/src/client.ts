@@ -569,7 +569,7 @@ export class YaciAPIClient {
   ): Promise<PaginatedResponse<EnhancedTransaction>> {
     // Get all messages involving this address
     const { data: addressMessages } = await this.query<Message>('messages_main', {
-      filters: { or: `(sender.eq.${address},mentions.cs.%7B${address}%7D)` },
+      filters: { or: `(sender.eq.${address},mentions.cs.{${address}})` },
       order: 'id.desc'
     })
 
@@ -653,7 +653,7 @@ export class YaciAPIClient {
     total_received: number
   }> {
     const { data: messages } = await this.query<Message>('messages_main', {
-      filters: { or: `(sender.eq.${address},mentions.cs.%7B${address}%7D)` }
+      filters: { or: `(sender.eq.${address},mentions.cs.{${address}})` }
     })
 
     const uniqueTxIds = new Set(messages.map(msg => msg.id))
