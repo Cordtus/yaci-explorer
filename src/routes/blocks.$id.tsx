@@ -31,7 +31,7 @@ export default function BlockDetailPage() {
   const { data: transactions, isLoading: txLoading } = useQuery({
     queryKey: ['blockTransactions', blockHeight],
     queryFn: async () => {
-      const result = await api.getTransactions(100, 0, { block_height: blockHeight })
+      const result = await api.getTransactions(100, 0, { blockHeight: blockHeight })
       return result
     },
     enabled: mounted && !isNaN(blockHeight),

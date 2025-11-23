@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, type BlockRaw } from '@/lib/api'
 import { clearChainInfoCache } from '@/lib/chain-info'
 import { IBC_CACHE_KEY, CHANNEL_CACHE_KEY } from '@/lib/ibc-resolver'
 import { appConfig } from '@/config/app'
-import type { Block } from '@/types/blockchain'
 
 type ChainFingerprint = {
   chainId: string
@@ -15,8 +14,8 @@ type ChainFingerprint = {
 
 const FINGERPRINT_KEY = 'yaci_chain_fingerprint'
 
-function getFingerprint(block: Block): ChainFingerprint {
-  const header = block.data?.block?.header as any
+function getFingerprint(block: BlockRaw): ChainFingerprint {
+  const header = block.data?.block?.header
   const height = typeof block.id === 'number'
     ? block.id
     : parseInt(header?.height || '0', 10)
