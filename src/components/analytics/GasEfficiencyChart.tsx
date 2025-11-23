@@ -6,13 +6,13 @@ import { api } from '@/lib/api'
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
     queryKey: ['gas-usage-distribution'],
-    queryFn: () => api.getGasUsageDistribution(1000),
+    queryFn: () => api.getGasUsageDistribution(),
     refetchInterval: 60000,
   })
 
   const { data: efficiency, isLoading: loadingEff } = useQuery({
     queryKey: ['gas-efficiency'],
-    queryFn: () => api.getGasEfficiency(1000),
+    queryFn: () => api.getGasEfficiency(),
     refetchInterval: 60000,
   })
 

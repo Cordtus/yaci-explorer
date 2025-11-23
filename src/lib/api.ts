@@ -343,17 +343,36 @@ export class YaciClient {
 		return this.query('message_type_stats')
 	}
 
-	async getGasUsageDistribution(limit?: number): Promise<Array<{ range: string; count: number }>> {
-		return this.rpc('get_gas_usage_distribution', limit ? { _limit: limit } : undefined)
+	async getGasUsageDistribution(): Promise<Array<{ range: string; count: number }>> {
+		return this.query('gas_usage_distribution')
 	}
 
-	async getGasEfficiency(limit?: number): Promise<{
+	async getGasEfficiency(): Promise<{
 		avgGasLimit: number
 		totalGasLimit: number
 		transactionCount: number
 		data: Array<{ range: string; count: number }>
 	}> {
-		return this.rpc('get_gas_efficiency', limit ? { _limit: limit } : undefined)
+		const data = await this.query<Array<{ range: string; count: number }>>('gas_usage_distribution')
+		const transactionCount = data.reduce((sum, d) => sum + d.count, 0)
+		// Estimate average based on distribution midpoints
+		const midpoints: Record<string, number> = {
+			'0-100k': 50000,
+			'100k-250k': 175000,
+			'250k-500k': 375000,
+			'500k-1M': 750000,
+			'1M+': 1500000
+		}
+		let totalGasLimit = 0
+		for (const d of data) {
+			totalGasLimit += (midpoints[d.range] || 500000) * d.count
+		}
+		return {
+			avgGasLimit: transactionCount > 0 ? Math.round(totalGasLimit / transactionCount) : 0,
+			totalGasLimit,
+			transactionCount,
+			data
+		}
 	}
 
 	async getTxSuccessRate(): Promise<{
@@ -371,8 +390,8 @@ export class YaciClient {
 		return result[0]
 	}
 
-	async getFeeRevenueOverTime(days?: number): Promise<Array<{ date: string; revenue: Record<string, number> }>> {
-		return this.rpc('get_fee_revenue_over_time', days ? { _days: days } : undefined)
+	async getFeeRevenueOverTime(): Promise<Array<{ denom: string; total_amount: string }>> {
+		return this.query('fee_revenue')
 	}
 
 	async getTotalFeeRevenue(): Promise<Record<string, string | number>> {

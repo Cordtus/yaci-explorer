@@ -3,10 +3,10 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 
-export function FeeRevenueChart({ days = 7 }: { days?: number }) {
+export function FeeRevenueChart() {
   const { data, isLoading } = useQuery({
-    queryKey: ['fee-revenue', days],
-    queryFn: () => api.getFeeRevenueOverTime(days),
+    queryKey: ['fee-revenue'],
+    queryFn: () => api.getFeeRevenueOverTime(),
     refetchInterval: 30000,
   })
 
@@ -14,8 +14,8 @@ export function FeeRevenueChart({ days = 7 }: { days?: number }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Fee Revenue Over Time</CardTitle>
-          <CardDescription>Daily fee collection by denomination</CardDescription>
+          <CardTitle>Fee Revenue by Denomination</CardTitle>
+          <CardDescription>Total fee collection breakdown</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">
@@ -26,48 +26,33 @@ export function FeeRevenueChart({ days = 7 }: { days?: number }) {
     )
   }
 
-  // Extract all unique denominations
-  const denoms = new Set<string>()
-  data.forEach((day) => {
-    Object.keys(day.revenue).forEach((denom) => denoms.add(denom))
-  })
-  const denomList = Array.from(denoms)
-
-  // Calculate total revenue per denom
-  const totalRevenue: Record<string, number> = {}
-  data.forEach((day) => {
-    Object.entries(day.revenue).forEach(([denom, amount]) => {
-      totalRevenue[denom] = (totalRevenue[denom] || 0) + amount
-    })
-  })
-
   // Format denom names (remove 'u' prefix for display)
   const formatDenom = (denom: string) => {
     return denom.startsWith('u') ? denom.slice(1).toUpperCase() : denom.toUpperCase()
   }
 
   // Format amount (divide by 1e6 for micro denomination)
-  const formatAmount = (amount: number, denom: string) => {
-    return denom.startsWith('u') ? amount / 1e6 : amount
+  const formatAmount = (amount: string, denom: string) => {
+    const num = parseFloat(amount)
+    return denom.startsWith('u') ? num / 1e6 : num
   }
+
+  // Calculate total for description
+  const totalDescription = data
+    .map((d) => `${formatAmount(d.total_amount, d.denom).toFixed(2)} ${formatDenom(d.denom)}`)
+    .join(' + ')
 
   const option = {
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross',
-      },
+      trigger: 'item',
       formatter: (params: any) => {
-        let tooltip = `<strong>${params[0].axisValue}</strong><br/>`
-        params.forEach((param: any) => {
-          const value = param.value
-          tooltip += `${param.marker} ${param.seriesName}: ${value.toFixed(2)}<br/>`
-        })
-        return tooltip
+        const denom = data[params.dataIndex].denom
+        const amount = formatAmount(data[params.dataIndex].total_amount, denom)
+        return `<strong>${formatDenom(denom)}</strong><br/>Amount: ${amount.toFixed(2)}`
       },
     },
     legend: {
-      data: denomList.map(formatDenom),
+      data: data.map((d) => formatDenom(d.denom)),
       top: 'bottom',
     },
     grid: {
@@ -79,13 +64,9 @@ export function FeeRevenueChart({ days = 7 }: { days?: number }) {
     },
     xAxis: {
       type: 'category',
-      data: data.map((d) => d.date),
+      data: data.map((d) => formatDenom(d.denom)),
       axisLabel: {
         rotate: 45,
-        formatter: (value: string) => {
-          const date = new Date(value)
-          return `${date.getMonth() + 1}/${date.getDate()}`
-        },
       },
     },
     yAxis: {
@@ -101,31 +82,39 @@ export function FeeRevenueChart({ days = 7 }: { days?: number }) {
         },
       },
     },
-    series: denomList.map((denom) => ({
-      name: formatDenom(denom),
-      type: 'line',
-      stack: 'total',
-      areaStyle: {},
-      emphasis: {
-        focus: 'series',
+    series: [
+      {
+        name: 'Fee Revenue',
+        type: 'bar',
+        data: data.map((d) => formatAmount(d.total_amount, d.denom)),
+        itemStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: '#10b981' },
+              { offset: 1, color: '#059669' },
+            ],
+          },
+        },
+        emphasis: {
+          itemStyle: {
+            color: '#34d399',
+          },
+        },
       },
-      data: data.map((d) => formatAmount(d.revenue[denom] || 0, denom)),
-      smooth: true,
-    })),
+    ],
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Fee Revenue Over Time</CardTitle>
+        <CardTitle>Fee Revenue by Denomination</CardTitle>
         <CardDescription>
-          Last {days} days |{' '}
-          {Object.entries(totalRevenue)
-            .map(
-              ([denom, amount]) =>
-                `${formatAmount(amount, denom).toFixed(2)} ${formatDenom(denom)}`
-            )
-            .join(' + ')}
+          Total: {totalDescription}
         </CardDescription>
       </CardHeader>
       <CardContent>

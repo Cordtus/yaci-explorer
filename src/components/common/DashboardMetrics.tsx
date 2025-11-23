@@ -36,7 +36,7 @@ export function DashboardMetrics() {
 
   const { data: gasEfficiency } = useQuery({
     queryKey: ['gasEfficiency'],
-    queryFn: () => api.getGasEfficiency(1000),
+    queryFn: () => api.getGasEfficiency(),
     refetchInterval: 30000,
     enabled: mounted,
   })
