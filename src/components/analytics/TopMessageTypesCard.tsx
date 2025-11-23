@@ -1,9 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 interface MessageTypeStats {
   type: string
@@ -13,8 +11,8 @@ interface MessageTypeStats {
 }
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
-  // Use the client's getTransactionTypeDistribution method
-  const typeData = await client.getTransactionTypeDistribution()
+  // Use the api's getTransactionTypeDistribution method
+  const typeData = await api.getTransactionTypeDistribution()
 
   // Calculate total and percentages
   const total = typeData.reduce((sum, d) => sum + d.count, 0)

@@ -1,10 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 interface NetworkMetrics {
   latestHeight: number

@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import ReactECharts from 'echarts-for-react'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 interface TxBreakdown {
   evm: number
@@ -13,7 +11,7 @@ interface TxBreakdown {
 }
 
 async function getTxTypeBreakdown(): Promise<TxBreakdown> {
-  const { data: messages } = await client.query<any>('messages_main', {
+  const { data: messages } = await api.query<any>('messages_main', {
     select: 'type',
     limit: 1000,
     order: 'id.desc'

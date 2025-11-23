@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import ReactECharts from 'echarts-for-react'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 interface AddressActivity {
   dates: string[]
@@ -14,7 +12,7 @@ interface AddressActivity {
 
 async function getActiveAddresses(): Promise<AddressActivity> {
   // Get messages with senders from last 7 days worth of data
-  const { data: messages } = await client.query<any>('messages_main', {
+  const { data: messages } = await api.query<any>('messages_main', {
     select: 'sender,id',
     limit: 2000,
     order: 'id.desc'
@@ -24,7 +22,7 @@ async function getActiveAddresses(): Promise<AddressActivity> {
   const txIds = [...new Set(messages.map((m: any) => m.id))]
   const idFilter = txIds.slice(0, 100).map(id => `id.eq.${id}`).join(',')
 
-  const { data: txs } = await client.query<any>('transactions_main', {
+  const { data: txs } = await api.query<any>('transactions_main', {
     select: 'id,timestamp',
     filters: { or: `(${idFilter})` }
   })

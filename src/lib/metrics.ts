@@ -1,9 +1,22 @@
-import { YaciAPIClient, createTTLCache } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
 import { subMinutes, subHours, subDays } from 'date-fns'
 
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
-const cache = createTTLCache(30000) // 30s TTL for expensive calls
+// Simple cache implementation
+const cacheStore = new Map<string, { value: any; expires: number }>()
+const cache = {
+  get<T>(key: string): T | null {
+    const entry = cacheStore.get(key)
+    if (!entry || Date.now() > entry.expires) {
+      cacheStore.delete(key)
+      return null
+    }
+    return entry.value as T
+  },
+  set(key: string, value: any, ttl = 30000) {
+    cacheStore.set(key, { value, expires: Date.now() + ttl })
+  }
+}
 
 // Types
 export type TimeUnit = 'minutes' | 'hours' | 'days'
@@ -43,7 +56,7 @@ export interface BlockInterval {
 
 // Configuration
 const REST_ENDPOINT = import.meta.env.VITE_CHAIN_REST_ENDPOINT
-const BASE_URL = client.getBaseUrl()
+const BASE_URL = import.meta.env.VITE_POSTGREST_URL || 'http://localhost:3000'
 
 // Time utilities
 function getStartDate(range: TimeRange): Date {
@@ -133,7 +146,7 @@ async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
     }
   }
 
-  const latestBlock = await client.getLatestBlock()
+  const latestBlock = await api.getLatestBlock()
   return getValidatorCountFromBlock(latestBlock)
 }
 
@@ -207,11 +220,11 @@ export async function getOverviewMetrics(): Promise<OverviewMetrics> {
   const cached = cache.get<OverviewMetrics>('overview')
   if (cached) return cached
 
-  const chainInfo = await getChainInfo(client)
+  const chainInfo = await getChainInfo(api)
   const [latestBlock, blockTimeAnalysis, totalTx, tps, activeValidators, totalSupply] =
     await Promise.all([
-      client.getLatestBlock(),
-      client.getBlockTimeAnalysis(100),
+      api.getLatestBlock(),
+      api.getBlockTimeAnalysis(100),
       getTotalTransactions(),
       getTPS({ value: 1, unit: 'minutes' }),
       getActiveValidators(chainInfo),

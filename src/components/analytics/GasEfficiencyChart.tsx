@@ -1,20 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
     queryKey: ['gas-usage-distribution'],
-    queryFn: () => client.getGasUsageDistribution(1000),
+    queryFn: () => api.getGasUsageDistribution(1000),
     refetchInterval: 60000,
   })
 
   const { data: efficiency, isLoading: loadingEff } = useQuery({
     queryKey: ['gas-efficiency'],
-    queryFn: () => client.getGasEfficiency(1000),
+    queryFn: () => api.getGasEfficiency(1000),
     refetchInterval: 60000,
   })
 

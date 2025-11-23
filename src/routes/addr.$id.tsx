@@ -5,7 +5,7 @@ import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activi
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient, type EnhancedTransaction } from '@yaci/database-client'
+import { api, type EnhancedTransaction } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -16,8 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
-const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 /**
  * Address detail page component

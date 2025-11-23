@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import ReactECharts from 'echarts-for-react'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 interface GasData {
   gasLimit: number
@@ -12,7 +10,7 @@ interface GasData {
 }
 
 async function getGasDistribution(): Promise<{ bins: string[]; counts: number[]; avgGas: number; totalTx: number }> {
-  const { data: transactions } = await client.query<any>('transactions_main', {
+  const { data: transactions } = await api.query<any>('transactions_main', {
     select: 'fee',
     limit: 500,
     order: 'height.desc'

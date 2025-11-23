@@ -2,10 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
-import { YaciAPIClient } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 interface VolumeData {
   time: string
@@ -14,8 +12,8 @@ interface VolumeData {
 }
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
-  // Get hourly volume from client
-  const hourlyVolume = await client.getHourlyTransactionVolume(hours)
+  // Get hourly volume from api
+  const hourlyVolume = await api.getHourlyTransactionVolume(hours)
 
   // Convert to VolumeData format with empty hours filled in
   const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000)

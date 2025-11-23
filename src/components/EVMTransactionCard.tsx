@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import type { EVMTransaction } from '@yaci/database-client'
+import type { EVMTransaction } from '@/lib/api'
 
 interface EVMTransactionCardProps {
   evmData: EVMTransaction

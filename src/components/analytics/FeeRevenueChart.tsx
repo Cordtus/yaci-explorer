@@ -1,14 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@yaci/database-client'
-
-const client = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
+import { api } from '@/lib/api'
 
 export function FeeRevenueChart({ days = 7 }: { days?: number }) {
   const { data, isLoading } = useQuery({
     queryKey: ['fee-revenue', days],
-    queryFn: () => client.getFeeRevenueOverTime(days),
+    queryFn: () => api.getFeeRevenueOverTime(days),
     refetchInterval: 30000,
   })
 

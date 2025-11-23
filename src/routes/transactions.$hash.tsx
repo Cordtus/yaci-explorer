@@ -5,7 +5,7 @@ import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronR
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -15,8 +15,6 @@ import { AddressChip } from '@/components/AddressChip'
 import { EVMTransactionCard } from '@/components/EVMTransactionCard'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
-
-const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 // Helper to group events by event_index, then by attributes
 function groupEvents(events: any[]) {
