@@ -27,7 +27,7 @@ export async function getChainInfo(api: YaciClient): Promise<ChainInfo> {
   try {
     // Get latest block to extract chain ID
     const latestBlock = await api.getLatestBlock()
-    const chainId = latestBlock?.data?.block?.header?.chain_id || 'unknown'
+    const chainId = latestBlock?.data?.block?.header?.chainId || 'unknown'
 
     // Try to get config from registry
     const config = getChainConfig(chainId)

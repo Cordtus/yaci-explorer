@@ -144,6 +144,19 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'TEST',
     decimals: 18,
   },
+  'republic_77701-1': {
+    name: 'Republic AI',
+    features: {
+      evm: true,
+      ibc: true,
+      wasm: false,
+    },
+    nativeDenom: 'arai',
+    nativeSymbol: 'RAI',
+    decimals: 18,
+    rpcEndpoint: 'https://rpc.republicai.io',
+    restEndpoint: 'https://api.republicai.io',
+  },
 }
 
 /**
