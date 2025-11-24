@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter, ToggleLeft, ToggleRight } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,8 @@ export default function TransactionDetailPage() {
   const [expandedEventTypes, setExpandedEventTypes] = useState<Record<string, boolean>>({})
   const [eventFilter, setEventFilter] = useState('')
   const [evmView, setEvmView] = useState(false)
+  const [isDecodingEVM, setIsDecodingEVM] = useState(false)
+  const [decodeAttempted, setDecodeAttempted] = useState(false)
   const params = useParams()
   const [searchParams] = useSearchParams()
 
@@ -95,14 +97,53 @@ export default function TransactionDetailPage() {
     }
   }, [searchParams])
 
-  const { data: transaction, isLoading, error } = useQuery({
+  const { data: transaction, isLoading, error, refetch } = useQuery({
     queryKey: ['transaction', params.hash],
     queryFn: async () => {
       const result = await api.getTransaction(params.hash!)
       return result
     },
     enabled: mounted && !!params.hash,
+    refetchInterval: isDecodingEVM ? 2000 : false,
   })
+
+  useEffect(() => {
+    if (!transaction || decodeAttempted) return
+
+    const isEVMTransaction = transaction.messages?.some(
+      (msg) => msg.type === '/ethermint.evm.v1.MsgEthereumTx'
+    )
+
+    if (isEVMTransaction && !transaction.evm_data) {
+      setIsDecodingEVM(true)
+      setDecodeAttempted(true)
+
+      const decodeURL = import.meta.env.VITE_EVM_DECODE_URL || 'https://yaci-explorer-apis.fly.dev:3001'
+
+      fetch(`${decodeURL}/decode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txId: transaction.id }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log('Priority EVM decode:', data.message)
+          if (data.success) {
+            setTimeout(() => {
+              refetch().then(() => {
+                setIsDecodingEVM(false)
+              })
+            }, 1000)
+          } else {
+            setIsDecodingEVM(false)
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to trigger priority decode:', err)
+          setIsDecodingEVM(false)
+        })
+    }
+  }, [transaction, decodeAttempted, refetch])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -156,6 +197,7 @@ export default function TransactionDetailPage() {
 
   const isSuccess = !transaction.error
   const feeAmounts = transaction.fee?.amount ?? []
+  const groupedEvents = groupEvents(transaction.events || [])
 
   return (
     <div className="space-y-6">
@@ -207,6 +249,14 @@ export default function TransactionDetailPage() {
             <span className="text-xs text-muted-foreground">
               {evmView ? 'Showing EVM transaction details' : 'Showing Cosmos SDK transaction details'}
             </span>
+          </div>
+        )}
+
+        {/* EVM Decoding Status */}
+        {isDecodingEVM && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Decoding EVM transaction data...</span>
           </div>
         )}
 
@@ -565,7 +615,7 @@ export default function TransactionDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Events</span>
-                  <span className="font-medium">{transaction.events?.length || 0}</span>
+                  <span className="font-medium">{groupedEvents.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Block</span>
