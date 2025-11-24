@@ -4,10 +4,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import type { EVMTransaction } from '@/lib/api'
+import type { EvmData } from '@/lib/api'
 
 interface EVMTransactionCardProps {
-  evmData: EVMTransaction
+  evmData: EvmData
 }
 
 // Format wei to ether with appropriate decimals
@@ -52,9 +52,9 @@ function getTxTypeLabel(type: number): string {
 }
 
 // Determine transaction action based on input data and decoded info
-function getTransactionAction(evmData: EVMTransaction): { label: string; description: string } {
+function getTransactionAction(evmData: EvmData): { label: string; description: string } {
   // No input data = native transfer
-  if (!evmData.input_data || evmData.input_data === '0x') {
+  if (!evmData.data || evmData.data === '0x') {
     return {
       label: 'Native Transfer',
       description: `Transfer ${formatWei(evmData.value)} ETH`
@@ -62,22 +62,20 @@ function getTransactionAction(evmData: EVMTransaction): { label: string; descrip
   }
 
   // Contract creation
-  if (!evmData.to_address) {
+  if (!evmData.to) {
     return {
       label: 'Contract Creation',
       description: 'Deploy new smart contract'
     }
   }
 
-  // Decoded method
-  if (evmData.decoded_input) {
-    const method = evmData.decoded_input.methodName
+  // Decoded method from 4byte.directory
+  if (evmData.functionName) {
+    const method = evmData.functionName
     if (method === 'transfer') {
-      const to = evmData.decoded_input.params.find(p => p.name === 'to')?.value
-      const amount = evmData.decoded_input.params.find(p => p.name === 'amount')?.value
       return {
         label: 'Token Transfer',
-        description: amount ? `Transfer ${formatWei(String(amount))} tokens` : 'Transfer tokens'
+        description: 'Transfer tokens'
       }
     }
     if (method === 'approve') {
@@ -123,12 +121,15 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     </Button>
   )
 
-  const gasEfficiency = evmData.gas_limit && evmData.gas_limit > 0 && evmData.gas_used
-    ? ((evmData.gas_used / evmData.gas_limit) * 100).toFixed(1)
+  const gasLimit = evmData.gasLimit ? BigInt(evmData.gasLimit) : BigInt(0)
+  const gasUsed = evmData.gasUsed || 0
+
+  const gasEfficiency = gasLimit > 0 && gasUsed > 0
+    ? ((gasUsed / Number(gasLimit)) * 100).toFixed(1)
     : '0'
 
-  const transactionFee = evmData.gas_price && evmData.gas_used
-    ? (BigInt(evmData.gas_price) * BigInt(evmData.gas_used)).toString()
+  const transactionFee = evmData.gasPrice && gasUsed
+    ? (BigInt(evmData.gasPrice) * BigInt(gasUsed)).toString()
     : '0'
 
   // Guard against missing required fields
@@ -196,18 +197,18 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">From:</span>
           <div className="flex items-center gap-1">
-            <code className="text-xs">{evmData.from_address || 'N/A'}</code>
-            {evmData.from_address && <CopyButton text={evmData.from_address} field="from" />}
+            <code className="text-xs">{evmData.from || 'N/A'}</code>
+            {evmData.from && <CopyButton text={evmData.from} field="from" />}
           </div>
         </div>
 
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">To:</span>
           <div className="flex items-center gap-1">
-            {evmData.to_address ? (
+            {evmData.to ? (
               <>
-                <code className="text-xs">{evmData.to_address}</code>
-                <CopyButton text={evmData.to_address} field="to" />
+                <code className="text-xs">{evmData.to}</code>
+                <CopyButton text={evmData.to} field="to" />
               </>
             ) : (
               <span className="text-muted-foreground italic">Contract Creation</span>
@@ -240,7 +241,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Gas Used:</span>
           <span>
-            {formatNumber(evmData.gas_used)} / {formatNumber(evmData.gas_limit)}
+            {formatNumber(gasUsed)} / {formatNumber(Number(gasLimit))}
             <span className="text-xs text-muted-foreground ml-1">
               ({gasEfficiency}%)
             </span>
@@ -251,9 +252,9 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Gas Price:</span>
           <span>
-            {formatGwei(evmData.gas_price)} Gwei
+            {formatGwei(evmData.gasPrice)} Gwei
             <span className="text-xs text-muted-foreground ml-1">
-              ({evmData.gas_price} wei)
+              ({evmData.gasPrice} wei)
             </span>
           </span>
         </div>
@@ -261,16 +262,16 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         {/* EIP-1559 fields */}
         {evmData.type === 2 && (
           <>
-            {evmData.max_fee_per_gas && (
+            {evmData.maxFeePerGas && (
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground">Max Fee:</span>
-                <span>{formatGwei(evmData.max_fee_per_gas)} Gwei</span>
+                <span>{formatGwei(evmData.maxFeePerGas)} Gwei</span>
               </div>
             )}
-            {evmData.max_priority_fee_per_gas && (
+            {evmData.maxPriorityFeePerGas && (
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground">Max Priority:</span>
-                <span>{formatGwei(evmData.max_priority_fee_per_gas)} Gwei</span>
+                <span>{formatGwei(evmData.maxPriorityFeePerGas)} Gwei</span>
               </div>
             )}
           </>
@@ -283,67 +284,37 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         </div>
 
         {/* Input Data */}
-        {evmData.input_data && evmData.input_data !== '0x' && (
+        {evmData.data && evmData.data !== '0x' && (
           <Collapsible open={inputExpanded} onOpenChange={setInputExpanded}>
             <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
               {inputExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              Input Data ({evmData.input_data.length / 2 - 1} bytes)
+              Input Data ({evmData.data.length / 2 - 1} bytes)
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2">
               <div className="space-y-3">
                 {/* Decoded function call */}
-                {evmData.decoded_input && (
+                {evmData.functionName && (
                   <div className="bg-muted/50 p-3 rounded text-sm space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">Function:</span>
                       <Badge variant="secondary">
-                        {evmData.decoded_input.methodName}
+                        {evmData.functionName}
                       </Badge>
-                      <code className="text-xs text-muted-foreground">
-                        {evmData.decoded_input.methodId}
-                      </code>
                     </div>
-                    {evmData.decoded_input.params.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">Parameters:</span>
-                        {evmData.decoded_input.params.map((param, idx) => (
-                          <div key={idx} className="pl-2 text-xs font-mono">
-                            <span className="text-muted-foreground">{param.type}</span>{' '}
-                            <span className="text-primary">{param.name}</span>:{' '}
-                            <span className="break-all">{String(param.value)}</span>
-                          </div>
-                        ))}
+                    {evmData.functionSignature && (
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {evmData.functionSignature}
                       </div>
                     )}
                   </div>
                 )}
                 {/* Raw hex data */}
                 <div className="bg-muted p-3 rounded overflow-auto max-h-32">
-                  <code className="text-xs break-all">{evmData.input_data}</code>
+                  <code className="text-xs break-all">{evmData.data}</code>
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
-        )}
-
-
-        {/* Access List */}
-        {evmData.access_list && evmData.access_list.length > 0 && (
-          <div className="text-sm">
-            <span className="text-muted-foreground">Access List:</span>
-            <div className="mt-1 bg-muted p-2 rounded text-xs">
-              {evmData.access_list.map((entry, idx) => (
-                <div key={idx} className="mb-1">
-                  <code>{entry.address}</code>
-                  {entry.storage_keys.length > 0 && (
-                    <span className="text-muted-foreground ml-1">
-                      ({entry.storage_keys.length} keys)
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </CardContent>
     </Card>

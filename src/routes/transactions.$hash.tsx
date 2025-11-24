@@ -13,6 +13,7 @@ import { MessageDetails } from '@/components/MessageDetails'
 import { JsonViewer } from '@/components/JsonViewer'
 import { AddressChip } from '@/components/AddressChip'
 import { EVMTransactionCard } from '@/components/EVMTransactionCard'
+import { EVMLogsCard } from '@/components/EVMLogsCard'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 
@@ -226,7 +227,12 @@ export default function TransactionDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* EVM View Mode - Show EVM card prominently */}
           {evmView && transaction.evm_data && (
-            <EVMTransactionCard evmData={transaction.evm_data} />
+            <>
+              <EVMTransactionCard evmData={transaction.evm_data} />
+              {transaction.evm_logs && transaction.evm_logs.length > 0 && (
+                <EVMLogsCard logs={transaction.evm_logs} />
+              )}
+            </>
           )}
 
           {/* Transaction Overview - Show in both modes */}

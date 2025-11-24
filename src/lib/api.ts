@@ -31,8 +31,16 @@ export interface Transaction {
 	ingest_error: IngestError | null
 }
 
+export interface EvmLog {
+	logIndex: number
+	address: string
+	topics: string[]
+	data: string
+}
+
 export interface TransactionDetail extends Transaction {
 	evm_data: EvmData | null
+	evm_logs: EvmLog[]
 	raw_data: unknown
 }
 
@@ -71,41 +79,25 @@ export interface Event {
 	msg_index: number | null
 }
 
-export interface DecodedInput {
-	methodName: string
-	methodId: string
-	params: Array<{
-		name: string
-		type: string
-		value: unknown
-	}>
-}
-
-export interface AccessListEntry {
-	address: string
-	storage_keys: string[]
-}
 
 export interface EvmData {
-	ethereum_tx_hash: string | null
-	recipient: string | null
-	gas_used: number
-	tx_type: number | null
-	// Extended EVM fields
+	// Standard EVM field names
 	hash: string
-	type: number
+	from: string
+	to: string | null
 	nonce: number
-	from_address: string | null
-	to_address: string | null
+	gasLimit: string
+	gasPrice: string
+	maxFeePerGas: string | null
+	maxPriorityFeePerGas: string | null
 	value: string
-	gas_limit: number
-	gas_price: string
+	data: string | null
+	type: number
+	chainId: string | null
+	gasUsed: number | null
 	status: number
-	input_data: string | null
-	decoded_input: DecodedInput | null
-	max_fee_per_gas: string | null
-	max_priority_fee_per_gas: string | null
-	access_list?: AccessListEntry[]
+	functionName: string | null
+	functionSignature: string | null
 }
 
 export interface AddressStats {
@@ -165,7 +157,6 @@ export interface BlockRaw {
 
 // Legacy type aliases for compatibility
 export type EnhancedTransaction = Transaction
-export type EVMTransaction = EvmData
 
 // Client
 
