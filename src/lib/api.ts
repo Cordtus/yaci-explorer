@@ -129,7 +129,7 @@ export interface ChainStats {
 
 export interface SearchResult {
 	type: 'block' | 'transaction' | 'evm_transaction' | 'address' | 'evm_address'
-	value: { id?: string | number; height?: number; hash?: string; address?: string }
+	value: { id?: string | number; height?: number; hash?: string; address?: string; tx_id?: string }
 	score: number
 }
 

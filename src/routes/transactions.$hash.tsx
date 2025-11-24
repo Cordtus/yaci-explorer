@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter } from 'lucide-react'
+import { Link, useParams, useSearchParams } from 'react-router'
+import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter, ToggleLeft, ToggleRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -82,11 +82,17 @@ export default function TransactionDetailPage() {
   const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({})
   const [expandedEventTypes, setExpandedEventTypes] = useState<Record<string, boolean>>({})
   const [eventFilter, setEventFilter] = useState('')
+  const [evmView, setEvmView] = useState(false)
   const params = useParams()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // Auto-enable EVM view if searched by EVM hash
+    if (searchParams.get('evm') === 'true') {
+      setEvmView(true)
+    }
+  }, [searchParams])
 
   const { data: transaction, isLoading, error } = useQuery({
     queryKey: ['transaction', params.hash],
@@ -182,6 +188,27 @@ export default function TransactionDetailPage() {
           </Button>
         </div>
 
+        {/* EVM View Toggle */}
+        {transaction.evm_data && (
+          <div className="mt-4 flex items-center gap-3">
+            <Button
+              variant={evmView ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEvmView(!evmView)}
+              className="gap-2"
+            >
+              {evmView ? (
+                <><ToggleRight className="h-4 w-4" /> EVM View</>
+              ) : (
+                <><ToggleLeft className="h-4 w-4" /> Cosmos View</>
+              )}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {evmView ? 'Showing EVM transaction details' : 'Showing Cosmos SDK transaction details'}
+            </span>
+          </div>
+        )}
+
         {transaction.ingest_error && (
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="font-semibold">Partial transaction data</p>
@@ -195,8 +222,14 @@ export default function TransactionDetailPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Transaction Overview */}
+          {/* EVM View Mode - Show EVM card prominently */}
+          {evmView && transaction.evm_data && (
+            <EVMTransactionCard evmData={transaction.evm_data} />
+          )}
+
+          {/* Transaction Overview - Show in both modes */}
           <Card>
             <CardHeader>
               <CardTitle>Transaction Overview</CardTitle>
@@ -545,8 +578,8 @@ export default function TransactionDetailPage() {
             </CardContent>
           </Card>
 
-          {/* EVM Data if available */}
-          {transaction.evm_data && (
+          {/* EVM Data in sidebar when in Cosmos view */}
+          {!evmView && transaction.evm_data && (
             <EVMTransactionCard evmData={transaction.evm_data} />
           )}
         </div>
