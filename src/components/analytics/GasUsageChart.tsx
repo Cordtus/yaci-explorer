@@ -10,44 +10,31 @@ interface GasData {
 }
 
 async function getGasDistribution(): Promise<{ bins: string[]; counts: number[]; avgGas: number; totalTx: number }> {
-  const { data: transactions } = await api.query<any>('transactions_main', {
-    select: 'fee',
-    limit: 500,
-    order: 'height.desc'
-  })
+  const distribution = await api.getGasUsageDistribution()
 
-  const gasValues = transactions
-    .filter((tx: any) => tx.fee?.gasLimit)
-    .map((tx: any) => parseInt(tx.fee.gasLimit, 10))
-
-  if (gasValues.length === 0) {
+  if (!distribution || distribution.length === 0) {
     return { bins: [], counts: [], avgGas: 0, totalTx: 0 }
   }
 
-  // Create histogram bins
-  const bins = [
-    '0-50K',
-    '50K-100K',
-    '100K-200K',
-    '200K-500K',
-    '500K-1M',
-    '1M+'
-  ]
+  const bins = distribution.map(d => d.range)
+  const counts = distribution.map(d => d.count)
+  const totalTx = counts.reduce((a, b) => a + b, 0)
 
-  const counts = [0, 0, 0, 0, 0, 0]
-
-  gasValues.forEach((gas: number) => {
-    if (gas < 50000) counts[0]++
-    else if (gas < 100000) counts[1]++
-    else if (gas < 200000) counts[2]++
-    else if (gas < 500000) counts[3]++
-    else if (gas < 1000000) counts[4]++
-    else counts[5]++
+  // Estimate average gas from distribution midpoints
+  const midpoints: Record<string, number> = {
+    '0-100k': 50000,
+    '100k-250k': 175000,
+    '250k-500k': 375000,
+    '500k-1M': 750000,
+    '1M+': 1500000
+  }
+  let totalGas = 0
+  distribution.forEach(d => {
+    totalGas += (midpoints[d.range] || 200000) * d.count
   })
+  const avgGas = totalTx > 0 ? Math.round(totalGas / totalTx) : 0
 
-  const avgGas = Math.round(gasValues.reduce((a: number, b: number) => a + b, 0) / gasValues.length)
-
-  return { bins, counts, avgGas, totalTx: gasValues.length }
+  return { bins, counts, avgGas, totalTx }
 }
 
 export function GasUsageChart() {

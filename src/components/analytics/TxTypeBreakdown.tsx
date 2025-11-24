@@ -11,20 +11,20 @@ interface TxBreakdown {
 }
 
 async function getTxTypeBreakdown(): Promise<TxBreakdown> {
-  const { data: messages } = await api.query<any>('messages_main', {
-    select: 'type',
-    limit: 1000,
-    order: 'id.desc'
-  })
+  const stats = await api.getMessageTypeStats()
+
+  if (!stats || stats.length === 0) {
+    return { evm: 0, cosmos: 0, total: 0 }
+  }
 
   let evm = 0
   let cosmos = 0
 
-  messages.forEach((msg: any) => {
-    if (msg.type?.includes('MsgEthereumTx') || msg.type?.includes('evm')) {
-      evm++
+  stats.forEach((stat) => {
+    if (stat.type?.includes('MsgEthereumTx') || stat.type?.includes('evm')) {
+      evm += stat.count
     } else {
-      cosmos++
+      cosmos += stat.count
     }
   })
 

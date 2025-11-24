@@ -36,7 +36,8 @@ function formatGwei(wei: string): string {
 }
 
 // Format large numbers with commas
-function formatNumber(num: number): string {
+function formatNumber(num: number | undefined | null): string {
+  if (num === undefined || num === null) return '0'
   return num.toLocaleString()
 }
 
@@ -122,13 +123,27 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     </Button>
   )
 
-  const gasEfficiency = evmData.gas_limit > 0
+  const gasEfficiency = evmData.gas_limit && evmData.gas_limit > 0 && evmData.gas_used
     ? ((evmData.gas_used / evmData.gas_limit) * 100).toFixed(1)
     : '0'
 
   const transactionFee = evmData.gas_price && evmData.gas_used
     ? (BigInt(evmData.gas_price) * BigInt(evmData.gas_used)).toString()
     : '0'
+
+  // Guard against missing required fields
+  if (!evmData.hash) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">EVM Transaction Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-muted-foreground">EVM data not available</div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const action = getTransactionAction(evmData)
 
