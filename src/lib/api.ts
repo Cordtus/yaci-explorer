@@ -295,6 +295,24 @@ export class YaciClient {
 		}
 	}
 
+	async getBlocksPaginated(
+		limit = 20,
+		offset = 0,
+		filters?: {
+			minTxCount?: number
+			fromDate?: string
+			toDate?: string
+		}
+	): Promise<PaginatedResponse<BlockRaw & { tx_count: number }>> {
+		return this.rpc('get_blocks_paginated', {
+			_limit: limit,
+			_offset: offset,
+			_min_tx_count: filters?.minTxCount,
+			_from_date: filters?.fromDate,
+			_to_date: filters?.toDate
+		})
+	}
+
 	async getLatestBlock(): Promise<BlockRaw | undefined> {
 		const result = await this.query<BlockRaw[]>('blocks_raw', {
 			order: 'id.desc',
