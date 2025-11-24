@@ -3,7 +3,6 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package.json yarn.lock ./
-COPY packages/database-client/package.json packages/database-client/
 RUN yarn install --frozen-lockfile
 
 COPY . .
