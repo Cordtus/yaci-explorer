@@ -182,7 +182,7 @@ export default function BlocksPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {'tx_count' in block ? block.tx_count : (block.data?.txs?.length || 0)} txs
+                        {String('tx_count' in block ? block.tx_count : (block.data?.txs?.length || 0))} txs
                       </Badge>
                     </TableCell>
                   </TableRow>
