@@ -1,28 +1,76 @@
 import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
-import { cn } from "@/lib/utils"
+import { cx, css } from "../../../styled-system/css"
+import { tooltip as tooltipRecipe } from "../../../styled-system/recipes"
 
-const TooltipProvider = TooltipPrimitive.Provider
+type TooltipContextValue = {
+  open: boolean
+  setOpen: (open: boolean) => void
+}
 
-const Tooltip = TooltipPrimitive.Root
+const TooltipContext = React.createContext<TooltipContextValue | null>(null)
 
-const TooltipTrigger = TooltipPrimitive.Trigger
+const TooltipProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>
 
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-    {...props}
-  />
-))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
+const Tooltip = ({ children }: { children: React.ReactNode }) => {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <TooltipContext.Provider value={{ open, setOpen }}>
+      <span className={css({ position: 'relative', display: 'inline-flex' })}>
+        {children}
+      </span>
+    </TooltipContext.Provider>
+  )
+}
+
+const TooltipTrigger = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>(
+  ({ children, ...props }, ref) => {
+    const ctx = React.useContext(TooltipContext)
+    if (!ctx) return <>{children}</>
+    return (
+      <span
+        ref={ref}
+        className={css({ display: 'inline-flex' })}
+        onMouseEnter={() => ctx.setOpen(true)}
+        onMouseLeave={() => ctx.setOpen(false)}
+        onFocus={() => ctx.setOpen(true)}
+        onBlur={() => ctx.setOpen(false)}
+        {...props}
+      >
+        {children}
+      </span>
+    )
+  }
+)
+TooltipTrigger.displayName = "TooltipTrigger"
+
+const slots = tooltipRecipe()
+
+const TooltipContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => {
+    const ctx = React.useContext(TooltipContext)
+    if (!ctx || !ctx.open) return null
+    return (
+      <div
+        ref={ref}
+        role="tooltip"
+        className={cx(
+          slots.content,
+          css({
+            position: 'absolute',
+            zIndex: 50,
+            pointerEvents: 'none',
+            top: '100%',
+            left: '0',
+            mt: '1',
+          }),
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
+TooltipContent.displayName = "TooltipContent"
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
   ChainStats
 } from '@/types/blockchain'
+import { getPublicPostgrestUrl } from "@/config/env";
 
 export class YaciAPIClient {
   private baseUrl: string
@@ -15,18 +16,15 @@ export class YaciAPIClient {
 
   /**
    * Creates a new Yaci API client instance
-   * @param baseUrl - The PostgREST API base URL. If not provided, uses VITE_POSTGREST_URL from environment
-   * @throws {Error} If no baseUrl is provided and VITE_POSTGREST_URL is not set
+   * @param baseUrl - The PostgREST API base URL. If not provided, uses PUBLIC_POSTGREST_URL from environment
+   * @throws {Error} If no baseUrl is provided and PUBLIC_POSTGREST_URL is not set
    */
   constructor(baseUrl?: string) {
-    // Use provided baseUrl, or fall back to environment variable
-    const url = baseUrl || import.meta.env.VITE_POSTGREST_URL
+    this.baseUrl = baseUrl ?? getPublicPostgrestUrl()
 
-    if (!url) {
-      throw new Error('VITE_POSTGREST_URL environment variable is not set and no baseUrl provided')
+    if (!this.baseUrl) {
+      throw new Error('PUBLIC_POSTGREST_URL environment variable is not set and no baseUrl provided')
     }
-
-    this.baseUrl = url
   }
 
   private async fetchWithCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {

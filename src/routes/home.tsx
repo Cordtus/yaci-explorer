@@ -8,6 +8,7 @@ import { YaciAPIClient } from '@/lib/api/client'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
+import { css } from '../../styled-system/css'
 
 const api = new YaciAPIClient()
 
@@ -41,65 +42,68 @@ export default function DashboardPage() {
   // Display errors if any
   if (mounted && (blocksError || txError)) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-red-600">Error Loading Data</h2>
-        {blocksError && <p className="text-red-500">Blocks error: {String(blocksError)}</p>}
-        {txError && <p className="text-red-500">Transactions error: {String(txError)}</p>}
-        <p className="text-sm text-muted-foreground">API URL: {api['baseUrl']}</p>
+      <div className={styles.errorStack}>
+        <h2 className={styles.errorTitle}>Error Loading Data</h2>
+        {blocksError && <p className={styles.errorText}>Blocks error: {String(blocksError)}</p>}
+        {txError && <p className={styles.errorText}>Transactions error: {String(txError)}</p>}
+        <p className={styles.errorMeta}>API URL: {api['baseUrl']}</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
+    <div className={styles.page}>
       {/* Dashboard Metrics */}
       <DashboardMetrics />
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div
+        className={styles.grid}
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))' }}
+      >
         {/* Latest Blocks */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Latest Blocks</CardTitle>
+          <CardHeader className={styles.listHeader}>
+            <CardTitle className={styles.sectionTitle}>Latest Blocks</CardTitle>
             <Link
               to="/blocks"
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              className={styles.subtleLink}
             >
-              View all <ArrowRight className="h-4 w-4" />
+              View all <ArrowRight className={styles.arrowIcon} />
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className={styles.listContent}>
+            <div className={styles.list}>
               {blocksLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className={styles.listSkeleton} />
                 ))
               ) : (
                 blocks?.data.map((block) => (
                   <div
                     key={block.id}
-                    className="flex items-center justify-between py-3 border-b last:border-0"
+                    className={styles.row}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Blocks className="h-5 w-5 text-primary" />
+                    <div className={styles.rowLeft}>
+                      <div className={styles.iconCircle}>
+                        <Blocks className={styles.rowIcon} />
                       </div>
                       <div>
                         <Link
                           to={`/blocks/${block.id}`}
-                          className="font-medium hover:text-primary"
+                          className={styles.primaryLink}
                         >
                           Block #{block.id}
                         </Link>
-                        <div className="text-sm text-muted-foreground">
+                        <div className={styles.metaText}>
                           {block.data?.block?.header?.time ? formatTimeAgo(block.data.block.header.time) : '-'}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm">
+                    <div className={styles.textRight}>
+                      <div className={styles.metaEmphasis}>
                         {block.data?.txs?.length || 0} txs
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className={styles.hashText}>
                         {formatHash(block.data?.block_id?.hash || block.data?.blockId?.hash || '', 6)}
                       </div>
                     </div>
@@ -112,20 +116,20 @@ export default function DashboardPage() {
 
         {/* Latest Transactions */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Latest Transactions</CardTitle>
+          <CardHeader className={styles.listHeader}>
+            <CardTitle className={styles.sectionTitle}>Latest Transactions</CardTitle>
             <Link
               to="/transactions"
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              className={styles.subtleLink}
             >
-              View all <ArrowRight className="h-4 w-4" />
+              View all <ArrowRight className={styles.arrowIcon} />
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className={styles.listContent}>
+            <div className={styles.list}>
               {txLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className={styles.listSkeleton} />
                 ))
               ) : (
                 transactions?.data.map((tx) => {
@@ -133,32 +137,32 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={tx.id}
-                      className="flex items-center justify-between py-3 border-b last:border-0"
+                      className={styles.row}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Activity className="h-5 w-5 text-primary" />
+                      <div className={styles.rowLeft}>
+                        <div className={styles.iconCircle}>
+                          <Activity className={styles.rowIcon} />
                         </div>
                         <div>
                           <Link
                             to={`/transactions/${tx.id}`}
-                            className="font-medium hover:text-primary"
+                            className={styles.primaryLink}
                           >
                             {formatHash(tx.id, 8)}
                           </Link>
-                          <div className="text-sm text-muted-foreground">
+                          <div className={styles.metaText}>
                             {formatTimeAgo(tx.timestamp)}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className={styles.textRight}>
                         <Badge
                           variant={tx.error ? 'destructive' : 'success'}
-                          className="mb-1"
+                          className={styles.badge}
                         >
                           {status.label}
                         </Badge>
-                        <div className="text-xs text-muted-foreground">
+                        <div className={styles.hashText}>
                           Block #{tx.height}
                         </div>
                       </div>
@@ -172,4 +176,140 @@ export default function DashboardPage() {
       </div>
     </div>
   )
+}
+
+const styles = {
+  errorStack: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2',
+    p: '4',
+    bg: 'red.3',
+    borderWidth: '1px',
+    borderColor: 'red.6',
+    borderRadius: 'lg',
+  }),
+  errorTitle: css({
+    fontSize: '2xl',
+    fontWeight: 'bold',
+    color: 'red.11',
+  }),
+  errorText: css({
+    color: 'red.10',
+  }),
+  errorMeta: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  page: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8',
+    textAlign: 'left',
+  }),
+  grid: css({
+    display: 'grid',
+    gap: '8',
+    alignItems: 'start',
+  }),
+  listHeader: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '2',
+    pb: '1',
+    px: '2',
+    textAlign: 'left',
+  }),
+  sectionTitle: css({
+    fontSize: 'xl',
+    fontWeight: 'semibold',
+    letterSpacing: '-0.01em',
+    textAlign: 'left',
+  }),
+  subtleLink: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1.5',
+    _hover: { color: 'fg.default' },
+  }),
+  arrowIcon: css({
+    h: '4',
+    w: '4',
+  }),
+  list: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4',
+  }),
+  listContent: css({
+    pt: '1',
+    px: '2',
+  }),
+  listSkeleton: css({
+    h: '16',
+    w: 'full',
+    borderRadius: 'lg',
+  }),
+  row: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    py: '3.5',
+    borderBottomWidth: '1px',
+    borderColor: 'border.subtle',
+    _last: { borderBottomWidth: '0' },
+    textAlign: 'left',
+  }),
+  rowLeft: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4',
+  }),
+  iconCircle: css({
+    h: '10',
+    w: '10',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 'full',
+    bg: 'colorPalette.a3',
+    color: 'colorPalette.default',
+  }),
+  rowIcon: css({
+    h: '5',
+    w: '5',
+  }),
+  primaryLink: css({
+    fontWeight: 'medium',
+    color: 'fg.default',
+    fontSize: 'md',
+    letterSpacing: '-0.01em',
+    _hover: { color: 'colorPalette.default' },
+  }),
+  metaText: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  metaEmphasis: css({
+    fontSize: 'sm',
+    color: 'fg.default',
+    fontWeight: 'medium',
+  }),
+  hashText: css({
+    fontSize: 'xs',
+    color: 'fg.subtle',
+    fontFamily: 'mono',
+  }),
+  textRight: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '1',
+  }),
+  badge: css({
+    mb: '1',
+  }),
 }

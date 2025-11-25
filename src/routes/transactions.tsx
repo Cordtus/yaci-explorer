@@ -15,6 +15,7 @@ import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, i
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Pagination } from '@/components/ui/pagination'
+import { css } from '../../styled-system/css'
 
 const api = new YaciAPIClient()
 
@@ -128,27 +129,27 @@ export default function TransactionsPage() {
   const activeFilterCount = statusFilters.size + messageTypeFilters.size + (blockFilter ? 1 : 0) + (blockRangeMin || blockRangeMax ? 1 : 0) + (timeRangeMin || timeRangeMax ? 1 : 0)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={styles.page}>
+      <div className={styles.headerRow}>
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">
+          <h1 className={styles.title}>Transactions</h1>
+          <p className={styles.subtitle}>
             Browse and filter transactions on the blockchain
           </p>
         </div>
         <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
+            <Button variant="outline" className={styles.filterButton}>
+              <Filter className={styles.iconSm} />
               Filters
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className={css({ ml: '1' })}>
                   {activeFilterCount}
                 </Badge>
               )}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className={styles.dialogContent}>
             <DialogHeader>
               <DialogTitle>Filter Transactions</DialogTitle>
               <DialogDescription>
@@ -156,12 +157,12 @@ export default function TransactionsPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            <div className={styles.filterBody}>
               {/* Status Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Status</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
+              <div className={styles.section}>
+                <Label className={styles.sectionTitle}>Status</Label>
+                <div className={styles.stack2}>
+                  <div className={styles.checkRow}>
                     <Checkbox
                       id="status-success"
                       checked={statusFilters.has('success')}
@@ -169,12 +170,12 @@ export default function TransactionsPage() {
                     />
                     <label
                       htmlFor="status-success"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      className={styles.checkboxLabel}
                     >
                       Success
                     </label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className={styles.checkRow}>
                     <Checkbox
                       id="status-failed"
                       checked={statusFilters.has('failed')}
@@ -182,7 +183,7 @@ export default function TransactionsPage() {
                     />
                     <label
                       htmlFor="status-failed"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      className={styles.checkboxLabel}
                     >
                       Failed
                     </label>
@@ -193,14 +194,14 @@ export default function TransactionsPage() {
               <Separator />
 
               {/* Message Type Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Message Type</Label>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+              <div className={styles.section}>
+                <Label className={styles.sectionTitle}>Message Type</Label>
+                <div className={styles.scrollList}>
                   {messageTypes.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">Loading message types...</div>
+                    <div className={styles.metaText}>Loading message types...</div>
                   ) : (
                     messageTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
+                      <div key={type} className={styles.checkRow}>
                         <Checkbox
                           id={`type-${type}`}
                           checked={messageTypeFilters.has(type)}
@@ -208,7 +209,7 @@ export default function TransactionsPage() {
                         />
                         <label
                           htmlFor={`type-${type}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          className={styles.checkboxLabel}
                         >
                           {getMessageTypeLabel(type)}
                         </label>
@@ -221,11 +222,11 @@ export default function TransactionsPage() {
               <Separator />
 
               {/* Block Height Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Block Height</Label>
-                <div className="space-y-3">
+              <div className={styles.section}>
+                <Label className={styles.sectionTitle}>Block Height</Label>
+                <div className={styles.stack3}>
                   <div>
-                    <Label htmlFor="block-single" className="text-sm">Single Block</Label>
+                    <Label htmlFor="block-single" className={styles.labelSm}>Single Block</Label>
                     <Input
                       id="block-single"
                       type="number"
@@ -240,9 +241,9 @@ export default function TransactionsPage() {
                       }}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={styles.twoCol}>
                     <div>
-                      <Label htmlFor="block-min" className="text-sm">Min Block</Label>
+                      <Label htmlFor="block-min" className={styles.labelSm}>Min Block</Label>
                       <Input
                         id="block-min"
                         type="number"
@@ -256,7 +257,7 @@ export default function TransactionsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="block-max" className="text-sm">Max Block</Label>
+                      <Label htmlFor="block-max" className={styles.labelSm}>Max Block</Label>
                       <Input
                         id="block-max"
                         type="number"
@@ -276,11 +277,11 @@ export default function TransactionsPage() {
               <Separator />
 
               {/* Time Range Filter */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Time Range</Label>
-                <div className="grid grid-cols-2 gap-2">
+              <div className={styles.section}>
+                <Label className={styles.sectionTitle}>Time Range</Label>
+                <div className={styles.twoCol}>
                   <div>
-                    <Label htmlFor="time-min" className="text-sm">From</Label>
+                    <Label htmlFor="time-min" className={styles.labelSm}>From</Label>
                     <Input
                       id="time-min"
                       type="datetime-local"
@@ -289,7 +290,7 @@ export default function TransactionsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="time-max" className="text-sm">To</Label>
+                    <Label htmlFor="time-max" className={styles.labelSm}>To</Label>
                     <Input
                       id="time-max"
                       type="datetime-local"
@@ -324,12 +325,12 @@ export default function TransactionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Transaction Hash</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Block</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Fee</TableHead>
+                <TableHead className={styles.th}>Transaction Hash</TableHead>
+                <TableHead className={styles.th}>Type</TableHead>
+                <TableHead className={styles.th}>Block</TableHead>
+                <TableHead className={styles.th}>Time</TableHead>
+                <TableHead className={styles.th}>Status</TableHead>
+                <TableHead className={styles.th}>Fee</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -337,19 +338,19 @@ export default function TransactionsPage() {
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell colSpan={6}>
-                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className={css({ h: '12', w: 'full' })} />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className={styles.mutedCentered}>
                     Error loading transactions
                   </TableCell>
                 </TableRow>
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className={styles.emptyState}>
                     No transactions found matching your filters
                   </TableCell>
                 </TableRow>
@@ -363,26 +364,26 @@ export default function TransactionsPage() {
                       <TableCell>
                         <Link
                           to={`/transactions/${tx.id}`}
-                          className="flex items-center gap-2 font-medium hover:text-primary"
+                          className={styles.txLink}
                         >
-                          <Activity className="h-4 w-4" />
-                          <code className="text-xs">{formatHash(tx.id, 10)}</code>
+                          <Activity className={styles.iconSm} />
+                          <code className={styles.codeXs}>{formatHash(tx.id, 10)}</code>
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className={styles.rowGap2}>
                           {isEVM && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className={styles.badgeXs}>
                               EVM
                             </Badge>
                           )}
-                          <span className="text-sm">
+                          <span className={styles.textSm}>
                             {tx.messages.length > 0
                               ? getMessageTypeLabel(tx.messages[0].type || '')
                               : 'Unknown'}
                           </span>
                           {tx.messages.length > 1 && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className={styles.badgeXs}>
                               +{tx.messages.length - 1}
                             </Badge>
                           )}
@@ -391,31 +392,31 @@ export default function TransactionsPage() {
                       <TableCell>
                         <Link
                           to={`/blocks/${tx.height}`}
-                          className="text-sm hover:text-primary"
+                          className={styles.textLink}
                         >
                           {tx.height}
                         </Link>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="text-sm">{formatTimeAgo(tx.timestamp)}</div>
+                          <div className={styles.textSm}>{formatTimeAgo(tx.timestamp)}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={tx.error ? 'destructive' : 'success'}
-                          className="flex items-center gap-1 w-fit"
+                          className={styles.statusBadge}
                         >
                           {tx.error ? (
-                            <X className="h-3 w-3" />
+                            <X className={styles.iconXs} />
                           ) : (
-                            <Check className="h-3 w-3" />
+                            <Check className={styles.iconXs} />
                           )}
                           {status.label}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
+                        <div className={styles.textSm}>
                           {tx.fee?.amount?.[0]?.amount || '0'} {tx.fee?.amount?.[0]?.denom || ''}
                         </div>
                       </TableCell>
@@ -438,4 +439,93 @@ export default function TransactionsPage() {
       </Card>
     </div>
   )
+}
+
+const styles = {
+  page: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+  }),
+  headerRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
+  title: css({ fontSize: '3xl', fontWeight: 'bold', lineHeight: 'short' }),
+  subtitle: css({ color: 'fg.muted' }),
+  th: css({
+    fontSize: 'xs',
+    fontWeight: 'semibold',
+    textTransform: 'uppercase',
+    letterSpacing: 'widest',
+    color: 'fg.subtle',
+  }),
+  filterButton: css({ display: 'inline-flex', gap: '2' }),
+  dialogContent: css({
+    maxW: '2xl',
+    maxH: '80vh',
+    overflowY: 'auto',
+  }),
+  filterBody: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+    py: '4',
+  }),
+  section: css({ display: 'flex', flexDirection: 'column', gap: '3' }),
+  sectionTitle: css({ fontSize: 'base', fontWeight: 'semibold' }),
+  checkRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+  }),
+  checkboxLabel: css({
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    cursor: 'pointer',
+  }),
+  stack2: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  stack3: css({ display: 'flex', flexDirection: 'column', gap: '3' }),
+  labelSm: css({ fontSize: 'sm' }),
+  twoCol: css({
+    display: 'grid',
+    gap: '2',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  }),
+  scrollList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2',
+    maxH: '60',
+    overflowY: 'auto',
+  }),
+  metaText: css({ fontSize: 'sm', color: 'fg.muted' }),
+  mutedCentered: css({ textAlign: 'center', color: 'fg.muted' }),
+  emptyState: css({ textAlign: 'center', color: 'fg.muted', py: '8' }),
+  txLink: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '2',
+    fontWeight: 'medium',
+    color: 'fg.default',
+    _hover: { color: 'colorPalette.default' },
+  }),
+  textLink: css({
+    fontSize: 'sm',
+    color: 'colorPalette.default',
+    _hover: { color: 'colorPalette.emphasized' },
+  }),
+  textSm: css({ fontSize: 'sm' }),
+  iconSm: css({ h: '4', w: '4' }),
+  iconXs: css({ h: '3', w: '3' }),
+  rowGap2: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  codeXs: css({ fontSize: 'xs', fontFamily: 'mono' }),
+  badgeXs: css({ fontSize: 'xs' }),
+  statusBadge: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '1',
+    w: 'fit',
+  }),
 }

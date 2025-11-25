@@ -4,6 +4,7 @@
  */
 
 import { extractIBCHash } from './denom'
+import { getPublicChainRestEndpoint } from '@/config/env'
 
 export interface IBCChannelInfo {
 	channelId: string
@@ -34,9 +35,9 @@ const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
  * Get the chain's REST API endpoint from environment
  */
 function getChainRestEndpoint(): string {
-	const endpoint = import.meta.env.VITE_CHAIN_REST_ENDPOINT
+	const endpoint = getPublicChainRestEndpoint()
 	if (!endpoint) {
-		throw new Error('VITE_CHAIN_REST_ENDPOINT environment variable is not set')
+		throw new Error('PUBLIC_CHAIN_REST_ENDPOINT environment variable is not set')
 	}
 	return endpoint
 }

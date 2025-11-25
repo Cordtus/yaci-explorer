@@ -1,4 +1,5 @@
-import { cn } from '@/lib/utils'
+import { cx } from '../../../styled-system/css'
+import { skeleton as skeletonRecipe } from '../../../styled-system/recipes'
 
 function Skeleton({
   className,
@@ -6,7 +7,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('animate-pulse rounded-md bg-muted', className)}
+      className={cx(skeletonRecipe(), className)}
       {...props}
     />
   )

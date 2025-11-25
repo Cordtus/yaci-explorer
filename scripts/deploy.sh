@@ -47,7 +47,7 @@ fi
 # Build frontend
 echo ""
 echo "Step 3: Building frontend..."
-VITE_POSTGREST_URL="/api" npm run build
+PUBLIC_POSTGREST_URL="/api" npm run build
 
 # Install serve if not present
 if ! command -v serve &> /dev/null; then

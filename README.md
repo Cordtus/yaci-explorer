@@ -25,8 +25,8 @@ UI: http://localhost:3001 • PostgREST: http://localhost:3000 • Prometheus: h
 ## Without Docker
 Prereq: running PostgreSQL + PostgREST + Yaci indexer.
 ```bash
-yarn install
-yarn build
+bun install
+bun run build
 npx serve -s build/client -l 3001
 ```
 
@@ -35,8 +35,8 @@ npx serve -s build/client -l 3001
 | -- | -- | -- |
 | `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
 | `POSTGRES_PASSWORD` | DB password | `foobar` |
-| `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
-| `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
+| `PUBLIC_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
+| `PUBLIC_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
 | `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
 | `YACI_IMAGE` | Yaci image tag | `ghcr.io/cordtus/yaci:main` |
 
@@ -54,11 +54,24 @@ src/
 
 ## Development
 ```bash
-yarn install
-export VITE_POSTGREST_URL=http://localhost:3000
-yarn dev
+bun install
+export PUBLIC_POSTGREST_URL=http://localhost:3000
+bun run dev
 ```
-Scripts: `yarn typecheck`, `yarn lint`, `yarn build`.
+Scripts: `bun run typecheck`, `bun run lint`, `bun run build`.
+
+### Local frontend + dockerized backend
+```bash
+# start Postgres + PostgREST + yaci only
+bun run backend:up
+
+# in another shell, point the frontend at PostgREST
+export PUBLIC_POSTGREST_URL=http://localhost:3000
+
+# run the React app locally with Bun
+bun run dev
+```
+Compose maps PostgREST to `localhost:3000` by default. Once the indexer ingests data, the UI will leave the loading state.
 
 ## API (PostgREST)
 - `/blocks_raw` – raw blocks

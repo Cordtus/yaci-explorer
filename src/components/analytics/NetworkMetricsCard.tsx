@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { YaciAPIClient } from '@/lib/api/client'
+import { getPublicPostgrestUrl } from "@/config/env";
 
 const client = new YaciAPIClient()
 
@@ -19,10 +20,7 @@ interface NetworkMetrics {
 }
 
 async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  const baseUrl = getPublicPostgrestUrl()
 
   // Fetch multiple data points in parallel
   const [blocksResponse, txResponse, messagesResponse] = await Promise.all([

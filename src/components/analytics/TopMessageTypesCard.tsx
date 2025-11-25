@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { getPublicPostgrestUrl } from "@/config/env";
 
 interface MessageTypeStats {
   type: string
@@ -10,10 +11,7 @@ interface MessageTypeStats {
 }
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  const baseUrl = getPublicPostgrestUrl()
 
   // Fetch message types from the last 10000 messages
   const response = await fetch(

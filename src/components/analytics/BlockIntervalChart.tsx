@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { YaciAPIClient } from '@/lib/api/client'
+import { getPublicPostgrestUrl } from "@/config/env";
 
 const client = new YaciAPIClient()
 
@@ -12,10 +13,7 @@ interface BlockTimeData {
 }
 
 async function getBlockIntervalData(limit = 100): Promise<BlockTimeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  const baseUrl = getPublicPostgrestUrl()
   const response = await fetch(
     `${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`
   )

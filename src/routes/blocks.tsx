@@ -9,6 +9,7 @@ import { YaciAPIClient } from '@/lib/api/client'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
+import { css } from '../../styled-system/css'
 
 const api = new YaciAPIClient()
 
@@ -22,11 +23,11 @@ export default function BlocksPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={styles.page}>
+      <div className={styles.headerRow}>
         <div>
-          <h1 className="text-3xl font-bold">Blocks</h1>
-          <p className="text-muted-foreground">
+          <h1 className={styles.title}>Blocks</h1>
+          <p className={styles.subtitle}>
             Browse the latest blocks on the blockchain
           </p>
         </div>
@@ -43,11 +44,11 @@ export default function BlocksPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Height</TableHead>
-                <TableHead>Block Hash</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Transactions</TableHead>
-                <TableHead>Proposer</TableHead>
+                <TableHead className={styles.th}>Height</TableHead>
+                <TableHead className={styles.th}>Block Hash</TableHead>
+                <TableHead className={styles.th}>Time</TableHead>
+                <TableHead className={styles.th}>Transactions</TableHead>
+                <TableHead className={styles.th}>Proposer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -55,19 +56,19 @@ export default function BlocksPage() {
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell colSpan={5}>
-                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className={css({ h: '12', w: 'full' })} />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className={styles.mutedCentered}>
                     Error loading blocks
                   </TableCell>
                 </TableRow>
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className={styles.mutedCentered}>
                     No blocks found
                   </TableCell>
                 </TableRow>
@@ -77,21 +78,21 @@ export default function BlocksPage() {
                     <TableCell>
                       <Link
                         to={`/blocks/${block.id}`}
-                        className="flex items-center gap-2 font-medium hover:text-primary"
+                        className={styles.blockLink}
                       >
-                        <Blocks className="h-4 w-4" />
+                        <Blocks className={styles.iconXs} />
                         {formatNumber(block.id)}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs">
+                      <code className={styles.code}>
                         {formatHash(block.data?.block_id?.hash || block.data?.blockId?.hash || '', 12)}
                       </code>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="text-sm">{formatTimeAgo(block.data.block.header.time)}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className={styles.textSm}>{formatTimeAgo(block.data.block.header.time)}</div>
+                        <div className={styles.metaText}>
                           {formatTimestamp(block.data.block.header.time)}
                         </div>
                       </div>
@@ -124,4 +125,60 @@ export default function BlocksPage() {
       </Card>
     </div>
   )
+}
+
+const styles = {
+  page: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+  }),
+  headerRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
+  title: css({
+    fontSize: '3xl',
+    fontWeight: 'bold',
+    lineHeight: 'short',
+  }),
+  subtitle: css({
+    color: 'fg.muted',
+  }),
+  mutedCentered: css({
+    textAlign: 'center',
+    color: 'fg.muted',
+  }),
+  blockLink: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '2',
+    fontWeight: 'medium',
+    color: 'fg.default',
+    letterSpacing: '-0.01em',
+    _hover: { color: 'colorPalette.default' },
+  }),
+  th: css({
+    fontSize: 'xs',
+    fontWeight: 'semibold',
+    textTransform: 'uppercase',
+    letterSpacing: 'widest',
+    color: 'fg.subtle',
+  }),
+  iconXs: css({
+    h: '4',
+    w: '4',
+  }),
+  code: css({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+  }),
+  textSm: css({
+    fontSize: 'sm',
+  }),
+  metaText: css({
+    fontSize: 'xs',
+    color: 'fg.muted',
+  }),
 }

@@ -2,6 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
+import { getChartColors } from '@/theme/chartTheme'
+import { css } from '../../../styled-system/css'
+import { getPublicPostgrestUrl } from "@/config/env";
 
 interface VolumeData {
   time: string
@@ -10,10 +13,7 @@ interface VolumeData {
 }
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  const baseUrl = getPublicPostgrestUrl()
   const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 
   const response = await fetch(
@@ -62,6 +62,7 @@ export function TransactionVolumeChart() {
     queryFn: () => getTransactionVolume(24),
     refetchInterval: 60000, // Refresh every minute
   })
+  const chartColors = getChartColors()
 
   if (isLoading || !data || data.length === 0) {
     return (
@@ -93,24 +94,27 @@ export function TransactionVolumeChart() {
       axisPointer: {
         type: 'cross',
         label: {
-          backgroundColor: '#6a7985'
+          backgroundColor: chartColors.grid
         }
       },
       formatter: (params: any) => {
         const date = new Date(params[0].axisValue)
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         return `
-          <div style="font-size: 12px;">
+          <div style="font-size: 12px; color: ${chartColors.axis};">
             <strong>${timeStr}</strong><br/>
-            Transactions: ${params[0].value}<br/>
-            Gas Used: ${(params[1].value / 1000000).toFixed(2)}M
+            <span style="color:${chartColors.transactions}">Transactions: ${params[0].value}</span><br/>
+            <span style="color:${chartColors.gas}">Gas Used: ${(params[1].value / 1000000).toFixed(2)}M</span>
           </div>
         `
       }
     },
     legend: {
       data: ['Transactions', 'Gas Used'],
-      bottom: 0
+      bottom: 0,
+      textStyle: {
+        color: chartColors.axis,
+      },
     },
     grid: {
       left: '3%',
@@ -128,7 +132,8 @@ export function TransactionVolumeChart() {
           const date = new Date(value)
           return date.toLocaleTimeString([], { hour: '2-digit' })
         },
-        interval: Math.floor(data.length / 8) // Show ~8 labels
+        interval: Math.floor(data.length / 8), // Show ~8 labels
+        color: chartColors.axis,
       }
     },
     yAxis: [
@@ -137,12 +142,13 @@ export function TransactionVolumeChart() {
         name: 'Transactions',
         position: 'left',
         axisLabel: {
-          formatter: '{value}'
+          formatter: '{value}',
+          color: chartColors.axis,
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: '#3b82f6'
+            color: chartColors.transactions
           }
         }
       },
@@ -151,12 +157,13 @@ export function TransactionVolumeChart() {
         name: 'Gas (M)',
         position: 'right',
         axisLabel: {
-          formatter: (value: number) => (value / 1000000).toFixed(1)
+          formatter: (value: number) => (value / 1000000).toFixed(1),
+          color: chartColors.axis,
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: '#10b981'
+            color: chartColors.gas
           }
         }
       }
@@ -170,21 +177,11 @@ export function TransactionVolumeChart() {
         symbolSize: 4,
         sampling: 'average',
         itemStyle: {
-          color: '#3b82f6'
+          color: chartColors.transactions
         },
         areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [{
-              offset: 0, color: 'rgba(59, 130, 246, 0.2)'
-            }, {
-              offset: 1, color: 'rgba(59, 130, 246, 0.05)'
-            }]
-          }
+          color: chartColors.transactions,
+          opacity: 0.18,
         },
         data: data.map(d => d.count)
       },
@@ -196,7 +193,7 @@ export function TransactionVolumeChart() {
         symbol: 'none',
         sampling: 'average',
         itemStyle: {
-          color: '#10b981'
+          color: chartColors.gas
         },
         lineStyle: {
           width: 2,
@@ -219,7 +216,11 @@ export function TransactionVolumeChart() {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4">
-        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
+        <ReactECharts
+          option={option}
+          className={css({ h: '300px' })}
+          opts={{ renderer: 'canvas' }}
+        />
       </CardContent>
     </Card>
   )

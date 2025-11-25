@@ -74,11 +74,12 @@ services:
       dockerfile: docker/explorer/Dockerfile
     container_name: yaci-explorer-ui
     environment:
-      POSTGREST_URL: ${POSTGREST_URL:-http://postgrest:3000}
+      PUBLIC_POSTGREST_URL: ${PUBLIC_POSTGREST_URL:-/api}
+      PUBLIC_CHAIN_REST_ENDPOINT: ${PUBLIC_CHAIN_REST_ENDPOINT:-http://localhost:1317}
       CHAIN_ID: ${CHAIN_ID:-manifest-1}
       CHAIN_NAME: ${CHAIN_NAME:-Manifest Network}
     ports:
-      - "${EXPLORER_PORT:-3001}:80"
+      - "${EXPLORER_PORT:-3000}:80"
     depends_on:
       - postgrest
     restart: unless-stopped
@@ -88,7 +89,6 @@ services:
 networks:
   yaci-network:
     driver: bridge
-
 volumes:
   postgres-data:
     driver: local

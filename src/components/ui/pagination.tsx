@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { css } from '@/styled-system/css'
 
 interface PaginationProps {
   currentPage: number
@@ -68,30 +69,30 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
   const pageRange = generatePageRange(currentPage + 1, totalPages) // Convert to 1-indexed for display
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-      <div className="text-sm text-muted-foreground">
+    <div className={styles.wrapper}>
+      <div className={styles.pageInfo}>
         Page {currentPage + 1} of {totalPages.toLocaleString()}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className={styles.controls}>
         {/* Previous button */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 0 || isLoading}
-          className="gap-1"
+          className={styles.iconButton}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className={styles.icon} />
           Previous
         </Button>
 
         {/* Page numbers */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className={styles.pageRange}>
           {pageRange.map((page, idx) => {
             if (page === 'ellipsis') {
               return (
-                <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+                <span key={`ellipsis-${idx}`} className={styles.ellipsis}>
                   ...
                 </span>
               )
@@ -106,7 +107,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
                 size="sm"
                 onClick={() => onPageChange(page - 1)} // Convert to 0-indexed
                 disabled={isLoading}
-                className="min-w-[2.5rem]"
+                className={styles.pageButton(isCurrentPage)}
               >
                 {page}
               </Button>
@@ -120,15 +121,15 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1 || isLoading}
-          className="gap-1"
+          className={styles.iconButton}
         >
           Next
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className={styles.icon} />
         </Button>
       </div>
 
       {/* Jump to page */}
-      <form onSubmit={handleJumpToPage} className="flex items-center gap-2">
+      <form onSubmit={handleJumpToPage} className={styles.jumpForm}>
         <Input
           type="number"
           min="1"
@@ -136,7 +137,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
           placeholder="Jump to..."
           value={jumpToPage}
           onChange={(e) => setJumpToPage(e.target.value)}
-          className="w-24 h-9"
+          className={styles.jumpInput}
           disabled={isLoading}
         />
         <Button type="submit" size="sm" variant="secondary" disabled={isLoading}>
@@ -145,4 +146,54 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
       </form>
     </div>
   )
+}
+
+const styles = {
+  wrapper: css({
+    display: 'flex',
+    flexDirection: { base: 'column', sm: 'row' },
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '4',
+    mt: '6',
+  }),
+  pageInfo: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  controls: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+  }),
+  iconButton: css({
+    gap: '1.5',
+  }),
+  icon: css({
+    h: '4',
+    w: '4',
+  }),
+  pageRange: css({
+    display: { base: 'none', md: 'flex' },
+    alignItems: 'center',
+    gap: '1',
+  }),
+  ellipsis: css({
+    px: '2',
+    color: 'fg.muted',
+  }),
+  pageButton: (isCurrent: boolean) =>
+    css({
+      minW: '10',
+      fontWeight: isCurrent ? 'semibold' : 'medium',
+    }),
+  jumpForm: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+  }),
+  jumpInput: css({
+    w: '24',
+    h: '9',
+  }),
 }

@@ -245,7 +245,7 @@ echo "  Dependencies installed"
 
 # Build frontend
 echo "  Building frontend..."
-VITE_POSTGREST_URL="/api" npm run build > /dev/null 2>&1
+PUBLIC_POSTGREST_URL="/api" npm run build > /dev/null 2>&1
 echo "  Frontend built"
 
 # Start frontend server

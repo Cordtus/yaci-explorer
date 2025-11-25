@@ -4,15 +4,16 @@ import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
 import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
+import { css } from '../../styled-system/css'
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Activity className="h-8 w-8 text-primary" />
+    <div className={styles.page}>
+      <div className={styles.headerRow}>
+        <Activity className={styles.iconLg} />
         <div>
-          <h1 className="text-3xl font-bold">Network Metrics</h1>
-          <p className="text-muted-foreground">
+          <h1 className={styles.title}>Network Metrics</h1>
+          <p className={styles.subtitle}>
             Real-time blockchain statistics and performance metrics
           </p>
         </div>
@@ -25,7 +26,7 @@ export default function AnalyticsPage() {
       <NetworkMetricsCard />
 
       {/* Charts grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={styles.chartGrid}>
         <BlockIntervalChart />
         <TransactionVolumeChart />
       </div>
@@ -34,4 +35,17 @@ export default function AnalyticsPage() {
       <TopMessageTypesCard />
     </div>
   )
+}
+
+const styles = {
+  page: css({ display: 'flex', flexDirection: 'column', gap: '6' }),
+  headerRow: css({ display: 'flex', alignItems: 'center', gap: '3' }),
+  iconLg: css({ h: '8', w: '8', color: 'colorPalette.default' }),
+  title: css({ fontSize: '3xl', fontWeight: 'bold' }),
+  subtitle: css({ color: 'fg.muted' }),
+  chartGrid: css({
+    display: 'grid',
+    gap: '6',
+    gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+  }),
 }

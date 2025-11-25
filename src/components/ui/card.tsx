@@ -1,6 +1,9 @@
 import * as React from 'react'
 
-import { cn } from '@/lib/utils'
+import { cx, css } from '../../../styled-system/css'
+import { card as cardRecipe } from '../../../styled-system/recipes'
+
+const slots = cardRecipe()
 
 const Card = React.forwardRef<
   HTMLDivElement,
@@ -8,9 +11,15 @@ const Card = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      'rounded-lg border bg-card text-card-foreground shadow-sm',
-      className
+    className={cx(
+      slots.root,
+      css({
+        boxShadow: 'none',
+        borderWidth: '1px',
+        borderColor: 'border.subtle',
+        background: 'bg.default',
+      }),
+      className,
     )}
     {...props}
   />
@@ -23,7 +32,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex flex-col space-y-1.5 p-6', className)}
+    className={cx(slots.header, css({ gap: '1.5', p: '6' }), className)}
     {...props}
   />
 ))
@@ -35,10 +44,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
-      className
-    )}
+    className={cx(slots.title, css({ fontSize: '2xl', fontWeight: 'semibold', lineHeight: 'short' }), className)}
     {...props}
   />
 ))
@@ -48,11 +54,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
+  <p ref={ref} className={cx(slots.description, className)} {...props} />
 ))
 CardDescription.displayName = 'CardDescription'
 
@@ -60,7 +62,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
+  <div ref={ref} className={cx(slots.body, css({ p: '6', pt: '0' }), className)} {...props} />
 ))
 CardContent.displayName = 'CardContent'
 
@@ -70,7 +72,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex items-center p-6 pt-0', className)}
+    className={cx(slots.footer, css({ p: '6', pt: '0', display: 'flex', alignItems: 'center' }), className)}
     {...props}
   />
 ))

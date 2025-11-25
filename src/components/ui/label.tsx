@@ -1,14 +1,18 @@
 import * as React from 'react'
 
+import { cx } from '../../../styled-system/css'
+import { formLabel, type FormLabelVariantProps } from '../../../styled-system/recipes'
+
 export interface LabelProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+  extends React.LabelHTMLAttributes<HTMLLabelElement>,
+    FormLabelVariantProps {}
 
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, size, ...props }, ref) => {
     return (
       <label
         ref={ref}
-        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className || ''}`}
+        className={cx(formLabel({ size }), className)}
         {...props}
       />
     )

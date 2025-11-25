@@ -24,9 +24,10 @@
       "@/lib/*": ["./src/lib/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/types/*": ["./src/types/*"],
-      "@/config/*": ["./src/config/*"]
+      "@/config/*": ["./src/config/*"],
+      "@/styled-system/*": ["./styled-system/*"]
     }
   },
-  "include": ["src", "react-router.config.ts", "vite-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["src", "src/env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
