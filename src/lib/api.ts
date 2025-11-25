@@ -155,6 +155,35 @@ export interface BlockRaw {
 	}
 }
 
+export interface GovernanceProposal {
+	proposal_id: number
+	title: string | null
+	summary: string | null
+	status: string
+	submit_time: string
+	deposit_end_time: string | null
+	voting_start_time: string | null
+	voting_end_time: string | null
+	proposer: string | null
+	tally: {
+		yes: string | null
+		no: string | null
+		abstain: string | null
+		no_with_veto: string | null
+	}
+	last_updated: string
+}
+
+export interface ProposalSnapshot {
+	proposal_id: number
+	status: string
+	yes_count: string
+	no_count: string
+	abstain_count: string
+	no_with_veto_count: string
+	snapshot_time: string
+}
+
 // Legacy type aliases for compatibility
 export type EnhancedTransaction = Transaction
 
@@ -426,6 +455,74 @@ export class YaciClient {
 
 	async getActiveAddressesDaily(days = 30): Promise<Array<{ date: string; count: number }>> {
 		return this.rpc('get_active_addresses_daily', { _days: days })
+	}
+
+	// Governance endpoints
+
+	async getGovernanceProposals(
+		limit = 20,
+		offset = 0,
+		status?: string
+	): Promise<PaginatedResponse<GovernanceProposal>> {
+		return this.rpc('get_governance_proposals', {
+			_limit: limit,
+			_offset: offset,
+			_status: status
+		})
+	}
+
+	async getProposalDetail(proposalId: number): Promise<GovernanceProposal | undefined> {
+		// Query returns flat columns, need to transform to nested tally object
+		const result = await this.query<Array<{
+			proposal_id: number
+			title: string | null
+			summary: string | null
+			status: string
+			submit_time: string
+			deposit_end_time: string | null
+			voting_start_time: string | null
+			voting_end_time: string | null
+			proposer: string | null
+			yes_count: string | null
+			no_count: string | null
+			abstain_count: string | null
+			no_with_veto_count: string | null
+			last_updated: string
+		}>>('governance_proposals', {
+			proposal_id: `eq.${proposalId}`,
+			limit: '1'
+		})
+		if (!result[0]) return undefined
+		const row = result[0]
+		return {
+			proposal_id: row.proposal_id,
+			title: row.title,
+			summary: row.summary,
+			status: row.status,
+			submit_time: row.submit_time,
+			deposit_end_time: row.deposit_end_time,
+			voting_start_time: row.voting_start_time,
+			voting_end_time: row.voting_end_time,
+			proposer: row.proposer,
+			tally: {
+				yes: row.yes_count,
+				no: row.no_count,
+				abstain: row.abstain_count,
+				no_with_veto: row.no_with_veto_count
+			},
+			last_updated: row.last_updated
+		}
+	}
+
+	async getProposalSnapshots(proposalId: number): Promise<ProposalSnapshot[]> {
+		return this.query('governance_snapshots', {
+			proposal_id: `eq.${proposalId}`,
+			order: 'snapshot_time.desc'
+		})
+	}
+
+	async getProposalTally(proposalId: number): Promise<{ yes: number; no: number; abstain: number; no_with_veto: number }> {
+		return this.rpc('compute_proposal_tally', { _proposal_id: proposalId })
 	}
 }
 

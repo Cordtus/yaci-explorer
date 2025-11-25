@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router'
-import { Search, Blocks, Activity, Home, BarChart3 } from 'lucide-react'
+import { Search, Blocks, Activity, Home, BarChart3, Vote } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/transactions', icon: Activity },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Governance', href: '/governance', icon: Vote },
 ]
 
 export function Header() {
