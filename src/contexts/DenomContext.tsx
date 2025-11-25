@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getDenomMetadata, extractIBCHash } from '@/lib/denom'
+import { getDenomMetadata } from '@/lib/denom'
 
 interface DenomContextType {
   getDenomDisplay: (denom: string) => string
@@ -11,7 +11,8 @@ const DenomContext = createContext<DenomContextType | undefined>(undefined)
 interface DenomMetadataRow {
   denom: string
   symbol: string
-  ibc_hash: string | null
+  ibc_source_chain: string | null
+  ibc_source_denom: string | null
 }
 
 /**
@@ -29,7 +30,7 @@ export function DenomProvider({ children }: { children: ReactNode }) {
         if (!postgrestUrl) {
           throw new Error('VITE_POSTGREST_URL environment variable is not set')
         }
-        const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol,ibc_hash`)
+        const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol`)
 
         if (!response.ok) {
           console.error('Failed to fetch denom metadata from database')
@@ -43,10 +44,6 @@ export function DenomProvider({ children }: { children: ReactNode }) {
         // Build cache from database
         metadata.forEach((row) => {
           cache.set(row.denom, row.symbol)
-          // Also cache by IBC hash for faster lookups
-          if (row.ibc_hash) {
-            cache.set(`ibc_${row.ibc_hash}`, row.symbol)
-          }
         })
 
         setDenomCache(cache)
@@ -66,13 +63,8 @@ export function DenomProvider({ children }: { children: ReactNode }) {
       return denomCache.get(denom)!
     }
 
-    // For IBC denoms, check if we have a static mapping
+    // For IBC denoms, return as-is if not in cache (will be truncated by UI)
     if (denom.startsWith('ibc/')) {
-      const hash = extractIBCHash(denom)
-      if (hash && denomCache.has(`ibc_${hash}`)) {
-        return denomCache.get(`ibc_${hash}`)!
-      }
-      // If not resolved, return the denom as-is (will be truncated by UI)
       return denom
     }
 

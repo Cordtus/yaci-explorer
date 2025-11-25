@@ -280,16 +280,24 @@ export class YaciClient {
 		offset = 0,
 		filters?: {
 			status?: 'success' | 'failed'
-			blockHeight?: number
-			messageType?: string
+			block_height?: number
+			block_height_min?: number
+			block_height_max?: number
+			message_type?: string
+			timestamp_min?: string
+			timestamp_max?: string
 		}
 	): Promise<PaginatedResponse<Transaction>> {
 		return this.rpc('get_transactions_paginated', {
 			_limit: limit,
 			_offset: offset,
 			_status: filters?.status,
-			_block_height: filters?.blockHeight,
-			_message_type: filters?.messageType
+			_block_height: filters?.block_height,
+			_block_height_min: filters?.block_height_min,
+			_block_height_max: filters?.block_height_max,
+			_message_type: filters?.message_type,
+			_timestamp_min: filters?.timestamp_min,
+			_timestamp_max: filters?.timestamp_max
 		})
 	}
 
