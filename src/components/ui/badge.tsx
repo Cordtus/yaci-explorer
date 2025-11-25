@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 
 import { cx, css } from '../../../styled-system/css'
 import { badge as badgeRecipe, type BadgeVariantProps } from '../../../styled-system/recipes'

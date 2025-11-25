@@ -1,6 +1,6 @@
 // Dynamic chain information detected from blockchain data
 
-import { YaciAPIClient } from './api/client'
+import type { YaciAPIClient } from './api/client'
 import { getChainConfig, type ChainFeatures } from '@/config/chains'
 
 export interface ChainInfo {

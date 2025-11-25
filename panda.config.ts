@@ -4,22 +4,15 @@ import blue from '@park-ui/panda-preset/colors/blue'
 import slate from '@park-ui/panda-preset/colors/slate'
 
 export default defineConfig({
-  // Enable Panda's reset and JSX typings
   preflight: true,
   jsxFramework: 'react',
-
-  // Where Panda looks for class usage
   include: ['./src/**/*.{ts,tsx,js,jsx}'],
   exclude: [
     './node_modules/**/*',
     './build/**/*',
-    './dist/**/*',
   ],
-
-  // Generated output folder (CSS + typed helpers)
   outdir: 'styled-system',
 
-  // Park UI preset backed by Ark UI + Panda
   presets: [
     createPreset({
       accentColor: blue,
@@ -28,9 +21,20 @@ export default defineConfig({
     }),
   ],
 
+  plugins: [
+  {
+    name: 'Remove Default Panda Preset Colors',
+    hooks: {
+      'preset:resolved': ({ utils, preset, name }) =>
+        name === '@pandacss/preset-panda'
+          ? utils.omit(preset, ['theme.tokens.colors', 'theme.semanticTokens.colors'])
+          : preset,
+    },
+  },
+],
+
   theme: {
     extend: {
-      // Additional semantic colors for charts / data viz
       semanticTokens: {
         colors: {
           chart: {

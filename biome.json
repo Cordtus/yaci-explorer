@@ -1,52 +1,37 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "files": {
-    "ignore": [
-      "build",
-      "dist",
-      ".react-router",
-      "node_modules",
-      "styled-system"
-    ]
-  },
-  "formatter": {
-    "enabled": false
-  },
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "a11y": {
-        "noLabelWithoutControl": "off",
-        "noSvgWithoutTitle": "off",
-        "useFocusableInteractive": "off",
-        "useKeyWithClickEvents": "off",
-        "useSemanticElements": "off"
-      },
-      "complexity": {
-        "noForEach": "off",
-        "useLiteralKeys": "off"
-      },
-      "style": {
-        "noInferrableTypes": "off",
-        "noUnusedTemplateLiteral": "off",
-        "noNonNullAssertion": "off",
-        "useExponentiationOperator": "off",
-        "useDefaultParameterLast": "off",
-        "useImportType": "off",
-        "useNodejsImportProtocol": "off",
-        "useNumberNamespace": "off",
-        "useSelfClosingElements": "off",
-        "useTemplate": "off"
-      },
-      "suspicious": {
-        "noArrayIndexKey": "off",
-        "noExplicitAny": "off",
-        "noGlobalIsNan": "off"
-      }
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"includes": ["src/**", ".react-router/**"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double",
+			"semicolons": "asNeeded",
+			"trailingCommas": "none"
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
 }

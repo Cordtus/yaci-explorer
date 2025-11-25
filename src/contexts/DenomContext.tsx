@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 import { getDenomMetadata, extractIBCHash } from '@/lib/denom'
 import { getIBCDenomFromCache } from '@/lib/ibc-resolver'
 
