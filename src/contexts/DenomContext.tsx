@@ -11,8 +11,6 @@ const DenomContext = createContext<DenomContextType | undefined>(undefined)
 interface DenomMetadataRow {
   denom: string
   symbol: string
-  ibc_source_chain: string | null
-  ibc_source_denom: string | null
 }
 
 /**
