@@ -195,6 +195,8 @@ export interface YaciClientConfig {
 
 export class YaciClient {
 	private baseUrl: string
+	private maxRetries = 3
+	private retryDelay = 500
 
 	constructor(config: YaciClientConfig) {
 		this.baseUrl = config.baseUrl.replace(/\/$/, '')
@@ -202,6 +204,24 @@ export class YaciClient {
 
 	getBaseUrl(): string {
 		return this.baseUrl
+	}
+
+	private async fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+		let lastError: Error | null = null
+		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+			const res = await fetch(url, init)
+			// HTTP 300 can occur during PostgREST schema cache reload with function overloads
+			// Retry on 300, 502, 503, 504 (transient errors)
+			if (res.ok) return res
+			if (![300, 502, 503, 504].includes(res.status)) {
+				throw new Error(`Request failed: ${res.status} ${res.statusText}`)
+			}
+			lastError = new Error(`Request failed: ${res.status} ${res.statusText}`)
+			if (attempt < this.maxRetries - 1) {
+				await new Promise(r => setTimeout(r, this.retryDelay * (attempt + 1)))
+			}
+		}
+		throw lastError || new Error('Request failed after retries')
 	}
 
 	private async rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
@@ -214,13 +234,9 @@ export class YaciClient {
 			})
 		}
 
-		const res = await fetch(url.toString(), {
+		const res = await this.fetchWithRetry(url.toString(), {
 			headers: { 'Accept': 'application/json' }
 		})
-
-		if (!res.ok) {
-			throw new Error(`RPC ${fn} failed: ${res.status} ${res.statusText}`)
-		}
 
 		return res.json()
 	}
@@ -232,7 +248,6 @@ export class YaciClient {
 				if (typeof value === 'string' || typeof value === 'number') {
 					url.searchParams.set(key, String(value))
 				} else if (value && typeof value === 'object') {
-					// Handle nested objects like filters
 					Object.entries(value).forEach(([k, v]) => {
 						url.searchParams.set(k, v)
 					})
@@ -240,13 +255,9 @@ export class YaciClient {
 			})
 		}
 
-		const res = await fetch(url.toString(), {
+		const res = await this.fetchWithRetry(url.toString(), {
 			headers: { 'Accept': 'application/json' }
 		})
-
-		if (!res.ok) {
-			throw new Error(`Query ${table} failed: ${res.status} ${res.statusText}`)
-		}
 
 		return res.json()
 	}
