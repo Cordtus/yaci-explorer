@@ -2,7 +2,23 @@ name: Preview Deployment
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'components.json'
+      - 'Dockerfile'
+      - 'fly.toml'
+      - 'nginx.conf'
+      - '.github/workflows/preview.yml'
+  pull_request_target:
+    types: [closed]
 
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
