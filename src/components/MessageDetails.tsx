@@ -27,6 +27,11 @@ interface MessageMetadata {
   proposalId?: string
   voter?: string
   option?: string
+  title?: string
+  summary?: string
+  metadata?: string
+  proposer?: string
+  initialDeposit?: CoinAmount[]
 
   // IBC
   token?: { denom: string; amount: string }
@@ -328,6 +333,58 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
                 {formatDenom(amt.amount, amt.denom, getDenomDisplay)}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Governance - Submit Proposal
+  if (type === '/cosmos.gov.v1beta1.MsgSubmitProposal' || type === '/cosmos.gov.v1.MsgSubmitProposal') {
+    const proposalId = getEventAttribute(events || [], 'submit_proposal', 'proposal_id')
+    const depositAmounts = metadata.initialDeposit || []
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-3">
+          <Vote className="h-4 w-4 text-indigo-600" />
+          <span className="text-sm font-semibold text-indigo-600">Submit Governance Proposal</span>
+        </div>
+        {proposalId && (
+          <div className="p-3 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+            <label className="text-xs font-medium text-indigo-600 uppercase tracking-wider block mb-1">Proposal ID</label>
+            <div className="text-2xl font-bold text-indigo-600">#{proposalId}</div>
+          </div>
+        )}
+        {metadata.title && (
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">Title</label>
+            <div className="text-base font-semibold">{metadata.title}</div>
+          </div>
+        )}
+        {metadata.summary && (
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">Summary</label>
+            <div className="text-sm whitespace-pre-wrap">{metadata.summary}</div>
+          </div>
+        )}
+        {metadata.proposer && (
+          <DetailRow label="Proposer" value={metadata.proposer} copyable icon={Users} />
+        )}
+        {depositAmounts.length > 0 && (
+          <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+            <label className="text-xs font-medium text-green-600 uppercase tracking-wider block mb-2">Initial Deposit</label>
+            {depositAmounts.map((amt, idx) => (
+              <div key={idx} className="text-lg font-bold text-green-600">
+                {formatDenom(amt.amount, amt.denom, getDenomDisplay)}
+              </div>
+            ))}
+          </div>
+        )}
+        {metadata.metadata && (
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">Metadata</label>
+            <div className="text-sm font-mono break-all">{metadata.metadata}</div>
           </div>
         )}
       </div>
