@@ -118,28 +118,31 @@ export default function TransactionDetailPage() {
       setIsDecodingEVM(true)
       setDecodeAttempted(true)
 
-      const decodeURL = import.meta.env.VITE_EVM_DECODE_URL || 'https://yaci-explorer-apis.fly.dev:3001'
+      const apiURL = import.meta.env.VITE_POSTGREST_URL || '/api'
 
-      fetch(`${decodeURL}/decode`, {
+      fetch(`${apiURL}/rpc/request_evm_decode`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txId: transaction.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Prefer': 'params=single-object'
+        },
+        body: JSON.stringify({ _tx_id: transaction.id }),
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log('Priority EVM decode:', data.message)
-          if (data.success) {
+          console.log('Priority EVM decode requested:', data.message)
+          if (data.success && data.status !== 'not_found') {
             setTimeout(() => {
               refetch().then(() => {
                 setIsDecodingEVM(false)
               })
-            }, 1000)
+            }, 2000)
           } else {
             setIsDecodingEVM(false)
           }
         })
         .catch((err) => {
-          console.error('Failed to trigger priority decode:', err)
+          console.error('Failed to request priority decode:', err)
           setIsDecodingEVM(false)
         })
     }
