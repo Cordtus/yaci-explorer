@@ -33,13 +33,13 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
 
 export default function GovernancePage() {
 	const [page, setPage] = useState(0)
-	const [statusFilter, setStatusFilter] = useState<string>('')
+	const [statusFilter, setStatusFilter] = useState<string>('all')
 
 	const limit = 20
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['governance-proposals', page, statusFilter],
-		queryFn: () => api.getGovernanceProposals(limit, page * limit, statusFilter || undefined),
+		queryFn: () => api.getGovernanceProposals(limit, page * limit, statusFilter === 'all' ? undefined : statusFilter),
 	})
 
 	return (
@@ -53,7 +53,7 @@ export default function GovernancePage() {
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="">All Statuses</SelectItem>
+						<SelectItem value="all">All Statuses</SelectItem>
 						{STATUSES.map((status) => (
 							<SelectItem key={status} value={status}>
 								{formatProposalStatus(status)}
