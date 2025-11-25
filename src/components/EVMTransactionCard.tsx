@@ -57,7 +57,7 @@ function getTransactionAction(evmData: EvmData): { label: string; description: s
   if (!evmData.data || evmData.data === '0x') {
     return {
       label: 'Native Transfer',
-      description: `Transfer ${formatWei(evmData.value)} ETH`
+      description: `Transfer ${formatWei(evmData.value)} RAI`
     }
   }
 
@@ -168,10 +168,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
             </div>
             <div className="text-right">
               <div className="font-mono font-medium">
-                {formatWei(evmData.value)} ETH
+                {formatWei(evmData.value)} RAI
               </div>
               <div className="text-xs text-muted-foreground">
-                Fee: {formatWei(transactionFee)} ETH
+                Fee: {formatWei(transactionFee)} RAI
               </div>
             </div>
           </div>
@@ -220,10 +220,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Value:</span>
           <span className="font-medium">
-            {formatWei(evmData.value)} ETH
+            {formatWei(evmData.value)} RAI
             {evmData.value !== '0' && (
               <span className="text-xs text-muted-foreground ml-1">
-                ({evmData.value} wei)
+                ({evmData.value} arai)
               </span>
             )}
           </span>
@@ -233,7 +233,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Tx Fee:</span>
           <span className="font-medium">
-            {formatWei(transactionFee)} ETH
+            {formatWei(transactionFee)} RAI
           </span>
         </div>
 
@@ -254,7 +254,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
           <span>
             {formatGwei(evmData.gasPrice)} Gwei
             <span className="text-xs text-muted-foreground ml-1">
-              ({evmData.gasPrice} wei)
+              ({evmData.gasPrice} arai)
             </span>
           </span>
         </div>
