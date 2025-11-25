@@ -48,12 +48,12 @@ export default function GovernancePage() {
 				<div>
 					<h1 className="text-3xl font-bold">Governance Proposals</h1>
 				</div>
-				<Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(0) }}>
+				<Select value={statusFilter || 'all'} onValueChange={(value) => { setStatusFilter(value === 'all' ? '' : value); setPage(0) }}>
 					<SelectTrigger className="w-[250px]">
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="">All Statuses</SelectItem>
+						<SelectItem value="all">All Statuses</SelectItem>
 						{STATUSES.map((status) => (
 							<SelectItem key={status} value={status}>
 								{formatProposalStatus(status)}
