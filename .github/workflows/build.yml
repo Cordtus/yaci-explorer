@@ -4,9 +4,37 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'components.json'
+      - 'eslint.config.js'
+      - '.github/workflows/build.yml'
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'components.json'
+      - 'eslint.config.js'
+      - 'Dockerfile'
+      - 'fly.toml'
+      - 'nginx.conf'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build:
@@ -30,5 +58,4 @@ jobs:
       - name: Build
         run: yarn build
         env:
-          VITE_POSTGREST_URL: https://yaci-postgrest.fly.dev
-# Activated for dyphira-git org
+          VITE_POSTGREST_URL: https://yaci-explorer-apis.fly.dev
