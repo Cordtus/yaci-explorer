@@ -1,0 +1,99 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  PREVIEW_APP: yaci-explorer-pr-${{ github.event.pull_request.number }}
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Create or update preview app
+        run: |
+          if ! flyctl apps list | grep -q "$PREVIEW_APP"; then
+            echo "Creating preview app: $PREVIEW_APP"
+            flyctl apps create "$PREVIEW_APP" --org personal
+          fi
+
+          cat > fly.preview.toml << EOF
+          app = "$PREVIEW_APP"
+          primary_region = "sjc"
+
+          [build]
+            [build.args]
+              VITE_POSTGREST_URL = "https://yaci-explorer-apis.fly.dev"
+
+          [http_service]
+            internal_port = 80
+            force_https = true
+            auto_stop_machines = "stop"
+            auto_start_machines = true
+            min_machines_running = 0
+            processes = ["app"]
+
+          [[vm]]
+            memory = "256mb"
+            cpu_kind = "shared"
+            cpus = 1
+          EOF
+
+          flyctl deploy --config fly.preview.toml --remote-only
+
+      - name: Post preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = `https://${process.env.PREVIEW_APP}.fly.dev`;
+            const body = `Preview deployment ready!\n\n${previewUrl}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Preview deployment')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Delete preview app
+        run: |
+          if flyctl apps list | grep -q "$PREVIEW_APP"; then
+            echo "Deleting preview app: $PREVIEW_APP"
+            flyctl apps destroy "$PREVIEW_APP" --yes
+          fi
