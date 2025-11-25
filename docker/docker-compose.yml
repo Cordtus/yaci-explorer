@@ -1,20 +1,18 @@
-version: '3.8'
-
 services:
-  # PostgreSQL database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: yaci-explorer-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foobar}
+      POSTGRES_USER: ${POSTGRES_USER:-yaci}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB: ${POSTGRES_DB:-yaci}
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yaci}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,18 +20,16 @@ services:
     networks:
       - yaci-network
 
-  # PostgREST API
   postgrest:
     image: postgrest/postgrest:v12.0.2
-    container_name: yaci-explorer-postgrest
+    container_name: yaci-postgrest
     environment:
-      PGRST_DB_URI: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-foobar}@postgres:5432/${POSTGRES_DB:-yaci}
+      PGRST_DB_URI: postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       PGRST_DB_SCHEMA: ${PGRST_DB_SCHEMA:-api}
-      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-postgres}
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-yaci}
       PGRST_SERVER_PORT: 3000
-      PGRST_OPENAPI_SERVER_PROXY_URI: ${POSTGREST_PROXY_URI:-http://localhost:3000}
     ports:
-      - "${POSTGREST_PORT:-3000}:3000"
+      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,44 +37,60 @@ services:
     networks:
       - yaci-network
 
-  # Yaci indexer (from Docker image)
+  chain-reset-guard:
+    image: alpine:3.19
+    container_name: yaci-explorer-reset-guard
+    command: ["/bin/sh", "/scripts/chain-reset-guard.sh"]
+    environment:
+      ENABLE_CHAIN_RESET_GUARD: ${ENABLE_CHAIN_RESET_GUARD:-false}
+      CHAIN_RPC_ENDPOINT: ${CHAIN_RPC_ENDPOINT:-}
+      RESET_GUARD_RPC_ENDPOINT: ${RESET_GUARD_RPC_ENDPOINT:-}
+      RESET_GUARD_DB_URI: ${RESET_GUARD_DB_URI:-}
+      RESET_GUARD_AUTO_TRUNCATE: ${RESET_GUARD_AUTO_TRUNCATE:-true}
+      POSTGRES_USER: ${POSTGRES_USER:-yaci}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-yaci}
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../scripts/chain-reset-guard.sh:/scripts/chain-reset-guard.sh:ro
+    networks:
+      - yaci-network
+    restart: "no"
+
   yaci:
-    image: ${YACI_IMAGE:-ghcr.io/cordtus/yaci:main}
-    container_name: yaci-explorer-indexer
+    image: ghcr.io/cordtus/yaci:main
+    container_name: yaci-indexer
     command: >
       extract postgres ${CHAIN_GRPC_ENDPOINT}
-      -p postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-foobar}@postgres:5432/${POSTGRES_DB:-yaci}
+      -p postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       --live
       --max-concurrency ${YACI_MAX_CONCURRENCY:-100}
       ${YACI_INSECURE:+-k}
       --enable-prometheus
       --prometheus-addr 0.0.0.0:2112
-      -l ${YACI_LOG_LEVEL:-info}
-    environment:
-      YACI_LOGLEVEL: ${YACI_LOG_LEVEL:-info}
     ports:
-      - "${YACI_METRICS_PORT:-2112}:2112"
+      - "2112:2112"
     depends_on:
       postgres:
         condition: service_healthy
+      chain-reset-guard:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - yaci-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  # Block explorer UI
   explorer:
     build:
       context: ..
       dockerfile: docker/explorer/Dockerfile
-    container_name: yaci-explorer-ui
-    environment:
-      POSTGREST_URL: ${POSTGREST_URL:-http://postgrest:3000}
-      CHAIN_ID: ${CHAIN_ID:-manifest-1}
-      CHAIN_NAME: ${CHAIN_NAME:-Manifest Network}
+    container_name: yaci-explorer
     ports:
-      - "${EXPLORER_PORT:-3001}:80"
+      - "3001:80"
     depends_on:
       - postgrest
     restart: unless-stopped
@@ -91,4 +103,3 @@ networks:
 
 volumes:
   postgres-data:
-    driver: local

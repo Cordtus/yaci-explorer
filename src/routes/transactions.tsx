@@ -10,13 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { YaciAPIClient } from '@/lib/api/client'
+import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Pagination } from '@/components/ui/pagination'
-
-const api = new YaciAPIClient()
 
 export default function TransactionsPage() {
   const [page, setPage] = useState(0)
@@ -31,7 +30,7 @@ export default function TransactionsPage() {
   const [timeRangeMin, setTimeRangeMin] = useState('')
   const [timeRangeMax, setTimeRangeMax] = useState('')
 
-  const limit = 20
+  const limit = appConfig.transactions.pageSize
 
   // Fetch distinct message types dynamically
   const { data: messageTypes = [] } = useQuery({
@@ -132,9 +131,6 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">
-            Browse and filter transactions on the blockchain
-          </p>
         </div>
         <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
           <DialogTrigger asChild>
@@ -389,16 +385,20 @@ export default function TransactionsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/blocks/${tx.height}`}
-                          className="text-sm hover:text-primary"
-                        >
-                          {tx.height}
-                        </Link>
+                        {tx.height ? (
+                          <Link
+                            to={`/blocks/${tx.height}`}
+                            className="text-sm hover:text-primary"
+                          >
+                            {tx.height}
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <div className="text-sm">{formatTimeAgo(tx.timestamp)}</div>
+                        <div className="text-sm">
+                          {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                         </div>
                       </TableCell>
                       <TableCell>

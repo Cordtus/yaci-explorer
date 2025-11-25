@@ -1,9 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { YaciAPIClient } from '@/lib/api/client'
-
-const client = new YaciAPIClient()
+import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -27,15 +26,15 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
   // Fetch multiple data points in parallel
   const [blocksResponse, txResponse, messagesResponse] = await Promise.all([
     fetch(
-      `${baseUrl}/blocks_raw?order=id.desc&limit=100`,
+      `${baseUrl}/blocks_raw?order=id.desc&limit=${appConfig.analytics.networkBlocksWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/transactions_main?order=height.desc&limit=1000`,
+      `${baseUrl}/transactions_main?order=height.desc&limit=${appConfig.analytics.networkTxWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=2000`,
+      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=${appConfig.analytics.networkMessageWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     )
   ])
@@ -126,9 +125,9 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
 
 export function NetworkMetricsCard() {
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['network-metrics'],
+    queryKey: ['network-metrics', appConfig.analytics.networkBlocksWindow, appConfig.analytics.networkTxWindow, appConfig.analytics.networkMessageWindow],
     queryFn: getNetworkMetrics,
-    refetchInterval: 10000, // Poll every 10 seconds
+    refetchInterval: appConfig.analytics.networkRefetchMs,
   })
 
   if (isLoading || !metrics) {

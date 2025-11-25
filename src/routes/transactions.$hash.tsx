@@ -1,18 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight } from 'lucide-react'
+import { Link, useParams, useSearchParams } from 'react-router'
+import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient } from '@/lib/api/client'
+import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
 import { JsonViewer } from '@/components/JsonViewer'
-
-const api = new YaciAPIClient()
+import { AddressChip } from '@/components/AddressChip'
+import { EVMTransactionCard } from '@/components/EVMTransactionCard'
+import { EVMLogsCard } from '@/components/EVMLogsCard'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 
 // Helper to group events by event_index, then by attributes
 function groupEvents(events: any[]) {
@@ -40,17 +43,28 @@ function groupEvents(events: any[]) {
   }))
 }
 
-// Accent colors for different message types
-const MESSAGE_COLORS = [
-  'bg-blue-500',
-  'bg-purple-500',
-  'bg-green-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-cyan-500',
-  'bg-indigo-500',
-  'bg-teal-500',
-]
+
+// Group events by event_type for the UI
+function groupEventsByType(events: any[]) {
+  const grouped = new Map<string, any[]>()
+  events.forEach(event => {
+    const type = event.event_type
+    if (!grouped.has(type)) {
+      grouped.set(type, [])
+    }
+    grouped.get(type)!.push(event)
+  })
+  return Array.from(grouped.entries()).map(([type, evts]) => ({
+    type,
+    events: evts,
+    count: evts.length
+  }))
+}
+
+// Check if value looks like an address
+function isAddress(value: string): boolean {
+  return /^(manifest1|0x)[a-zA-Z0-9]{20,}$/.test(value)
+}
 
 // Helper to check if a string is valid JSON
 function isJsonString(str: string): boolean {
@@ -67,21 +81,72 @@ export default function TransactionDetailPage() {
   const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
   const [copied, setCopied] = useState(false)
   const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({})
-  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [expandedEventTypes, setExpandedEventTypes] = useState<Record<string, boolean>>({})
+  const [eventFilter, setEventFilter] = useState('')
+  const [evmView, setEvmView] = useState(false)
+  const [isDecodingEVM, setIsDecodingEVM] = useState(false)
+  const [decodeAttempted, setDecodeAttempted] = useState(false)
   const params = useParams()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // Auto-enable EVM view if searched by EVM hash
+    if (searchParams.get('evm') === 'true') {
+      setEvmView(true)
+    }
+  }, [searchParams])
 
-  const { data: transaction, isLoading, error } = useQuery({
+  const { data: transaction, isLoading, error, refetch } = useQuery({
     queryKey: ['transaction', params.hash],
     queryFn: async () => {
       const result = await api.getTransaction(params.hash!)
       return result
     },
     enabled: mounted && !!params.hash,
+    refetchInterval: isDecodingEVM ? 2000 : false,
   })
+
+  useEffect(() => {
+    if (!transaction || decodeAttempted) return
+
+    const isEVMTransaction = transaction.messages?.some(
+      (msg) => msg.type === '/ethermint.evm.v1.MsgEthereumTx'
+    )
+
+    if (isEVMTransaction && !transaction.evm_data) {
+      setIsDecodingEVM(true)
+      setDecodeAttempted(true)
+
+      const apiURL = import.meta.env.VITE_POSTGREST_URL || '/api'
+
+      fetch(`${apiURL}/rpc/request_evm_decode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Prefer': 'params=single-object'
+        },
+        body: JSON.stringify({ _tx_id: transaction.id }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log('Priority EVM decode requested:', data.message)
+          if (data.success && data.status !== 'not_found') {
+            setTimeout(() => {
+              refetch().then(() => {
+                setIsDecodingEVM(false)
+              })
+            }, 2000)
+          } else {
+            setIsDecodingEVM(false)
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to request priority decode:', err)
+          setIsDecodingEVM(false)
+        })
+    }
+  }, [transaction, decodeAttempted, refetch])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -134,6 +199,8 @@ export default function TransactionDetailPage() {
   }
 
   const isSuccess = !transaction.error
+  const feeAmounts = transaction.fee?.amount ?? []
+  const groupedEvents = groupEvents(transaction.events || [])
 
   return (
     <div className="space-y-6">
@@ -166,11 +233,62 @@ export default function TransactionDetailPage() {
             {copied ? <CheckCircle className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </Button>
         </div>
+
+        {/* EVM View Toggle */}
+        {transaction.evm_data && (
+          <div className="mt-4 flex items-center gap-3">
+            <Button
+              variant={evmView ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEvmView(!evmView)}
+              className="gap-2"
+            >
+              {evmView ? (
+                <><ToggleRight className="h-4 w-4" /> EVM View</>
+              ) : (
+                <><ToggleLeft className="h-4 w-4" /> Cosmos View</>
+              )}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {evmView ? 'Showing EVM transaction details' : 'Showing Cosmos SDK transaction details'}
+            </span>
+          </div>
+        )}
+
+        {/* EVM Decoding Status */}
+        {isDecodingEVM && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Decoding EVM transaction data...</span>
+          </div>
+        )}
+
+        {transaction.ingest_error && (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">Partial transaction data</p>
+            <p className="mt-1">
+              The indexer could not fetch full transaction details from the gRPC node.
+              Reason: {transaction.ingest_error.reason || transaction.ingest_error.message}.
+              Only the hash and error metadata are available.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Transaction Overview */}
+          {/* EVM View Mode - Show EVM card prominently */}
+          {evmView && transaction.evm_data && (
+            <>
+              <EVMTransactionCard evmData={transaction.evm_data} />
+              {transaction.evm_logs && transaction.evm_logs.length > 0 && (
+                <EVMLogsCard logs={transaction.evm_logs} />
+              )}
+            </>
+          )}
+
+          {/* Transaction Overview - Show in both modes */}
           <Card>
             <CardHeader>
               <CardTitle>Transaction Overview</CardTitle>
@@ -180,28 +298,42 @@ export default function TransactionDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Block Height</label>
                   <p className="text-lg">
-                    <Link
-                      to={`/blocks/${transaction.height}`}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      #{formatNumber(transaction.height)}
-                    </Link>
+                    {transaction.height ? (
+                      <Link
+                        to={`/blocks/${transaction.height}`}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        #{formatNumber(transaction.height)}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Unavailable</span>
+                    )}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Timestamp</label>
-                  <p className="text-sm">{formatTimeAgo(transaction.timestamp)}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(transaction.timestamp).toLocaleString()}</p>
+                  {transaction.timestamp ? (
+                    <>
+                      <p className="text-sm">{formatTimeAgo(transaction.timestamp)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.timestamp).toLocaleString()}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Unavailable</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Fee</label>
                   <p className="text-sm">
-                    {transaction.fee?.amount?.map((fee: any, idx: number) => (
-                      <span key={idx}>
-                        {formatNumber(fee.amount)} {fee.denom}
-                        {idx < transaction.fee.amount.length - 1 && ', '}
-                      </span>
-                    )) || 'N/A'}
+                    {feeAmounts.length > 0
+                      ? feeAmounts.map((fee: any, idx: number) => (
+                          <span key={idx}>
+                            {formatNumber(fee.amount)} {fee.denom}
+                            {idx < feeAmounts.length - 1 && ', '}
+                          </span>
+                        ))
+                      : 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -257,22 +389,27 @@ export default function TransactionDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Messages & Events - Enhanced Nested View */}
+          {/* Messages & Events - Enhanced View */}
           <Card>
             <CardHeader>
-              <CardTitle>Messages & Events ({transaction.messages?.length || 0} messages)</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Messages & Events ({transaction.messages?.length || 0} messages)</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               {transaction.messages && transaction.messages.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {transaction.messages.map((message, msgIdx) => {
-                    const messageColor = MESSAGE_COLORS[msgIdx % MESSAGE_COLORS.length]
-                    // Include events where msg_index matches OR is null (null means it applies to message 0)
                     const messageEvents = transaction.events?.filter(e =>
                       e.msg_index === msgIdx || (e.msg_index === null && msgIdx === 0)
                     ) || []
                     const groupedEvents = groupEvents(messageEvents)
+                    const eventsByType = groupEventsByType(groupedEvents)
                     const isExpanded = expandedMessages[msgIdx]
+
+                    // Extract key info for summary
+                    const msgType = message.type?.split('.').pop() || 'Unknown'
+                    const sender = message.sender || message.data?.from_address
 
                     return (
                       <Collapsible
@@ -281,9 +418,6 @@ export default function TransactionDetailPage() {
                         onOpenChange={() => setExpandedMessages(prev => ({ ...prev, [msgIdx]: !prev[msgIdx] }))}
                       >
                         <div className="border rounded-lg overflow-hidden">
-                          {/* Accent line */}
-                          <div className={`h-0.5 ${messageColor} w-1/3`} />
-
                           <CollapsibleTrigger className="w-full p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -292,98 +426,134 @@ export default function TransactionDetailPage() {
                                 ) : (
                                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 )}
-                                <span className="text-sm font-medium">Message #{msgIdx}</span>
-                                <Badge variant="outline" className="font-mono text-xs">
-                                  {message.type || 'Unknown'}
-                                </Badge>
-                                {groupedEvents.length > 0 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {groupedEvents.length} events
-                                  </Badge>
-                                )}
+                                <div className="text-left">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold">{msgType}</span>
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                      #{msgIdx}
+                                    </Badge>
+                                  </div>
+                                  {sender && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      From: {sender.slice(0, 12)}...{sender.slice(-6)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {groupedEvents.length} events
                               </div>
                             </div>
                           </CollapsibleTrigger>
 
                           <CollapsibleContent>
-                            <div className="px-4 pb-4 space-y-4">
-                              {/* Message Details */}
-                              {message.sender && (
-                                <div className="bg-muted/30 rounded-lg p-3">
-                                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sender</label>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <code className="text-sm font-mono">{message.sender}</code>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-5 w-5"
-                                      onClick={() => message.sender && copyToClipboard(message.sender)}
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                            <div className="px-4 pb-4 space-y-4 border-t">
+                              {/* Sender with AddressChip */}
+                              {sender && (
+                                <div className="pt-4">
+                                  <AddressChip address={sender} label="From" />
                                 </div>
                               )}
 
-                              {/* Events nested under message */}
-                              {groupedEvents.length > 0 && (
-                                <div className="space-y-2 pl-4 border-l-2 border-muted">
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                    Events
-                                  </p>
-                                  {groupedEvents.map((event, evtIdx) => {
-                                    const eventKey = `${msgIdx}-${event.event_index}`
-                                    const isEventExpanded = expandedEvents[eventKey]
+                              {/* Events grouped by type */}
+                              {eventsByType.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                      Events ({groupedEvents.length})
+                                    </p>
+                                    {groupedEvents.length > 3 && (
+                                      <div className="flex items-center gap-2">
+                                        <Filter className="h-3 w-3 text-muted-foreground" />
+                                        <Input
+                                          placeholder="Filter events..."
+                                          value={eventFilter}
+                                          onChange={(e) => setEventFilter(e.target.value)}
+                                          className="h-7 w-40 text-xs"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {eventsByType.map(({ type, events: typeEvents }) => {
+                                    const typeKey = `${msgIdx}-${type}`
+                                    const isTypeExpanded = expandedEventTypes[typeKey]
+                                    const filteredEvents = eventFilter
+                                      ? typeEvents.filter(e =>
+                                          e.attributes.some((a: { key: string; value: string }) =>
+                                            a.key.toLowerCase().includes(eventFilter.toLowerCase()) ||
+                                            a.value.toLowerCase().includes(eventFilter.toLowerCase())
+                                          )
+                                        )
+                                      : typeEvents
+
+                                    if (filteredEvents.length === 0) return null
 
                                     return (
                                       <Collapsible
-                                        key={eventKey}
-                                        open={isEventExpanded}
-                                        onOpenChange={() => setExpandedEvents(prev => ({ ...prev, [eventKey]: !prev[eventKey] }))}
+                                        key={typeKey}
+                                        open={isTypeExpanded}
+                                        onOpenChange={() => setExpandedEventTypes(prev => ({
+                                          ...prev,
+                                          [typeKey]: !prev[typeKey]
+                                        }))}
                                       >
-                                        <div className="border rounded-lg overflow-hidden bg-card">
-                                          <div className={`h-0.5 ${messageColor} opacity-60 w-1/4`} />
-
+                                        <div className="border rounded-lg overflow-hidden">
                                           <CollapsibleTrigger className="w-full p-3 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center justify-between text-left">
+                                            <div className="flex items-center justify-between">
                                               <div className="flex items-center gap-2">
-                                                {isEventExpanded ? (
+                                                {isTypeExpanded ? (
                                                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                                 ) : (
                                                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
                                                 )}
-                                                <Badge variant="outline" className="text-xs">
-                                                  {event.event_type}
-                                                </Badge>
+                                                <span className="text-xs font-medium">
+                                                  {type}
+                                                </span>
                                                 <span className="text-xs text-muted-foreground">
-                                                  {event.attributes.length} attributes
+                                                  ({filteredEvents.length})
                                                 </span>
                                               </div>
                                             </div>
                                           </CollapsibleTrigger>
 
                                           <CollapsibleContent>
-                                            <div className="px-3 pb-3 space-y-2">
-                                              {event.attributes.map((attr, attrIdx) => {
-                                                const isJson = isJsonString(attr.value)
+                                            <div className="border-t">
+                                              {filteredEvents.map((event, evtIdx) => (
+                                                <div key={evtIdx} className="border-b last:border-b-0">
+                                                  <Table>
+                                                    <TableHeader>
+                                                      <TableRow className="bg-muted/30">
+                                                        <TableHead className="w-1/3 text-xs py-2">Key</TableHead>
+                                                        <TableHead className="text-xs py-2">Value</TableHead>
+                                                      </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                      {event.attributes.map((attr: { key: string; value: string }, attrIdx: number) => {
+                                                        const isJson = isJsonString(attr.value)
+                                                        const addrMatch = isAddress(attr.value)
 
-                                                return (
-                                                  <div key={attrIdx} className={isJson ? "bg-muted/20 rounded p-2" : "bg-muted/20 rounded p-2"}>
-                                                    <div className="flex flex-col gap-2">
-                                                      <span className="text-xs font-medium text-muted-foreground">
-                                                        {attr.key}:
-                                                      </span>
-                                                      {isJson ? (
-                                                        <JsonViewer data={attr.value} maxHeight={400} />
-                                                      ) : (
-                                                        <span className="text-xs font-mono break-all">
-                                                          {attr.value}
-                                                        </span>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                )
-                                              })}
+                                                        return (
+                                                          <TableRow key={attrIdx}>
+                                                            <TableCell className="font-medium text-xs py-2 text-muted-foreground">
+                                                              {attr.key}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs py-2">
+                                                              {isJson ? (
+                                                                <JsonViewer data={attr.value} maxHeight={200} />
+                                                              ) : addrMatch ? (
+                                                                <AddressChip address={attr.value} truncate />
+                                                              ) : (
+                                                                <span className="font-mono break-all">{attr.value}</span>
+                                                              )}
+                                                            </TableCell>
+                                                          </TableRow>
+                                                        )
+                                                      })}
+                                                    </TableBody>
+                                                  </Table>
+                                                </div>
+                                              ))}
                                             </div>
                                           </CollapsibleContent>
                                         </div>
@@ -418,7 +588,11 @@ export default function TransactionDetailPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No messages found</p>
+                <p className="text-sm text-muted-foreground">
+                  {transaction.ingest_error
+                    ? 'The indexer could not decode this transaction from the RPC source.'
+                    : 'No messages found'}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -444,56 +618,28 @@ export default function TransactionDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Events</span>
-                  <span className="font-medium">{transaction.events?.length || 0}</span>
+                  <span className="font-medium">{groupedEvents.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Block</span>
-                  <Link
-                    to={`/blocks/${transaction.height}`}
-                    className="font-medium text-primary hover:text-primary/80"
-                  >
-                    #{formatNumber(transaction.height)}
-                  </Link>
+                  {transaction.height ? (
+                    <Link
+                      to={`/blocks/${transaction.height}`}
+                      className="font-medium text-primary hover:text-primary/80"
+                    >
+                      #{formatNumber(transaction.height)}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Unavailable</span>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* EVM Data if available */}
-          {transaction.evm_data && (
-            <Card>
-              <CardHeader>
-                <CardTitle>EVM Transaction</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  {transaction.evm_data.hash && (
-                    <div>
-                      <label className="text-muted-foreground">EVM Hash</label>
-                      <p className="font-mono text-xs break-all">{transaction.evm_data.hash}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.from_address && (
-                    <div>
-                      <label className="text-muted-foreground">From</label>
-                      <p className="font-mono text-xs">{formatHash(transaction.evm_data.from_address, 8)}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.to_address && (
-                    <div>
-                      <label className="text-muted-foreground">To</label>
-                      <p className="font-mono text-xs">{formatHash(transaction.evm_data.to_address, 8)}</p>
-                    </div>
-                  )}
-                  {transaction.evm_data.gas_used && (
-                    <div>
-                      <label className="text-muted-foreground">Gas Used</label>
-                      <p className="font-mono text-xs">{formatNumber(transaction.evm_data.gas_used)}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          {/* EVM Data in sidebar when in Cosmos view */}
+          {!evmView && transaction.evm_data && (
+            <EVMTransactionCard evmData={transaction.evm_data} />
           )}
         </div>
       </div>

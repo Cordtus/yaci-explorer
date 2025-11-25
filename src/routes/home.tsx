@@ -4,12 +4,10 @@ import { Link } from 'react-router'
 import { ArrowRight, Blocks, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { YaciAPIClient } from '@/lib/api/client'
+import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
-
-const api = new YaciAPIClient()
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -147,7 +145,7 @@ export default function DashboardPage() {
                             {formatHash(tx.id, 8)}
                           </Link>
                           <div className="text-sm text-muted-foreground">
-                            {formatTimeAgo(tx.timestamp)}
+                            {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </div>
                         </div>
                       </div>
@@ -159,7 +157,7 @@ export default function DashboardPage() {
                           {status.label}
                         </Badge>
                         <div className="text-xs text-muted-foreground">
-                          Block #{tx.height}
+                          {tx.height ? `Block #${tx.height}` : 'Block unknown'}
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,24 @@
+# fly.toml app configuration file generated for yaci-explorer on 2025-11-22T00:23:51-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'yaci-explorer'
+primary_region = 'sjc'
+
+[build]
+  [build.args]
+    VITE_POSTGREST_URL = "https://yaci-explorer-apis.fly.dev"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1

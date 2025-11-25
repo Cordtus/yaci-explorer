@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
+import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 
 interface VolumeData {
   time: string
@@ -10,46 +12,22 @@ interface VolumeData {
 }
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
-  const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+  // Get hourly volume from api
+  const hourlyVolume = await api.getHourlyTransactionVolume(hours)
 
-  const response = await fetch(
-    `${baseUrl}/transactions_main?select=timestamp,fee&timestamp=gte.${hoursAgo}&order=timestamp.asc`
-  )
+  // Convert to VolumeData format with empty hours filled in
+  const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000)
+  const volumeMap = new Map(hourlyVolume.map(d => [d.hour, d.count]))
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch transaction volume data')
-  }
-
-  const transactions = await response.json()
-
-  // Group by hour
-  const hourlyData: { [key: string]: { count: number; gasUsed: number } } = {}
-
-  transactions.forEach((tx: any) => {
-    const hour = new Date(tx.timestamp).toISOString().substring(0, 13) + ':00:00'
-    if (!hourlyData[hour]) {
-      hourlyData[hour] = { count: 0, gasUsed: 0 }
-    }
-    hourlyData[hour].count++
-    // Calculate gas from fee.gasLimit if available
-    hourlyData[hour].gasUsed += parseInt(tx.fee?.gasLimit || 0)
-  })
-
-  // Convert to array and ensure all hours are present
   const result: VolumeData[] = []
-  const startTime = new Date(hoursAgo)
   const endTime = new Date()
 
-  for (let time = new Date(startTime); time <= endTime; time.setHours(time.getHours() + 1)) {
-    const hourStr = time.toISOString().substring(0, 13) + ':00:00'
+  for (let time = new Date(hoursAgo); time <= endTime; time.setHours(time.getHours() + 1)) {
+    const hourStr = `${time.toISOString().split('T')[0]} ${time.getHours().toString().padStart(2, '0')}:00`
     result.push({
-      time: hourStr,
-      count: hourlyData[hourStr]?.count || 0,
-      gasUsed: hourlyData[hourStr]?.gasUsed || 0
+      time: time.toISOString().substring(0, 13) + ':00:00',
+      count: volumeMap.get(hourStr) || 0,
+      gasUsed: 0 // Gas data not available from hourly aggregation
     })
   }
 
@@ -58,10 +36,11 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
 
 export function TransactionVolumeChart() {
   const { data, isLoading } = useQuery({
-    queryKey: ['transaction-volume'],
-    queryFn: () => getTransactionVolume(24),
-    refetchInterval: 60000, // Refresh every minute
+    queryKey: ['transaction-volume', appConfig.analytics.transactionVolumeHours],
+    queryFn: () => getTransactionVolume(appConfig.analytics.transactionVolumeHours),
+    refetchInterval: appConfig.analytics.transactionVolumeRefetchMs,
   })
+  const hoursLabel = appConfig.analytics.transactionVolumeHours.toLocaleString()
 
   if (isLoading || !data || data.length === 0) {
     return (
@@ -71,7 +50,7 @@ export function TransactionVolumeChart() {
             <TrendingUp className="h-5 w-5" />
             Transaction Volume
           </CardTitle>
-          <CardDescription>24-hour transaction activity</CardDescription>
+          <CardDescription>{hoursLabel}-hour transaction activity</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -215,7 +194,7 @@ export function TransactionVolumeChart() {
           Transaction Volume
         </CardTitle>
         <CardDescription>
-          {totalTx.toLocaleString()} total • {avgTxPerHour} avg/hour • Peak: {peakHour.count} at {new Date(peakHour.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          Last {hoursLabel}h * {totalTx.toLocaleString()} total * {avgTxPerHour} avg/hour * Peak: {peakHour.count} at {new Date(peakHour.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4">

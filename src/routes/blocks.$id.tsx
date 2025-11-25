@@ -5,11 +5,9 @@ import { ArrowLeft, Copy, CheckCircle, Activity, Blocks as BlocksIcon } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient } from '@/lib/api/client'
+import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-
-const api = new YaciAPIClient()
 
 export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
@@ -33,7 +31,7 @@ export default function BlockDetailPage() {
   const { data: transactions, isLoading: txLoading } = useQuery({
     queryKey: ['blockTransactions', blockHeight],
     queryFn: async () => {
-      const result = await api.getTransactions(100, 0, { block_height: blockHeight })
+      const result = await api.getTransactions(100, 0, { blockHeight: blockHeight })
       return result
     },
     enabled: mounted && !isNaN(blockHeight),
@@ -87,6 +85,9 @@ export default function BlockDetailPage() {
   const proposerAddress = block.data?.block?.header?.proposer_address || 'N/A'
   const timestamp = block.data?.block?.header?.time || null
   const txCount = block.data?.txs?.length || 0
+  const ingestedTxCount = transactions?.data.length || 0
+  const missingTxCount = Math.max(txCount - ingestedTxCount, 0)
+  const hasMissingTxs = !txLoading && missingTxCount > 0
 
   return (
     <div className="space-y-6">
@@ -171,6 +172,26 @@ export default function BlockDetailPage() {
               <CardTitle>Transactions ({txCount})</CardTitle>
             </CardHeader>
             <CardContent>
+              {hasMissingTxs && (
+                <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                  {missingTxCount === txCount ? (
+                    <p>
+                      This block references {txCount} transaction{txCount === 1 ? '' : 's'}, but none could be decoded
+                      from the RPC node. The indexer stores the hashes with error metadata so ingestion can continue.
+                    </p>
+                  ) : (
+                    <p>
+                      Only {ingestedTxCount} of {txCount} transaction{txCount === 1 ? '' : 's'} exposed details.
+                      The remaining {missingTxCount} could not be fetched from the gRPC node (pruned node, payload too
+                      large, etc.).
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs">
+                    Ensure the node exposes full `GetTx` responses or re-sync from a non-pruned peer to see complete
+                    data.
+                  </p>
+                </div>
+              )}
               {txLoading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -198,7 +219,7 @@ export default function BlockDetailPage() {
                               {formatHash(tx.id, 12)}
                             </Link>
                             <div className="text-xs text-muted-foreground">
-                              {formatTimeAgo(tx.timestamp)}
+                              {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                             </div>
                           </div>
                         </div>

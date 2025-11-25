@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Search, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { YaciAPIClient } from '@/lib/api/client'
+import { api } from '@/lib/api'
 
 /**
  * Universal search bar component for searching blocks, transactions, and addresses
@@ -18,7 +18,6 @@ export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
-  const api = new YaciAPIClient()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -57,6 +56,10 @@ export function SearchBar() {
           break
         case 'transaction':
           navigate(`/transactions/${result.value.id}`)
+          break
+        case 'evm_transaction':
+          // EVM hash search - navigate to tx with EVM view enabled
+          navigate(`/transactions/${result.value.tx_id}?evm=true`)
           break
         case 'address':
           navigate(`/addr/${result.value.address}`)

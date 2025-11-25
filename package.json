@@ -8,7 +8,7 @@
     "dev": "react-router dev",
     "build": "react-router build",
     "start": "react-router-serve ./build/server/index.js",
-    "preview": "npm run build && npm run start",
+    "preview": "yarn build && yarn start",
     "typecheck": "react-router typegen && tsc",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
@@ -17,8 +17,11 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "clean": "rm -rf build .react-router node_modules/.vite",
     "clean:all": "rm -rf build .react-router node_modules",
-    "reinstall": "npm run clean:all && npm install",
-    "deploy:build": "npm run clean && npm install && npm run typecheck && npm run build"
+    "reinstall": "yarn run clean:all && yarn install",
+    "configure:env": "bash ./scripts/configure-env.sh",
+    "deploy:build": "yarn run clean && yarn install --production=false && yarn run typecheck && yarn run build",
+    "reset:full": "bash ./scripts/full-reset.sh",
+    "redeploy:systemd": "bash ./scripts/redeploy-systemd.sh"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -29,6 +32,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@react-router/dev": "^7.9.4",
     "@react-router/node": "^7.9.4",
     "@react-router/serve": "^7.9.4",
     "@tanstack/react-query": "^5.62.11",
@@ -38,7 +42,6 @@
     "date-fns": "^4.1.0",
     "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.2",
-    "ethers": "^6.13.5",
     "isbot": "^5.1.17",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
@@ -48,6 +51,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@react-router/dev": "^7.9.4",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.18",

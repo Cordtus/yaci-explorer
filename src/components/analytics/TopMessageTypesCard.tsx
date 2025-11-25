@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { api } from '@/lib/api'
 
 interface MessageTypeStats {
   type: string
@@ -10,42 +11,22 @@ interface MessageTypeStats {
 }
 
 async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
-  if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
-  }
+  // Use the api's getTransactionTypeDistribution method
+  const typeData = await api.getTransactionTypeDistribution()
 
-  // Fetch message types from the last 10000 messages
-  const response = await fetch(
-    `${baseUrl}/messages_main?select=type&order=id.desc&limit=10000`
-  )
+  // Calculate total and percentages
+  const total = typeData.reduce((sum, d) => sum + d.count, 0)
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch message types')
-  }
-
-  const messages = await response.json()
-
-  // Count occurrences
-  const typeCounts: { [key: string]: number } = {}
-  messages.forEach((msg: any) => {
-    const type = msg.type || 'Unknown'
+  const stats: MessageTypeStats[] = typeData.map(({ type, count }) => {
     // Simplify type names (remove module path)
     const simplifiedType = type.split('.').pop() || type
-    typeCounts[simplifiedType] = (typeCounts[simplifiedType] || 0) + 1
-  })
-
-  // Convert to array and calculate percentages
-  const total = messages.length
-  const stats: MessageTypeStats[] = Object.entries(typeCounts)
-    .map(([type, count]) => ({
-      type,
+    return {
+      type: simplifiedType,
       count,
       percentage: (count / total) * 100,
-      trend: 'stable' as const // In a real app, you'd compare with previous period
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10) // Top 10
+      trend: 'stable' as const
+    }
+  })
 
   return stats
 }
@@ -54,7 +35,7 @@ export function TopMessageTypesCard() {
   const { data, isLoading } = useQuery({
     queryKey: ['top-message-types'],
     queryFn: getTopMessageTypes,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
   })
 
   if (isLoading || !data) {
@@ -118,7 +99,7 @@ export function TopMessageTypesCard() {
           Top Message Types
         </CardTitle>
         <CardDescription>
-          Distribution of the most frequently used message types (last 10,000 messages)
+          Distribution of the most frequently used message types
         </CardDescription>
       </CardHeader>
       <CardContent>
