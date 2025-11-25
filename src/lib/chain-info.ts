@@ -1,6 +1,6 @@
 // Dynamic chain information detected from blockchain data
 
-import { YaciAPIClient } from '@yaci/database-client'
+import type { YaciClient } from '@/lib/api'
 import { getChainConfig, type ChainFeatures } from '@/config/chains'
 
 export interface ChainInfo {
@@ -18,7 +18,7 @@ let cachedChainInfo: ChainInfo | null = null
  * Detect chain information from actual blockchain data
  * Uses chain registry config if available, falls back to auto-detection
  */
-export async function getChainInfo(api: YaciAPIClient): Promise<ChainInfo> {
+export async function getChainInfo(api: YaciClient): Promise<ChainInfo> {
   // Return cached if available
   if (cachedChainInfo) {
     return cachedChainInfo
@@ -27,7 +27,7 @@ export async function getChainInfo(api: YaciAPIClient): Promise<ChainInfo> {
   try {
     // Get latest block to extract chain ID
     const latestBlock = await api.getLatestBlock()
-    const chainId = latestBlock?.data?.block?.header?.chain_id || 'unknown'
+    const chainId = latestBlock?.data?.block?.header?.chain_id || (latestBlock?.data?.block?.header as any)?.chainId || 'unknown'
 
     // Try to get config from registry
     const config = getChainConfig(chainId)

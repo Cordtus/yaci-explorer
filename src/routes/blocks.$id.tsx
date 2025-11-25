@@ -5,11 +5,9 @@ import { ArrowLeft, Copy, CheckCircle, Activity, Blocks as BlocksIcon } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { YaciAPIClient } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-
-const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
@@ -33,7 +31,7 @@ export default function BlockDetailPage() {
   const { data: transactions, isLoading: txLoading } = useQuery({
     queryKey: ['blockTransactions', blockHeight],
     queryFn: async () => {
-      const result = await api.getTransactions(100, 0, { block_height: blockHeight })
+      const result = await api.getTransactions(100, 0, { blockHeight: blockHeight })
       return result
     },
     enabled: mounted && !isNaN(blockHeight),

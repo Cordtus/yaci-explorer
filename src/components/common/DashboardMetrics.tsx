@@ -2,14 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Blocks, Activity, TrendingUp, Users, Gauge, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { YaciAPIClient } from '@yaci/database-client'
+import { api } from '@/lib/api'
 import { formatNumber } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
 import { getOverviewMetrics } from '@/lib/metrics'
-
-const api = new YaciAPIClient(import.meta.env.VITE_POSTGREST_URL)
 
 /**
  * Dashboard metrics component displaying key chain statistics
@@ -38,7 +36,7 @@ export function DashboardMetrics() {
 
   const { data: gasEfficiency } = useQuery({
     queryKey: ['gasEfficiency'],
-    queryFn: () => api.getGasEfficiency(1000),
+    queryFn: () => api.getGasEfficiency(),
     refetchInterval: 30000,
     enabled: mounted,
   })
