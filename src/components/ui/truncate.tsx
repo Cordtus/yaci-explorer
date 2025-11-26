@@ -1,6 +1,5 @@
-import * as React from "react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cx, css } from '@/styled-system/css'
 
 interface TruncateProps {
   children: string
@@ -23,7 +22,6 @@ export function Truncate({
     return <span className={className}>{children}</span>
   }
 
-  // Use start/end chars if provided, otherwise split evenly
   const start = startChars ?? Math.floor(maxLength / 2) - 2
   const end = endChars ?? Math.floor(maxLength / 2) - 2
   const truncated = `${children.slice(0, start)}...${children.slice(-end)}`
@@ -33,44 +31,45 @@ export function Truncate({
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className={cn("cursor-help", className)}>{truncated}</span>
+          <span className={cx(css({ cursor: 'help' }), className)}>{truncated}</span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="max-w-xs break-all">{children}</p>
+          <p className={css({ maxW: 'xs', wordBreak: 'break-all' })}>{children}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )
 }
 
-// Version with inline-block for better layout control
 export function TruncateInline({
   children,
   maxLength = 20,
   className,
   showTooltip = true,
-}: Omit<TruncateProps, "startChars" | "endChars">) {
+}: Omit<TruncateProps, 'startChars' | 'endChars'>) {
   if (!children || children.length <= maxLength) {
-    return <span className={cn("inline-block", className)}>{children}</span>
+    return <span className={cx(css({ display: 'inline-block' }), className)}>{children}</span>
   }
 
   const truncated = `${children.slice(0, maxLength)}...`
 
   if (!showTooltip) {
-    return <span className={cn("inline-block", className)}>{truncated}</span>
+    return <span className={cx(css({ display: 'inline-block' }), className)}>{truncated}</span>
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className={cn("inline-block cursor-help", className)}>{truncated}</span>
+          <span className={cx(css({ display: 'inline-block', cursor: 'help' }), className)}>
+            {truncated}
+          </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="max-w-xs break-all">{children}</p>
+          <p className={css({ maxW: 'xs', wordBreak: 'break-all' })}>{children}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

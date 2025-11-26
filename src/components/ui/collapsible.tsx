@@ -1,12 +1,7 @@
-"use client"
+import { Collapsible as ArkCollapsible } from '@ark-ui/react/collapsible'
 
-import * as React from "react"
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-
-const Collapsible = CollapsiblePrimitive.Root
-
-const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger
-
-const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent
+const Collapsible = ArkCollapsible.Root
+const CollapsibleTrigger = ArkCollapsible.Trigger
+const CollapsibleContent = ArkCollapsible.Content
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent }

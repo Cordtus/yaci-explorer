@@ -1,9 +1,7 @@
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { cx } from '@/styled-system/css'
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// Re-export cx as cn for compatibility with existing code
+export const cn = cx
 
 export function formatAddress(address: string, length = 8): string {
   if (!address) return ''
@@ -16,7 +14,7 @@ export function formatNumber(num: number | string, decimals = 2): string {
   if (isNaN(n)) return '0'
   return n.toLocaleString('en-US', {
     minimumFractionDigits: 0,
-    maximumFractionDigits: decimals
+    maximumFractionDigits: decimals,
   })
 }
 
@@ -48,16 +46,12 @@ export function formatAmount(amount: string, decimals = 6, symbol = ''): string 
 }
 
 export function isValidAddress(address: string): boolean {
-  // Check for Cosmos address (bech32)
   if (address.match(/^[a-z]+1[a-z0-9]{38,}$/)) {
     return true
   }
-
-  // Check for EVM address
   if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
     return true
   }
-
   return false
 }
 
@@ -67,28 +61,20 @@ export function isValidTxHash(hash: string): boolean {
 
 export function getTransactionStatus(error: string | null): {
   label: string
-  className: string
+  variant: 'success' | 'destructive'
 } {
   if (!error) {
-    return {
-      label: 'Success',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-    }
+    return { label: 'Success', variant: 'success' }
   }
-  return {
-    label: 'Failed',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  }
+  return { label: 'Failed', variant: 'destructive' }
 }
 
 export function getMessageTypeLabel(type: string): string {
   if (!type) return 'Unknown'
 
-  // Remove the module path and just return the message type
   const parts = type.split('.')
   const msgType = parts[parts.length - 1]
 
-  // Convert from MsgSend to Send
   if (msgType.startsWith('Msg')) {
     return msgType.slice(3)
   }
@@ -96,11 +82,8 @@ export function getMessageTypeLabel(type: string): string {
   return msgType
 }
 
-export function isEVMTransaction(messages: any[]): boolean {
+export function isEVMTransaction(messages: { type?: string }[]): boolean {
   if (!messages || messages.length === 0) return false
 
-  return messages.some(msg =>
-    msg.type?.includes('MsgEthereumTx') ||
-    msg.type?.includes('evm')
-  )
+  return messages.some((msg) => msg.type?.includes('MsgEthereumTx') || msg.type?.includes('evm'))
 }

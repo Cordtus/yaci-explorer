@@ -1,32 +1,42 @@
 import * as React from 'react'
+import { cx, css } from '@/styled-system/css'
+import { card } from '@/styled-system/recipes'
 
-import { cn } from '@/lib/utils'
+const slots = card()
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-lg border bg-card text-card-foreground shadow-sm',
-      className
-    )}
-    {...props}
-  />
-))
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cx(
+        slots.root,
+        css({
+          boxShadow: 'sm',
+          borderWidth: '1px',
+          borderColor: 'border.default',
+          bg: 'bg.default',
+        }),
+        className
+      )}
+      {...props}
+    />
+  )
+)
 Card.displayName = 'Card'
 
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex flex-col space-y-1.5 p-6', className)}
-    {...props}
-  />
-))
+const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cx(
+        slots.header,
+        css({ display: 'flex', flexDir: 'column', gap: '1.5', p: '6' }),
+        className
+      )}
+      {...props}
+    />
+  )
+)
 CardHeader.displayName = 'CardHeader'
 
 const CardTitle = React.forwardRef<
@@ -35,8 +45,9 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
+    className={cx(
+      slots.title,
+      css({ fontSize: '2xl', fontWeight: 'semibold', lineHeight: 'tight', letterSpacing: 'tight' }),
       className
     )}
     {...props}
@@ -50,30 +61,32 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cx(slots.description, css({ fontSize: 'sm', color: 'fg.muted' }), className)}
     {...props}
   />
 ))
 CardDescription.displayName = 'CardDescription'
 
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-))
+const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cx(slots.body, css({ p: '6', pt: '0' }), className)} {...props} />
+  )
+)
 CardContent.displayName = 'CardContent'
 
-const CardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex items-center p-6 pt-0', className)}
-    {...props}
-  />
-))
+const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cx(
+        slots.footer,
+        css({ display: 'flex', alignItems: 'center', p: '6', pt: '0' }),
+        className
+      )}
+      {...props}
+    />
+  )
+)
 CardFooter.displayName = 'CardFooter'
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
