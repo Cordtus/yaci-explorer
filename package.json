@@ -9,7 +9,6 @@
     "build": "panda codegen && NODE_ENV=production bun ./build.ts",
     "start": "bun --bun serve ./dist",
     "preview": "bun run build && bun run start",
-    "prepare": "panda codegen",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
