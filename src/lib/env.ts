@@ -6,6 +6,7 @@
 export interface AppConfig {
 	apiUrl: string
 	chainRestEndpoint?: string
+	evmRpcEndpoint?: string
 	appName: string
 	appNameShort: string
 }
@@ -15,6 +16,7 @@ export interface AppConfig {
 const defaultConfig: AppConfig = {
 	apiUrl: 'https://yaci-explorer-apis.fly.dev',
 	chainRestEndpoint: undefined,
+	evmRpcEndpoint: undefined,
 	appName: 'Yaci Explorer',
 	appNameShort: 'Explorer'
 }
@@ -66,6 +68,7 @@ export function getEnv(key: string, fallback?: string): string | undefined {
 	const mapping: Record<string, string | undefined> = {
 		'VITE_POSTGREST_URL': config.apiUrl,
 		'VITE_CHAIN_REST_ENDPOINT': config.chainRestEndpoint,
+		'VITE_EVM_RPC_ENDPOINT': config.evmRpcEndpoint,
 		'VITE_APP_NAME': config.appName,
 		'VITE_APP_NAME_SHORT': config.appNameShort
 	}

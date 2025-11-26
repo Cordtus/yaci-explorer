@@ -55,6 +55,36 @@ export function isValidAddress(address: string): boolean {
   return false
 }
 
+export type AddressType = 'cosmos' | 'evm'
+
+/** Detect if address is bech32 (cosmos) or hex (evm) */
+export function getAddressType(address: string): AddressType | null {
+  if (address.match(/^[a-z]+1[a-z0-9]{38,}$/)) return 'cosmos'
+  if (address.match(/^0x[a-fA-F0-9]{40}$/)) return 'evm'
+  return null
+}
+
+/** Check if EVM address is a contract by calling eth_getCode */
+export async function isEvmContract(address: string, rpcUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'eth_getCode',
+        params: [address, 'latest'],
+        id: 1
+      })
+    })
+    const data = await res.json()
+    // Empty code (0x or null) means EOA, otherwise it's a contract
+    return data.result && data.result !== '0x' && data.result !== '0x0'
+  } catch {
+    return false
+  }
+}
+
 export function isValidTxHash(hash: string): boolean {
   return /^[A-F0-9]{64}$/i.test(hash)
 }

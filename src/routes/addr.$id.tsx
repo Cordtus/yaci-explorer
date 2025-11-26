@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, type EnhancedTransaction } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn } from '@/lib/utils'
+import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, isEvmContract } from '@/lib/utils'
+import { getConfig } from '@/lib/env'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -26,12 +27,29 @@ export default function AddressDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const [page, setPage] = useState(0)
+  const [isContract, setIsContract] = useState<boolean | null>(null)
   const params = useParams()
   const pageSize = 20
+
+  const addressType = params.id ? getAddressType(params.id) : null
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Check if EVM address is a contract
+  useEffect(() => {
+    if (!params.id || addressType !== 'evm') {
+      setIsContract(null)
+      return
+    }
+    const config = getConfig()
+    if (!config.evmRpcEndpoint) {
+      setIsContract(null)
+      return
+    }
+    isEvmContract(params.id, config.evmRpcEndpoint).then(setIsContract)
+  }, [params.id, addressType])
 
   // Fetch address statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -111,8 +129,19 @@ export default function AddressDetailPage() {
           Back to Home
         </Link>
         <div className={styles.headerContent}>
-          <User className={styles.headerIcon} />
-          <h1 className={styles.headerTitle}>Address Details</h1>
+          {addressType === 'evm' && isContract ? (
+            <FileCode className={styles.headerIcon} />
+          ) : (
+            <Wallet className={styles.headerIcon} />
+          )}
+          <h1 className={styles.headerTitle}>
+            {addressType === 'evm' && isContract ? 'Contract' : 'Wallet'} Details
+          </h1>
+          {addressType && (
+            <Badge variant="outline" className={css({ ml: '2' })}>
+              {addressType === 'cosmos' ? 'Cosmos' : isContract === null ? 'EVM' : isContract ? 'Contract' : 'EOA'}
+            </Badge>
+          )}
         </div>
         <div className={styles.addressContainer}>
           <p className={styles.addressText}>
