@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Search, Loader2 } from 'lucide-react'
-import { css, cx } from '@/styled-system/css'
+import { css } from '@/styled-system/css'
 import { api } from '@/lib/api'
 
 /**

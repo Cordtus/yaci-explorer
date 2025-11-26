@@ -10,11 +10,14 @@ type SkeletonVariantMap = {
   [key in keyof SkeletonVariant]: Array<SkeletonVariant[key]>
 }
 
+
+
 export type SkeletonVariantProps = {
   [key in keyof SkeletonVariant]?: ConditionalValue<SkeletonVariant[key]> | undefined
 }
 
 export interface SkeletonRecipe {
+  
   __type: SkeletonVariantProps
   (props?: SkeletonVariantProps): string
   raw: (props?: SkeletonVariantProps) => SkeletonVariantProps

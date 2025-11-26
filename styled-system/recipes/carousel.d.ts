@@ -13,13 +13,16 @@ type CarouselVariantMap = {
   [key in keyof CarouselVariant]: Array<CarouselVariant[key]>
 }
 
+type CarouselSlot = "root" | "viewport" | "itemGroup" | "item" | "nextTrigger" | "prevTrigger" | "indicatorGroup" | "indicator" | "control"
+
 export type CarouselVariantProps = {
   [key in keyof CarouselVariant]?: ConditionalValue<CarouselVariant[key]> | undefined
 }
 
 export interface CarouselRecipe {
+  __slot: CarouselSlot
   __type: CarouselVariantProps
-  (props?: CarouselVariantProps): Pretty<Record<"root" | "viewport" | "itemGroup" | "item" | "nextTrigger" | "prevTrigger" | "indicatorGroup" | "indicator" | "control", string>>
+  (props?: CarouselVariantProps): Pretty<Record<CarouselSlot, string>>
   raw: (props?: CarouselVariantProps) => CarouselVariantProps
   variantMap: CarouselVariantMap
   variantKeys: Array<keyof CarouselVariant>

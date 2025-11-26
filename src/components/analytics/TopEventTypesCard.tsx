@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { getEnv } from '@/lib/env'
 
 interface EventTypeStats {
   type: string
@@ -12,9 +13,9 @@ interface EventTypeStats {
 }
 
 async function getTopEventTypes(): Promise<EventTypeStats[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    return []
   }
 
   const response = await fetch(

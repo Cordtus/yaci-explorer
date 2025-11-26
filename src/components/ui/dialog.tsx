@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Dialog as ArkDialog } from '@ark-ui/react/dialog'
 import { X } from 'lucide-react'
 import { cx, css } from '@/styled-system/css'

@@ -39,6 +39,7 @@ export const hoverCard = /* @__PURE__ */ Object.assign(hoverCardFn, {
   __recipe__: false,
   __name__: 'hoverCard',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: hoverCardVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

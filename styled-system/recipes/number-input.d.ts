@@ -13,13 +13,16 @@ type NumberInputVariantMap = {
   [key in keyof NumberInputVariant]: Array<NumberInputVariant[key]>
 }
 
+type NumberInputSlot = "root" | "label" | "input" | "control" | "valueText" | "incrementTrigger" | "decrementTrigger" | "scrubber"
+
 export type NumberInputVariantProps = {
   [key in keyof NumberInputVariant]?: ConditionalValue<NumberInputVariant[key]> | undefined
 }
 
 export interface NumberInputRecipe {
+  __slot: NumberInputSlot
   __type: NumberInputVariantProps
-  (props?: NumberInputVariantProps): Pretty<Record<"root" | "label" | "input" | "control" | "valueText" | "incrementTrigger" | "decrementTrigger" | "scrubber", string>>
+  (props?: NumberInputVariantProps): Pretty<Record<NumberInputSlot, string>>
   raw: (props?: NumberInputVariantProps) => NumberInputVariantProps
   variantMap: NumberInputVariantMap
   variantKeys: Array<keyof NumberInputVariant>

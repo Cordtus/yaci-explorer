@@ -43,8 +43,8 @@ export function Pagination({ currentPage, totalPages, onPageChange, isLoading }:
 
   const handleJumpToPage = (e: React.FormEvent) => {
     e.preventDefault()
-    const pageNum = parseInt(jumpToPage)
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+    const pageNum = parseInt(jumpToPage, 10)
+    if (!Number.isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
       onPageChange(pageNum - 1)
       setJumpToPage('')
     }

@@ -26,7 +26,7 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
   for (let time = new Date(hoursAgo); time <= endTime; time.setHours(time.getHours() + 1)) {
     const hourStr = `${time.toISOString().split('T')[0]} ${time.getHours().toString().padStart(2, '0')}:00`
     result.push({
-      time: time.toISOString().substring(0, 13) + ':00:00',
+      time: `${time.toISOString().substring(0, 13)}:00:00`,
       count: volumeMap.get(hourStr) || 0,
       gasUsed: 0 // Gas data not available from hourly aggregation
     })

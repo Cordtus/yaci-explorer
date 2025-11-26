@@ -13,11 +13,14 @@ type KbdVariantMap = {
   [key in keyof KbdVariant]: Array<KbdVariant[key]>
 }
 
+
+
 export type KbdVariantProps = {
   [key in keyof KbdVariant]?: ConditionalValue<KbdVariant[key]> | undefined
 }
 
 export interface KbdRecipe {
+  
   __type: KbdVariantProps
   (props?: KbdVariantProps): string
   raw: (props?: KbdVariantProps) => KbdVariantProps

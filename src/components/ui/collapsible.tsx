@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Collapsible as ArkCollapsible } from '@ark-ui/react/collapsible'
 
 interface CollapsibleProps {

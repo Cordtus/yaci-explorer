@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { getEnv } from '@/lib/env'
 
 interface BlockTimeData {
   height: number
@@ -12,9 +12,9 @@ interface BlockTimeData {
 }
 
 async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    return []
   }
   const response = await fetch(
     `${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`

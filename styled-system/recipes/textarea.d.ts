@@ -13,11 +13,14 @@ type TextareaVariantMap = {
   [key in keyof TextareaVariant]: Array<TextareaVariant[key]>
 }
 
+
+
 export type TextareaVariantProps = {
   [key in keyof TextareaVariant]?: ConditionalValue<TextareaVariant[key]> | undefined
 }
 
 export interface TextareaRecipe {
+  
   __type: TextareaVariantProps
   (props?: TextareaVariantProps): string
   raw: (props?: TextareaVariantProps) => TextareaVariantProps

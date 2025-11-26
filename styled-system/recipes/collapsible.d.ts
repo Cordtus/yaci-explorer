@@ -10,13 +10,16 @@ type CollapsibleVariantMap = {
   [key in keyof CollapsibleVariant]: Array<CollapsibleVariant[key]>
 }
 
+type CollapsibleSlot = "root" | "trigger" | "content"
+
 export type CollapsibleVariantProps = {
   [key in keyof CollapsibleVariant]?: ConditionalValue<CollapsibleVariant[key]> | undefined
 }
 
 export interface CollapsibleRecipe {
+  __slot: CollapsibleSlot
   __type: CollapsibleVariantProps
-  (props?: CollapsibleVariantProps): Pretty<Record<"root" | "trigger" | "content", string>>
+  (props?: CollapsibleVariantProps): Pretty<Record<CollapsibleSlot, string>>
   raw: (props?: CollapsibleVariantProps) => CollapsibleVariantProps
   variantMap: CollapsibleVariantMap
   variantKeys: Array<keyof CollapsibleVariant>

@@ -32,7 +32,7 @@ function formatStatusLabel(status: string): string {
 export default function GovernanceProposalDetailPage() {
 	const [mounted, setMounted] = useState(false)
 	const params = useParams()
-	const proposalId = parseInt(params.id!)
+	const proposalId = parseInt(params.id!, 10)
 
 	useEffect(() => {
 		setMounted(true)

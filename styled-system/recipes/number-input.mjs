@@ -55,6 +55,7 @@ export const numberInput = /* @__PURE__ */ Object.assign(numberInputFn, {
   __recipe__: false,
   __name__: 'numberInput',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: numberInputVariantKeys,
   variantMap: {
   "size": [

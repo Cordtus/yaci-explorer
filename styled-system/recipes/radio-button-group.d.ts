@@ -17,13 +17,16 @@ type RadioButtonGroupVariantMap = {
   [key in keyof RadioButtonGroupVariant]: Array<RadioButtonGroupVariant[key]>
 }
 
+type RadioButtonGroupSlot = "root" | "label" | "item" | "itemText" | "itemControl" | "indicator"
+
 export type RadioButtonGroupVariantProps = {
   [key in keyof RadioButtonGroupVariant]?: ConditionalValue<RadioButtonGroupVariant[key]> | undefined
 }
 
 export interface RadioButtonGroupRecipe {
+  __slot: RadioButtonGroupSlot
   __type: RadioButtonGroupVariantProps
-  (props?: RadioButtonGroupVariantProps): Pretty<Record<"root" | "label" | "item" | "itemText" | "itemControl" | "indicator", string>>
+  (props?: RadioButtonGroupVariantProps): Pretty<Record<RadioButtonGroupSlot, string>>
   raw: (props?: RadioButtonGroupVariantProps) => RadioButtonGroupVariantProps
   variantMap: RadioButtonGroupVariantMap
   variantKeys: Array<keyof RadioButtonGroupVariant>

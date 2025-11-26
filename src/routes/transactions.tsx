@@ -53,20 +53,20 @@ export default function TransactionsPage() {
 
 		// Block filters
 		if (blockFilter) {
-			const parsed = parseInt(blockFilter)
-			if (!isNaN(parsed)) {
+			const parsed = parseInt(blockFilter, 10)
+			if (!Number.isNaN(parsed)) {
 				filters.block_height = parsed
 			}
 		} else {
 			if (blockRangeMin) {
-				const parsed = parseInt(blockRangeMin)
-				if (!isNaN(parsed)) {
+				const parsed = parseInt(blockRangeMin, 10)
+				if (!Number.isNaN(parsed)) {
 					filters.block_height_min = parsed
 				}
 			}
 			if (blockRangeMax) {
-				const parsed = parseInt(blockRangeMax)
-				if (!isNaN(parsed)) {
+				const parsed = parseInt(blockRangeMax, 10)
+				if (!Number.isNaN(parsed)) {
 					filters.block_height_max = parsed
 				}
 			}
@@ -124,7 +124,6 @@ export default function TransactionsPage() {
 		setMessageTypeFilters(newFilters)
 	}
 
-	const hasActiveFilters = statusFilters.size > 0 || messageTypeFilters.size > 0 || blockFilter || blockRangeMin || blockRangeMax || timeRangeMin || timeRangeMax
 	const activeFilterCount = statusFilters.size + messageTypeFilters.size + (blockFilter ? 1 : 0) + (blockRangeMin || blockRangeMax ? 1 : 0) + (timeRangeMin || timeRangeMax ? 1 : 0)
 
 	return (

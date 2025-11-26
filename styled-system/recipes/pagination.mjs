@@ -39,6 +39,7 @@ export const pagination = /* @__PURE__ */ Object.assign(paginationFn, {
   __recipe__: false,
   __name__: 'pagination',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: paginationVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

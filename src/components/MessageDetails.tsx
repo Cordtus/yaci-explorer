@@ -1,7 +1,7 @@
 'use client'
 
 import { useDenom } from '@/contexts/DenomContext'
-import { formatNumber, formatHash } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 import { Copy, ArrowRight, Coins, Users, Vote, Lock } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -63,8 +63,8 @@ interface MessageDetailsProps {
 }
 
 function formatDenom(amount: string, denom: string, getDenomDisplay: (d: string) => string): string {
-  const num = parseInt(amount)
-  if (isNaN(num)) return `${amount} ${denom}`
+  const num = parseInt(amount, 10)
+  if (Number.isNaN(num)) return `${amount} ${denom}`
 
   // For micro denoms (6 decimals)
   if (denom.startsWith('u') || denom.startsWith('ibc/')) {
@@ -564,7 +564,8 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
 
 function Code({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Code icon">
+      <title>Code</title>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
     </svg>
   )

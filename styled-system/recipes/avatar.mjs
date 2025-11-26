@@ -35,6 +35,7 @@ export const avatar = /* @__PURE__ */ Object.assign(avatarFn, {
   __recipe__: false,
   __name__: 'avatar',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: avatarVariantKeys,
   variantMap: {
   "size": [

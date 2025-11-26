@@ -10,13 +10,16 @@ type SignaturePadVariantMap = {
   [key in keyof SignaturePadVariant]: Array<SignaturePadVariant[key]>
 }
 
+type SignaturePadSlot = "root" | "control" | "segment" | "segmentPath" | "guide" | "clearTrigger" | "label"
+
 export type SignaturePadVariantProps = {
   [key in keyof SignaturePadVariant]?: ConditionalValue<SignaturePadVariant[key]> | undefined
 }
 
 export interface SignaturePadRecipe {
+  __slot: SignaturePadSlot
   __type: SignaturePadVariantProps
-  (props?: SignaturePadVariantProps): Pretty<Record<"root" | "control" | "segment" | "segmentPath" | "guide" | "clearTrigger" | "label", string>>
+  (props?: SignaturePadVariantProps): Pretty<Record<SignaturePadSlot, string>>
   raw: (props?: SignaturePadVariantProps) => SignaturePadVariantProps
   variantMap: SignaturePadVariantMap
   variantKeys: Array<keyof SignaturePadVariant>

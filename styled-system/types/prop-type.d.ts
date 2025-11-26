@@ -56,6 +56,12 @@ export interface UtilityValues {
 	outlineColor: Tokens["colors"];
 	outline: Tokens["borders"];
 	outlineOffset: Tokens["spacing"];
+	focusRing: "outside" | "inside" | "mixed" | "none";
+	focusVisibleRing: "outside" | "inside" | "mixed" | "none";
+	focusRingColor: Tokens["colors"];
+	focusRingOffset: Tokens["spacing"];
+	focusRingWidth: CssProperties["outlineWidth"];
+	focusRingStyle: CssProperties["outlineStyle"];
 	divideColor: Tokens["colors"];
 	divideStyle: CssProperties["borderStyle"];
 	width: "auto" | Tokens["sizes"] | "1/2" | "1/3" | "2/3" | "1/4" | "2/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" | "1/6" | "2/6" | "3/6" | "4/6" | "5/6" | "1/12" | "2/12" | "3/12" | "4/12" | "5/12" | "6/12" | "7/12" | "8/12" | "9/12" | "10/12" | "11/12" | "screen";
@@ -70,6 +76,7 @@ export interface UtilityValues {
 	minBlockSize: "auto" | Tokens["sizes"] | "svh" | "lvh" | "dvh" | "screen" | "1/2" | "1/3" | "2/3" | "1/4" | "2/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" | "1/6" | "2/6" | "3/6" | "4/6" | "5/6";
 	maxHeight: "auto" | Tokens["sizes"] | "svh" | "lvh" | "dvh" | "screen" | "1/2" | "1/3" | "2/3" | "1/4" | "2/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" | "1/6" | "2/6" | "3/6" | "4/6" | "5/6";
 	maxBlockSize: "auto" | Tokens["sizes"] | "svh" | "lvh" | "dvh" | "screen" | "1/2" | "1/3" | "2/3" | "1/4" | "2/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" | "1/6" | "2/6" | "3/6" | "4/6" | "5/6";
+	boxSize: "auto" | Tokens["sizes"] | "1/2" | "1/3" | "2/3" | "1/4" | "2/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" | "1/6" | "2/6" | "3/6" | "4/6" | "5/6" | "1/12" | "2/12" | "3/12" | "4/12" | "5/12" | "6/12" | "7/12" | "8/12" | "9/12" | "10/12" | "11/12" | "screen";
 	color: Tokens["colors"];
 	fontFamily: Tokens["fonts"];
 	fontSize: Tokens["fontSizes"];
@@ -87,6 +94,7 @@ export interface UtilityValues {
 	background: Tokens["colors"];
 	backgroundColor: Tokens["colors"];
 	backgroundGradient: "to-t" | "to-tr" | "to-r" | "to-br" | "to-b" | "to-bl" | "to-l" | "to-tl";
+	backgroundLinear: "to-t" | "to-tr" | "to-r" | "to-br" | "to-b" | "to-bl" | "to-l" | "to-tl";
 	textGradient: "to-t" | "to-tr" | "to-r" | "to-br" | "to-b" | "to-bl" | "to-l" | "to-tl";
 	gradientFrom: Tokens["colors"];
 	gradientTo: Tokens["colors"];
@@ -140,7 +148,8 @@ export interface UtilityValues {
 	transitionTimingFunction: Tokens["easings"];
 	transitionDelay: Tokens["durations"];
 	transitionDuration: Tokens["durations"];
-	transition: "all" | "common" | "background" | "colors" | "opacity" | "shadow" | "transform";
+	transitionProperty: "common" | "colors" | "size" | "position" | "background";
+	transition: "all" | "common" | "size" | "position" | "background" | "colors" | "opacity" | "shadow" | "transform";
 	animation: Tokens["animations"];
 	animationName: "fade-in" | "fade-out" | "slide-in" | "slide-out" | "slide-in-left" | "slide-out-left" | "slide-in-right" | "slide-out-right" | "collapse-in" | "collapse-out" | "fadeIn" | "fadeOut" | "skeleton-pulse" | "spin";
 	animationTimingFunction: Tokens["easings"];
@@ -194,7 +203,7 @@ export interface UtilityValues {
 	srOnly: boolean;
 	debug: boolean;
 	containerName: CssProperties["containerName"];
-	colorPalette: "current" | "black" | "white" | "transparent" | "blue" | "blue.light" | "blue.dark" | "gray" | "gray.light" | "gray.dark" | "red" | "red.light" | "red.dark" | "slate" | "slate.light" | "slate.dark" | "chartBlue" | "chartGreen" | "chartGray" | "chartAxis" | "chart" | "accent" | "bg" | "fg" | "border";
+	colorPalette: "current" | "black" | "white" | "transparent" | "red" | "red.light" | "red.dark" | "gray" | "gray.light" | "gray.dark" | "blue" | "blue.light" | "blue.dark" | "chart" | "bg" | "fg" | "border";
 	textStyle: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl";
 }
 

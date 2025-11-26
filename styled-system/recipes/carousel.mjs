@@ -59,6 +59,7 @@ export const carousel = /* @__PURE__ */ Object.assign(carouselFn, {
   __recipe__: false,
   __name__: 'carousel',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: carouselVariantKeys,
   variantMap: {
   "size": [

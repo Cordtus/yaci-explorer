@@ -55,6 +55,7 @@ export const editable = /* @__PURE__ */ Object.assign(editableFn, {
   __recipe__: false,
   __name__: 'editable',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: editableVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

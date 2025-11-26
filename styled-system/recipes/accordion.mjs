@@ -43,6 +43,7 @@ export const accordion = /* @__PURE__ */ Object.assign(accordionFn, {
   __recipe__: false,
   __name__: 'accordion',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: accordionVariantKeys,
   variantMap: {
   "size": [

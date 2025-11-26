@@ -59,13 +59,21 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
   }
 
   // Object/Array rendering
-  const entries = isArray ? data : Object.entries(data)
   const itemCount = isArray ? data.length : Object.keys(data).length
   const preview = isArray ? `[${itemCount}]` : `{${itemCount}}`
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setIsExpanded(!isExpanded)
+    }
+  }
 
   return (
     <div>
       <div
+        role="button"
+        tabIndex={0}
         className={css({
           display: 'flex',
           gap: '2',
@@ -76,6 +84,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
         })}
         style={{ paddingLeft: `${indent}px` }}
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={handleKeyDown}
       >
         {isExpanded ? (
           <ChevronDown className={css({ h: '4', w: '4', color: 'fg.muted', flexShrink: '0', mt: '0.5' })} />

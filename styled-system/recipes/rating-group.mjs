@@ -39,6 +39,7 @@ export const ratingGroup = /* @__PURE__ */ Object.assign(ratingGroupFn, {
   __recipe__: false,
   __name__: 'ratingGroup',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: ratingGroupVariantKeys,
   variantMap: {
   "size": [

@@ -13,11 +13,14 @@ type SpinnerVariantMap = {
   [key in keyof SpinnerVariant]: Array<SpinnerVariant[key]>
 }
 
+
+
 export type SpinnerVariantProps = {
   [key in keyof SpinnerVariant]?: ConditionalValue<SpinnerVariant[key]> | undefined
 }
 
 export interface SpinnerRecipe {
+  
   __type: SpinnerVariantProps
   (props?: SpinnerVariantProps): string
   raw: (props?: SpinnerVariantProps) => SpinnerVariantProps

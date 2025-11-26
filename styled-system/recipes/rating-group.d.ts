@@ -13,13 +13,16 @@ type RatingGroupVariantMap = {
   [key in keyof RatingGroupVariant]: Array<RatingGroupVariant[key]>
 }
 
+type RatingGroupSlot = "root" | "label" | "item" | "control"
+
 export type RatingGroupVariantProps = {
   [key in keyof RatingGroupVariant]?: ConditionalValue<RatingGroupVariant[key]> | undefined
 }
 
 export interface RatingGroupRecipe {
+  __slot: RatingGroupSlot
   __type: RatingGroupVariantProps
-  (props?: RatingGroupVariantProps): Pretty<Record<"root" | "label" | "item" | "control", string>>
+  (props?: RatingGroupVariantProps): Pretty<Record<RatingGroupSlot, string>>
   raw: (props?: RatingGroupVariantProps) => RatingGroupVariantProps
   variantMap: RatingGroupVariantMap
   variantKeys: Array<keyof RatingGroupVariant>

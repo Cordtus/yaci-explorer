@@ -10,13 +10,16 @@ type CardVariantMap = {
   [key in keyof CardVariant]: Array<CardVariant[key]>
 }
 
+type CardSlot = "root" | "header" | "body" | "footer" | "title" | "description"
+
 export type CardVariantProps = {
   [key in keyof CardVariant]?: ConditionalValue<CardVariant[key]> | undefined
 }
 
 export interface CardRecipe {
+  __slot: CardSlot
   __type: CardVariantProps
-  (props?: CardVariantProps): Pretty<Record<"root" | "header" | "body" | "footer" | "title" | "description", string>>
+  (props?: CardVariantProps): Pretty<Record<CardSlot, string>>
   raw: (props?: CardVariantProps) => CardVariantProps
   variantMap: CardVariantMap
   variantKeys: Array<keyof CardVariant>

@@ -13,13 +13,16 @@ type DrawerVariantMap = {
   [key in keyof DrawerVariant]: Array<DrawerVariant[key]>
 }
 
+type DrawerSlot = "trigger" | "backdrop" | "positioner" | "content" | "title" | "description" | "closeTrigger" | "header" | "body" | "footer"
+
 export type DrawerVariantProps = {
   [key in keyof DrawerVariant]?: ConditionalValue<DrawerVariant[key]> | undefined
 }
 
 export interface DrawerRecipe {
+  __slot: DrawerSlot
   __type: DrawerVariantProps
-  (props?: DrawerVariantProps): Pretty<Record<"trigger" | "backdrop" | "positioner" | "content" | "title" | "description" | "closeTrigger" | "header" | "body" | "footer", string>>
+  (props?: DrawerVariantProps): Pretty<Record<DrawerSlot, string>>
   raw: (props?: DrawerVariantProps) => DrawerVariantProps
   variantMap: DrawerVariantMap
   variantKeys: Array<keyof DrawerVariant>

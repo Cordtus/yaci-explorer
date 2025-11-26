@@ -59,6 +59,7 @@ export const progress = /* @__PURE__ */ Object.assign(progressFn, {
   __recipe__: false,
   __name__: 'progress',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: progressVariantKeys,
   variantMap: {
   "size": [

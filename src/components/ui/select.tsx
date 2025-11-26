@@ -146,12 +146,21 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
     const { value: selectedValue, onValueChange } = React.useContext(SelectContext)
     const isSelected = selectedValue === value
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onValueChange?.(value)
+      }
+    }
+
     return (
       <div
         ref={ref}
         role="option"
+        tabIndex={0}
         aria-selected={isSelected}
         onClick={() => onValueChange?.(value)}
+        onKeyDown={handleKeyDown}
         className={cx(
           css({
             position: 'relative',

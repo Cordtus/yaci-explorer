@@ -47,6 +47,7 @@ export const dialog = /* @__PURE__ */ Object.assign(dialogFn, {
   __recipe__: false,
   __name__: 'dialog',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: dialogVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

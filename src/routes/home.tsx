@@ -5,10 +5,10 @@ import { ArrowRight, Blocks, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
+import { formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
-import { css, cx } from '@/styled-system/css'
+import { css } from '@/styled-system/css'
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -44,7 +44,7 @@ export default function DashboardPage() {
         <h2 className={css(styles.errorTitle)}>Error Loading Data</h2>
         {blocksError && <p className={css(styles.errorText)}>Blocks error: {String(blocksError)}</p>}
         {txError && <p className={css(styles.errorText)}>Transactions error: {String(txError)}</p>}
-        <p className={css(styles.errorApiUrl)}>API URL: {api['baseUrl']}</p>
+        <p className={css(styles.errorApiUrl)}>API URL: {api.getBaseUrl()}</p>
       </div>
     )
   }

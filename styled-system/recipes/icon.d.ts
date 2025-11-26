@@ -13,11 +13,14 @@ type IconVariantMap = {
   [key in keyof IconVariant]: Array<IconVariant[key]>
 }
 
+
+
 export type IconVariantProps = {
   [key in keyof IconVariant]?: ConditionalValue<IconVariant[key]> | undefined
 }
 
 export interface IconRecipe {
+  
   __type: IconVariantProps
   (props?: IconVariantProps): string
   raw: (props?: IconVariantProps) => IconVariantProps

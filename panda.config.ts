@@ -1,60 +1,54 @@
 import { defineConfig } from '@pandacss/dev'
 import { createPreset } from '@park-ui/panda-preset'
+import blue from '@park-ui/panda-preset/colors/blue'
+import slate from '@park-ui/panda-preset/colors/slate'
 
 export default defineConfig({
   preflight: true,
   jsxFramework: 'react',
   include: ['./src/**/*.{ts,tsx,js,jsx}'],
-  exclude: ['./node_modules/**/*', './build/**/*', './dist/**/*'],
+  exclude: [
+    './node_modules/**/*',
+    './build/**/*',
+  ],
   outdir: 'styled-system',
 
   presets: [
-    '@pandacss/preset-base',
     createPreset({
-      accentColor: 'blue',
-      grayColor: 'slate',
+      accentColor: blue,
+      grayColor: slate,
+      radius: 'md',
     }),
   ],
 
+  plugins: [
+  {
+    name: 'Remove Default Panda Preset Colors',
+    hooks: {
+      'preset:resolved': ({ utils, preset, name }) =>
+        name === '@pandacss/preset-panda'
+          ? utils.omit(preset, ['theme.tokens.colors', 'theme.semanticTokens.colors'])
+          : preset,
+    },
+  },
+],
+
   theme: {
     extend: {
-      tokens: {
-        sizes: {
-          '4.5': { value: '1.125rem' },
-        },
-        colors: {
-          chartBlue: {
-            light: { value: '#3b82f6' },
-            dark: { value: '#60a5fa' },
-          },
-          chartGreen: {
-            light: { value: '#22c55e' },
-            dark: { value: '#4ade80' },
-          },
-          chartGray: {
-            light: { value: '#e2e8f0' },
-            dark: { value: '#1e293b' },
-          },
-          chartAxis: {
-            light: { value: '#94a3b8' },
-            dark: { value: '#64748b' },
-          },
-        },
-      },
       semanticTokens: {
         colors: {
           chart: {
             transactions: {
-              value: { base: '{colors.chartBlue.light}', _dark: '{colors.chartBlue.dark}' },
+              value: { base: '#3b82f6', _dark: '#60a5fa' },
             },
             gas: {
-              value: { base: '{colors.chartGreen.light}', _dark: '{colors.chartGreen.dark}' },
+              value: { base: '#10b981', _dark: '#34d399' },
             },
             grid: {
-              value: { base: '{colors.chartGray.light}', _dark: '{colors.chartGray.dark}' },
+              value: { base: '#e5e7eb', _dark: '#1f2937' },
             },
             axis: {
-              value: { base: '{colors.chartAxis.light}', _dark: '{colors.chartAxis.dark}' },
+              value: { base: '#9ca3af', _dark: '#94a3b8' },
             },
           },
         },

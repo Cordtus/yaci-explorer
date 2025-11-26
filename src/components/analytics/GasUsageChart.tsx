@@ -5,11 +5,6 @@ import ReactECharts from 'echarts-for-react'
 import { api } from '@/lib/api'
 import { css } from '@/styled-system/css'
 
-interface GasData {
-  gasLimit: number
-  gasUsed: number
-}
-
 async function getGasDistribution(): Promise<{ bins: string[]; counts: number[]; avgGas: number; totalTx: number }> {
   const distribution = await api.getGasUsageDistribution()
 

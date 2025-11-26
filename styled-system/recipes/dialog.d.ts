@@ -10,13 +10,16 @@ type DialogVariantMap = {
   [key in keyof DialogVariant]: Array<DialogVariant[key]>
 }
 
+type DialogSlot = "trigger" | "backdrop" | "positioner" | "content" | "title" | "description" | "closeTrigger"
+
 export type DialogVariantProps = {
   [key in keyof DialogVariant]?: ConditionalValue<DialogVariant[key]> | undefined
 }
 
 export interface DialogRecipe {
+  __slot: DialogSlot
   __type: DialogVariantProps
-  (props?: DialogVariantProps): Pretty<Record<"trigger" | "backdrop" | "positioner" | "content" | "title" | "description" | "closeTrigger", string>>
+  (props?: DialogVariantProps): Pretty<Record<DialogSlot, string>>
   raw: (props?: DialogVariantProps) => DialogVariantProps
   variantMap: DialogVariantMap
   variantKeys: Array<keyof DialogVariant>

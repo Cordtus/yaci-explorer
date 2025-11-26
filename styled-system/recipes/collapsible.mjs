@@ -31,6 +31,7 @@ export const collapsible = /* @__PURE__ */ Object.assign(collapsibleFn, {
   __recipe__: false,
   __name__: 'collapsible',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: collapsibleVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

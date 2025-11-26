@@ -52,6 +52,10 @@ const treeViewSlotNames = [
   [
     "branchIndicator",
     "treeView__branchIndicator"
+  ],
+  [
+    "branchIndentGuide",
+    "treeView__branchIndentGuide"
   ]
 ]
 const treeViewSlotFns = /* @__PURE__ */ treeViewSlotNames.map(([slotName, slotKey]) => [slotName, createRecipe(slotKey, treeViewDefaultVariants, getSlotCompoundVariant(treeViewCompoundVariants, slotName))])
@@ -67,6 +71,7 @@ export const treeView = /* @__PURE__ */ Object.assign(treeViewFn, {
   __recipe__: false,
   __name__: 'treeView',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: treeViewVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

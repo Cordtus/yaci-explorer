@@ -29,7 +29,7 @@ export default function BlocksPage() {
     queryFn: () =>
       hasActiveFilters
         ? api.getBlocksPaginated(limit, page * limit, {
-            minTxCount: minTxCount ? parseInt(minTxCount) : undefined,
+            minTxCount: minTxCount ? parseInt(minTxCount, 10) : undefined,
             fromDate: fromDate || undefined,
             toDate: toDate || undefined,
           })

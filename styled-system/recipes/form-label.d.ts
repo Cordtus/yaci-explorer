@@ -13,11 +13,14 @@ type FormLabelVariantMap = {
   [key in keyof FormLabelVariant]: Array<FormLabelVariant[key]>
 }
 
+
+
 export type FormLabelVariantProps = {
   [key in keyof FormLabelVariant]?: ConditionalValue<FormLabelVariant[key]> | undefined
 }
 
 export interface FormLabelRecipe {
+  
   __type: FormLabelVariantProps
   (props?: FormLabelVariantProps): string
   raw: (props?: FormLabelVariantProps) => FormLabelVariantProps

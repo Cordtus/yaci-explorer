@@ -39,6 +39,7 @@ export const fieldset = /* @__PURE__ */ Object.assign(fieldsetFn, {
   __recipe__: false,
   __name__: 'fieldset',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: fieldsetVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

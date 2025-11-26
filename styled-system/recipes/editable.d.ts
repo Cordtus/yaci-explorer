@@ -10,13 +10,16 @@ type EditableVariantMap = {
   [key in keyof EditableVariant]: Array<EditableVariant[key]>
 }
 
+type EditableSlot = "root" | "area" | "label" | "preview" | "input" | "editTrigger" | "submitTrigger" | "cancelTrigger" | "control"
+
 export type EditableVariantProps = {
   [key in keyof EditableVariant]?: ConditionalValue<EditableVariant[key]> | undefined
 }
 
 export interface EditableRecipe {
+  __slot: EditableSlot
   __type: EditableVariantProps
-  (props?: EditableVariantProps): Pretty<Record<"root" | "area" | "label" | "preview" | "input" | "editTrigger" | "submitTrigger" | "cancelTrigger" | "control", string>>
+  (props?: EditableVariantProps): Pretty<Record<EditableSlot, string>>
   raw: (props?: EditableVariantProps) => EditableVariantProps
   variantMap: EditableVariantMap
   variantKeys: Array<keyof EditableVariant>

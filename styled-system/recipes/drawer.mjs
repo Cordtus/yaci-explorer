@@ -63,6 +63,7 @@ export const drawer = /* @__PURE__ */ Object.assign(drawerFn, {
   __recipe__: false,
   __name__: 'drawer',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: drawerVariantKeys,
   variantMap: {
   "variant": [

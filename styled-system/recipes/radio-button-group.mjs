@@ -49,6 +49,7 @@ export const radioButtonGroup = /* @__PURE__ */ Object.assign(radioButtonGroupFn
   __recipe__: false,
   __name__: 'radioButtonGroup',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: radioButtonGroupVariantKeys,
   variantMap: {
   "variant": [

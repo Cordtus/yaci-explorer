@@ -47,6 +47,7 @@ export const field = /* @__PURE__ */ Object.assign(fieldFn, {
   __recipe__: false,
   __name__: 'field',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: fieldVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

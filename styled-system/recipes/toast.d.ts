@@ -10,13 +10,16 @@ type ToastVariantMap = {
   [key in keyof ToastVariant]: Array<ToastVariant[key]>
 }
 
+type ToastSlot = "group" | "root" | "title" | "description" | "actionTrigger" | "closeTrigger"
+
 export type ToastVariantProps = {
   [key in keyof ToastVariant]?: ConditionalValue<ToastVariant[key]> | undefined
 }
 
 export interface ToastRecipe {
+  __slot: ToastSlot
   __type: ToastVariantProps
-  (props?: ToastVariantProps): Pretty<Record<"group" | "root" | "title" | "description" | "actionTrigger" | "closeTrigger", string>>
+  (props?: ToastVariantProps): Pretty<Record<ToastSlot, string>>
   raw: (props?: ToastVariantProps) => ToastVariantProps
   variantMap: ToastVariantMap
   variantKeys: Array<keyof ToastVariant>

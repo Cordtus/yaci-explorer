@@ -35,6 +35,7 @@ export const qrCode = /* @__PURE__ */ Object.assign(qrCodeFn, {
   __recipe__: false,
   __name__: 'qrCode',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: qrCodeVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

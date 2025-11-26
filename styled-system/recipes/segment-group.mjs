@@ -47,6 +47,7 @@ export const segmentGroup = /* @__PURE__ */ Object.assign(segmentGroupFn, {
   __recipe__: false,
   __name__: 'segmentGroup',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: segmentGroupVariantKeys,
   variantMap: {
   "size": [

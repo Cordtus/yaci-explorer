@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash } from '@/lib/utils'
+import { getEnv } from '@/lib/env'
+import { formatNumber, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
@@ -30,8 +31,8 @@ function groupEvents(events: any[]) {
         attributes: new Map()
       })
     }
-    const eventGroup = grouped.get(event.event_index)!
-    if (event.attr_key && event.attr_value !== null) {
+    const eventGroup = grouped.get(event.event_index)
+    if (eventGroup && event.attr_key && event.attr_value !== null) {
       eventGroup.attributes.set(event.attr_key, event.attr_value)
     }
   })
@@ -53,7 +54,7 @@ function groupEventsByType(events: any[]) {
     if (!grouped.has(type)) {
       grouped.set(type, [])
     }
-    grouped.get(type)!.push(event)
+    grouped.get(type)?.push(event)
   })
   return Array.from(grouped.entries()).map(([type, evts]) => ({
     type,
@@ -101,7 +102,8 @@ export default function TransactionDetailPage() {
   const { data: transaction, isLoading, error, refetch } = useQuery({
     queryKey: ['transaction', params.hash],
     queryFn: async () => {
-      const result = await api.getTransaction(params.hash!)
+      if (!params.hash) throw new Error('Transaction hash is required')
+      const result = await api.getTransaction(params.hash)
       return result
     },
     enabled: mounted && !!params.hash,
@@ -119,7 +121,7 @@ export default function TransactionDetailPage() {
       setIsDecodingEVM(true)
       setDecodeAttempted(true)
 
-      const apiURL = import.meta.env.VITE_POSTGREST_URL || '/api'
+      const apiURL = getEnv('VITE_POSTGREST_URL', '/api')!
 
       fetch(`${apiURL}/rpc/request_evm_decode`, {
         method: 'POST',

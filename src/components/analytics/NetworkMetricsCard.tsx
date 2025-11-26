@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { getEnv } from '@/lib/env'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -19,9 +19,9 @@ interface NetworkMetrics {
 }
 
 async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    throw new Error('VITE_POSTGREST_URL is not set')
   }
 
   // Fetch multiple data points in parallel
@@ -42,8 +42,8 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
 
   const blocks = await blocksResponse.json()
   const transactions = await txResponse.json()
-  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0')
-  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0')
+  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
+  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
 
   // Calculate average block time
   let avgBlockTime = 6.0

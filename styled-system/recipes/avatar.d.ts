@@ -13,13 +13,16 @@ type AvatarVariantMap = {
   [key in keyof AvatarVariant]: Array<AvatarVariant[key]>
 }
 
+type AvatarSlot = "root" | "image" | "fallback"
+
 export type AvatarVariantProps = {
   [key in keyof AvatarVariant]?: ConditionalValue<AvatarVariant[key]> | undefined
 }
 
 export interface AvatarRecipe {
+  __slot: AvatarSlot
   __type: AvatarVariantProps
-  (props?: AvatarVariantProps): Pretty<Record<"root" | "image" | "fallback", string>>
+  (props?: AvatarVariantProps): Pretty<Record<AvatarSlot, string>>
   raw: (props?: AvatarVariantProps) => AvatarVariantProps
   variantMap: AvatarVariantMap
   variantKeys: Array<keyof AvatarVariant>

@@ -43,6 +43,7 @@ export const card = /* @__PURE__ */ Object.assign(cardFn, {
   __recipe__: false,
   __name__: 'card',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: cardVariantKeys,
   variantMap: {},
   splitVariantProps(props) {

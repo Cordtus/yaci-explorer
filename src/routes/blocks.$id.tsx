@@ -14,7 +14,7 @@ export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const params = useParams()
-  const blockHeight = parseInt(params.id!)
+  const blockHeight = parseInt(params.id!, 10)
 
   useEffect(() => {
     setMounted(true)

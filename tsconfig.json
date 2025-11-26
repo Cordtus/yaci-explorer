@@ -1,24 +1,33 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "target": "es2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "ESNext",
+    "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
       "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/config/*": ["./src/config/*"],
       "@/styled-system/*": ["./styled-system/*"]
-    },
-    "baseUrl": "."
+    }
   },
-  "include": ["src", "styled-system", "vite.config.ts", "panda.config.ts"],
-  "exclude": ["node_modules", "dist", "build"]
+  "include": ["src", "src/env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "tests"]
 }

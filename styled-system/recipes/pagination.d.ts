@@ -10,13 +10,16 @@ type PaginationVariantMap = {
   [key in keyof PaginationVariant]: Array<PaginationVariant[key]>
 }
 
+type PaginationSlot = "root" | "item" | "ellipsis" | "prevTrigger" | "nextTrigger"
+
 export type PaginationVariantProps = {
   [key in keyof PaginationVariant]?: ConditionalValue<PaginationVariant[key]> | undefined
 }
 
 export interface PaginationRecipe {
+  __slot: PaginationSlot
   __type: PaginationVariantProps
-  (props?: PaginationVariantProps): Pretty<Record<"root" | "item" | "ellipsis" | "prevTrigger" | "nextTrigger", string>>
+  (props?: PaginationVariantProps): Pretty<Record<PaginationSlot, string>>
   raw: (props?: PaginationVariantProps) => PaginationVariantProps
   variantMap: PaginationVariantMap
   variantKeys: Array<keyof PaginationVariant>

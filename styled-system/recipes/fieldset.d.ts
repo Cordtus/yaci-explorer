@@ -10,13 +10,16 @@ type FieldsetVariantMap = {
   [key in keyof FieldsetVariant]: Array<FieldsetVariant[key]>
 }
 
+type FieldsetSlot = "root" | "errorText" | "helperText" | "legend" | "control"
+
 export type FieldsetVariantProps = {
   [key in keyof FieldsetVariant]?: ConditionalValue<FieldsetVariant[key]> | undefined
 }
 
 export interface FieldsetRecipe {
+  __slot: FieldsetSlot
   __type: FieldsetVariantProps
-  (props?: FieldsetVariantProps): Pretty<Record<"root" | "errorText" | "helperText" | "legend" | "control", string>>
+  (props?: FieldsetVariantProps): Pretty<Record<FieldsetSlot, string>>
   raw: (props?: FieldsetVariantProps) => FieldsetVariantProps
   variantMap: FieldsetVariantMap
   variantKeys: Array<keyof FieldsetVariant>

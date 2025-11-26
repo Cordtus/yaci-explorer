@@ -13,13 +13,16 @@ type AccordionVariantMap = {
   [key in keyof AccordionVariant]: Array<AccordionVariant[key]>
 }
 
+type AccordionSlot = "root" | "item" | "itemTrigger" | "itemContent" | "itemIndicator"
+
 export type AccordionVariantProps = {
   [key in keyof AccordionVariant]?: ConditionalValue<AccordionVariant[key]> | undefined
 }
 
 export interface AccordionRecipe {
+  __slot: AccordionSlot
   __type: AccordionVariantProps
-  (props?: AccordionVariantProps): Pretty<Record<"root" | "item" | "itemTrigger" | "itemContent" | "itemIndicator", string>>
+  (props?: AccordionVariantProps): Pretty<Record<AccordionSlot, string>>
   raw: (props?: AccordionVariantProps) => AccordionVariantProps
   variantMap: AccordionVariantMap
   variantKeys: Array<keyof AccordionVariant>

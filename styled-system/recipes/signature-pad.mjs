@@ -47,6 +47,7 @@ export const signaturePad = /* @__PURE__ */ Object.assign(signaturePadFn, {
   __recipe__: false,
   __name__: 'signaturePad',
   raw: (props) => props,
+  classNameMap: {},
   variantKeys: signaturePadVariantKeys,
   variantMap: {},
   splitVariantProps(props) {
