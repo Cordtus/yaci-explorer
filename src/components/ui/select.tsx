@@ -5,9 +5,14 @@ import { cx, css } from '@/styled-system/css'
 interface SelectContextValue {
   value?: string
   onValueChange?: (value: string) => void
+  open: boolean
+  setOpen: (open: boolean) => void
 }
 
-const SelectContext = React.createContext<SelectContextValue>({})
+const SelectContext = React.createContext<SelectContextValue>({
+  open: false,
+  setOpen: () => {},
+})
 
 interface SelectProps {
   value?: string
@@ -19,6 +24,7 @@ interface SelectProps {
 
 const Select = ({ value, onValueChange, children, defaultValue }: SelectProps) => {
   const [internalValue, setInternalValue] = React.useState(defaultValue || '')
+  const [open, setOpen] = React.useState(false)
   const currentValue = value !== undefined ? value : internalValue
 
   const handleChange = (newValue: string) => {
@@ -26,11 +32,14 @@ const Select = ({ value, onValueChange, children, defaultValue }: SelectProps) =
       setInternalValue(newValue)
     }
     onValueChange?.(newValue)
+    setOpen(false)
   }
 
   return (
-    <SelectContext.Provider value={{ value: currentValue, onValueChange: handleChange }}>
-      {children}
+    <SelectContext.Provider value={{ value: currentValue, onValueChange: handleChange, open, setOpen }}>
+      <div className={css({ position: 'relative', display: 'inline-block' })}>
+        {children}
+      </div>
     </SelectContext.Provider>
   )
 }
@@ -52,40 +61,38 @@ interface SelectTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
   ({ className, children, ...props }, ref) => {
-    const [open, setOpen] = React.useState(false)
+    const { open, setOpen } = React.useContext(SelectContext)
 
     return (
-      <div className={css({ position: 'relative' })}>
-        <button
-          type="button"
-          ref={ref}
-          onClick={() => setOpen(!open)}
-          className={cx(
-            css({
-              display: 'flex',
-              h: '10',
-              w: 'full',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              rounded: 'md',
-              borderWidth: '1px',
-              borderColor: 'border.default',
-              bg: 'bg.default',
-              px: '3',
-              py: '2',
-              fontSize: 'sm',
-              _placeholder: { color: 'fg.muted' },
-              _focus: { outline: 'none', ring: '2', ringColor: 'accent.default', ringOffset: '2' },
-              _disabled: { cursor: 'not-allowed', opacity: '0.5' },
-            }),
-            className
-          )}
-          {...props}
-        >
-          {children}
-          <ChevronDown className={css({ h: '4', w: '4', opacity: '0.5' })} />
-        </button>
-      </div>
+      <button
+        type="button"
+        ref={ref}
+        onClick={() => setOpen(!open)}
+        className={cx(
+          css({
+            display: 'flex',
+            h: '10',
+            w: 'full',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            rounded: 'md',
+            borderWidth: '1px',
+            borderColor: 'border.default',
+            bg: 'bg.default',
+            px: '3',
+            py: '2',
+            fontSize: 'sm',
+            _placeholder: { color: 'fg.muted' },
+            _focus: { outline: 'none', ring: '2', ringColor: 'accent.default', ringOffset: '2' },
+            _disabled: { cursor: 'not-allowed', opacity: '0.5' },
+          }),
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <ChevronDown className={css({ h: '4', w: '4', opacity: '0.5' })} />
+      </button>
     )
   }
 )
@@ -95,32 +102,38 @@ interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
 }
 
-const SelectContent = ({ className, children, ...props }: SelectContentProps) => (
-  <div
-    className={cx(
-      css({
-        position: 'absolute',
-        top: 'full',
-        left: '0',
-        right: '0',
-        zIndex: '50',
-        mt: '1',
-        maxH: '96',
-        minW: '32',
-        overflow: 'auto',
-        rounded: 'md',
-        borderWidth: '1px',
-        bg: 'bg.default',
-        shadow: 'md',
-        p: '1',
-      }),
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-)
+const SelectContent = ({ className, children, ...props }: SelectContentProps) => {
+  const { open } = React.useContext(SelectContext)
+
+  if (!open) return null
+
+  return (
+    <div
+      className={cx(
+        css({
+          position: 'absolute',
+          top: 'full',
+          left: '0',
+          right: '0',
+          zIndex: '50',
+          mt: '1',
+          maxH: '96',
+          minW: '32',
+          overflow: 'auto',
+          rounded: 'md',
+          borderWidth: '1px',
+          bg: 'bg.default',
+          shadow: 'md',
+          p: '1',
+        }),
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
 
 interface SelectLabelProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode

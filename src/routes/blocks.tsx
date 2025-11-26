@@ -241,7 +241,7 @@ const styles = {
   },
   filterGrid: {
     display: 'grid',
-    gridTemplateColumns: { base: '1', md: '3' },
+    gridTemplateColumns: { base: '1fr', md: 'repeat(3, 1fr)' },
     gap: '4',
   },
   filterField: {

@@ -68,16 +68,16 @@ const styles = {
     display: 'grid',
     gap: '6',
     gridTemplateColumns: {
-      base: '1',
-      lg: '2',
+      base: '1fr',
+      lg: 'repeat(2, 1fr)',
     },
   }),
   gridThree: css({
     display: 'grid',
     gap: '6',
     gridTemplateColumns: {
-      base: '1',
-      lg: '3',
+      base: '1fr',
+      lg: 'repeat(3, 1fr)',
     },
   }),
 }

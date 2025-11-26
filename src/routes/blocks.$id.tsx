@@ -214,7 +214,7 @@ export default function BlockDetailPage() {
                           </div>
                           <div>
                             <Link
-                              to={`/transactions/${tx.id}`}
+                              to={`/tx/${tx.id}`}
                               className={styles.txLink}
                             >
                               {formatHash(tx.id, 12)}

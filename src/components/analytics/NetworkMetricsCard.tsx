@@ -261,11 +261,11 @@ export function NetworkMetricsCard() {
 const styles = {
   title: css({ fontSize: '2xl' }),
   animatePulse: css({ animation: 'pulse', display: 'flex', flexDirection: 'column', gap: '4' }),
-  skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: '2', md: '3', lg: '4' }, gap: '4' }),
+  skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '4' }),
   skeletonItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
   skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
   skeletonText: css({ h: '4', bg: 'muted', rounded: 'md', w: '2/3' }),
-  metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: '2', md: '3', lg: '4' }, gap: '6' }),
+  metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '6' }),
   metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
   metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
   metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),

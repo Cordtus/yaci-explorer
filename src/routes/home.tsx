@@ -53,7 +53,11 @@ export default function DashboardPage() {
     <div className={css(styles.container)}>
       <DashboardMetrics />
 
-      <div className={css(styles.grid)}>
+      <div className={css({
+        display: 'grid',
+        gap: '8',
+        gridTemplateColumns: { base: '1fr', lg: 'repeat(2, 1fr)' }
+      })}>
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle>Latest Blocks</CardTitle>
@@ -111,7 +115,7 @@ export default function DashboardPage() {
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle>Latest Transactions</CardTitle>
             <Link
-              to="/transactions"
+              to="/tx"
               className={css(styles.viewAllLink)}
             >
               View all <ArrowRight className={css(styles.arrowIcon)} />
@@ -137,7 +141,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <Link
-                            to={`/transactions/${tx.id}`}
+                            to={`/tx/${tx.id}`}
                             className={css(styles.itemLink)}
                           >
                             {formatHash(tx.id, 8)}
@@ -192,11 +196,6 @@ const styles = {
   errorApiUrl: {
     fontSize: 'sm',
     color: 'fg.muted',
-  },
-  grid: {
-    display: 'grid',
-    gap: '8',
-    gridTemplateColumns: { base: '1', lg: '2' },
   },
   cardHeader: {
     display: 'flex',

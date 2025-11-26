@@ -358,7 +358,7 @@ export default function TransactionsPage() {
 										<TableRow key={tx.id}>
 											<TableCell>
 												<Link
-													to={`/transactions/${tx.id}`}
+													to={`/tx/${tx.id}`}
 													className={css(styles.txLink)}
 												>
 													<Activity className={css(styles.activityIcon)} />
@@ -528,12 +528,12 @@ const styles = {
 	},
 	blockRangeGrid: {
 		display: 'grid',
-		gridTemplateColumns: '2',
+		gridTemplateColumns: 'repeat(2, 1fr)',
 		gap: '0.5rem'
 	},
 	timeRangeGrid: {
 		display: 'grid',
-		gridTemplateColumns: '2',
+		gridTemplateColumns: 'repeat(2, 1fr)',
 		gap: '0.5rem'
 	},
 	skeletonRow: {

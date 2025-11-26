@@ -245,7 +245,7 @@ export default function AddressDetailPage() {
                           </TableCell>
                           <TableCell>
                             <Link
-                              to={`/transactions/${tx.id}`}
+                              to={`/tx/${tx.id}`}
                               className={styles.txHashLink}
                             >
                               {formatHash(tx.id, 8)}

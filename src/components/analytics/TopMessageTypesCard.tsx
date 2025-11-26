@@ -177,7 +177,7 @@ const styles = {
   barLabel: css({ position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', px: '2' }),
   barText: css({ fontSize: 'xs', fontWeight: 'medium', color: 'white', mixBlendMode: 'difference' }),
   summary: css({ mt: '4', pt: '4', borderTopWidth: '1px' }),
-  summaryGrid: css({ display: 'grid', gridTemplateColumns: '2', gap: '4', fontSize: 'sm' }),
+  summaryGrid: css({ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4', fontSize: 'sm' }),
   summaryLabel: css({ color: 'fg.muted' }),
   summaryValue: css({ ml: '2', fontWeight: 'medium' }),
 }

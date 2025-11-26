@@ -49,7 +49,11 @@ export function DashboardMetrics() {
   return (
     <>
       {/* Primary Stats */}
-      <div className={css(styles.metricsGrid)}>
+      <div className={css({
+        display: 'grid',
+        gap: '4',
+        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }
+      })}>
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle className={css(styles.cardTitle)}>Latest Block</CardTitle>
@@ -124,7 +128,11 @@ export function DashboardMetrics() {
       </div>
 
       {/* Secondary Metrics */}
-      <div className={css(styles.metricsGrid)}>
+      <div className={css({
+        display: 'grid',
+        gap: '4',
+        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }
+      })}>
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle className={css(styles.cardTitle)}>Fee Revenue</CardTitle>
@@ -174,17 +182,6 @@ export function DashboardMetrics() {
 }
 
 const styles = {
-  metricsGrid: {
-    display: 'grid',
-    gap: '1rem',
-    gridTemplateColumns: '1',
-    md: {
-      gridTemplateColumns: '2',
-    },
-    lg: {
-      gridTemplateColumns: '4',
-    },
-  },
   cardHeader: {
     display: 'flex',
     flexDirection: 'row',

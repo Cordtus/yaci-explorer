@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "panda codegen && panda cssgen --outfile styled-system/styles.css && bun ./index.html --console",
-    "build": "panda codegen && panda cssgen --outfile styled-system/styles.css && bun build ./index.html --outdir ./build --minify --target browser --format esm",
+    "dev": "panda codegen && vite",
+    "build": "panda codegen && vite build",
     "start": "bun serve ./build",
     "preview": "bun run build && bun run start",
     "prepare": "panda codegen",
@@ -43,12 +43,14 @@
     "@park-ui/panda-preset": "0.43.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
     "postcss": "8.5.6",
     "postcss-cli": "^11.0.1",
     "postcss-load-config": "^6.0.1",
     "tsx": "^4.20.6",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite": "^7.2.4"
   },
   "packageManager": "bun@1.3.2"
 }

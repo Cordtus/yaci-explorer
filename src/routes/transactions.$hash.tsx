@@ -167,7 +167,7 @@ export default function TransactionDetailPage() {
   if (mounted && error) {
     return (
       <div className={css(styles.pageContainer)}>
-        <Link to="/transactions" className={css(styles.backLink)}>
+        <Link to="/tx" className={css(styles.backLink)}>
           <ArrowLeft className={css(styles.backLinkIcon)} />
           Back to Transactions
         </Link>
@@ -209,7 +209,7 @@ export default function TransactionDetailPage() {
     <div className={css(styles.pageContainerLarge)}>
       {/* Header */}
       <div>
-        <Link to="/transactions" className={css(styles.backLinkWithMargin)}>
+        <Link to="/tx" className={css(styles.backLinkWithMargin)}>
           <ArrowLeft className={css(styles.backLinkIcon)} />
           Back to Transactions
         </Link>
@@ -807,7 +807,7 @@ const styles = {
   mainGrid: {
     display: 'grid',
     gap: '1.5rem',
-    gridTemplateColumns: { base: '1', lg: '3' }
+    gridTemplateColumns: { base: '1fr', lg: 'repeat(3, 1fr)' }
   },
   mainContent: {
     gridColumn: { base: 'auto', lg: 'span 2' },
@@ -817,7 +817,7 @@ const styles = {
   },
   overviewGrid: {
     display: 'grid',
-    gridTemplateColumns: { base: '1', md: '2' },
+    gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' },
     gap: '1rem'
   },
   fieldLabel: {

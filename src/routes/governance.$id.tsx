@@ -481,7 +481,7 @@ const styles = {
 		display: 'grid',
 		gap: '1.5rem',
 		lg: {
-			gridTemplateColumns: '3',
+			gridTemplateColumns: 'repeat(3, 1fr)',
 		},
 	}),
 	mainContent: css({

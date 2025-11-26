@@ -1,11 +1,9 @@
-import type { Config } from 'postcss-load-config';
-import autoprefixer from 'autoprefixer'
-import pandacss from '@pandacss/dev/postcss'
+import type { Config } from 'postcss-load-config'
 
 const config: Config = {
   plugins: {
-    pandacss, autoprefixer
+    '@pandacss/dev/postcss': {},
   }
-};
+}
 
-export default config;
+export default config
