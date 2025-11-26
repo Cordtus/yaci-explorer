@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, type EnhancedTransaction } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, isEvmContract } from '@/lib/utils'
+import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, isEvmContract, getAlternateAddress } from '@/lib/utils'
 import { getConfig } from '@/lib/env'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -32,6 +32,7 @@ export default function AddressDetailPage() {
   const pageSize = 20
 
   const addressType = params.id ? getAddressType(params.id) : null
+  const alternateAddr = params.id ? getAlternateAddress(params.id) : null
 
   useEffect(() => {
     setMounted(true)
@@ -144,17 +145,42 @@ export default function AddressDetailPage() {
           )}
         </div>
         <div className={styles.addressContainer}>
-          <p className={styles.addressText}>
-            {params.id}
-          </p>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={styles.copyButton}
-            onClick={() => copyToClipboard(params.id!)}
-          >
-            {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
-          </Button>
+          <div className={css({ flex: '1' })}>
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: alternateAddr ? '2' : '0' })}>
+              <Badge variant="outline" className={css({ fontSize: 'xs' })}>
+                {addressType === 'cosmos' ? 'Bech32' : 'Hex'}
+              </Badge>
+              <p className={styles.addressText}>
+                {params.id}
+              </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={styles.copyButton}
+                onClick={() => copyToClipboard(params.id!)}
+              >
+                {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
+              </Button>
+            </div>
+            {alternateAddr && (
+              <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                <Badge variant="outline" className={css({ fontSize: 'xs' })}>
+                  {addressType === 'cosmos' ? 'Hex' : 'Bech32'}
+                </Badge>
+                <p className={styles.addressText}>
+                  {alternateAddr}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={styles.copyButton}
+                  onClick={() => copyToClipboard(alternateAddr)}
+                >
+                  <Copy className={styles.copyIcon} />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

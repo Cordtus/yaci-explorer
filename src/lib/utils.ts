@@ -64,6 +64,109 @@ export function getAddressType(address: string): AddressType | null {
   return null
 }
 
+// Bech32 character set
+const BECH32_ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
+
+/** Convert 5-bit groups to 8-bit bytes */
+function convertBits(data: number[], fromBits: number, toBits: number, pad: boolean): number[] | null {
+  let acc = 0
+  let bits = 0
+  const ret: number[] = []
+  const maxv = (1 << toBits) - 1
+  for (const value of data) {
+    if (value < 0 || value >> fromBits !== 0) return null
+    acc = (acc << fromBits) | value
+    bits += fromBits
+    while (bits >= toBits) {
+      bits -= toBits
+      ret.push((acc >> bits) & maxv)
+    }
+  }
+  if (pad) {
+    if (bits > 0) ret.push((acc << (toBits - bits)) & maxv)
+  } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv)) {
+    return null
+  }
+  return ret
+}
+
+/** Decode bech32 address to bytes */
+function bech32Decode(addr: string): { prefix: string; bytes: Uint8Array } | null {
+  const lower = addr.toLowerCase()
+  const pos = lower.lastIndexOf('1')
+  if (pos < 1 || pos + 7 > lower.length) return null
+  const prefix = lower.slice(0, pos)
+  const data = lower.slice(pos + 1)
+  const values: number[] = []
+  for (const char of data) {
+    const idx = BECH32_ALPHABET.indexOf(char)
+    if (idx === -1) return null
+    values.push(idx)
+  }
+  // Skip checksum (last 6 chars)
+  const payload = values.slice(0, -6)
+  const bytes = convertBits(payload, 5, 8, false)
+  if (!bytes) return null
+  return { prefix, bytes: new Uint8Array(bytes) }
+}
+
+/** Encode bytes to bech32 address */
+function bech32Encode(prefix: string, bytes: Uint8Array): string {
+  const fiveBit = convertBits(Array.from(bytes), 8, 5, true)
+  if (!fiveBit) return ''
+
+  // Compute checksum
+  const values = [...fiveBit]
+  const polymod = (vals: number[]): number => {
+    const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+    let chk = 1
+    for (const v of vals) {
+      const b = chk >> 25
+      chk = ((chk & 0x1ffffff) << 5) ^ v
+      for (let i = 0; i < 5; i++) {
+        if ((b >> i) & 1) chk ^= GEN[i]
+      }
+    }
+    return chk
+  }
+
+  const prefixExpand = [...prefix].map(c => c.charCodeAt(0) >> 5)
+    .concat([0])
+    .concat([...prefix].map(c => c.charCodeAt(0) & 31))
+  const checksum = polymod([...prefixExpand, ...values, 0, 0, 0, 0, 0, 0]) ^ 1
+  const checksumChars: number[] = []
+  for (let i = 0; i < 6; i++) {
+    checksumChars.push((checksum >> (5 * (5 - i))) & 31)
+  }
+
+  return prefix + '1' + [...values, ...checksumChars].map(v => BECH32_ALPHABET[v]).join('')
+}
+
+/** Convert hex address to bech32 */
+export function hexToBech32(hexAddr: string, prefix = 'republic'): string | null {
+  if (!hexAddr.match(/^0x[a-fA-F0-9]{40}$/)) return null
+  const bytes = new Uint8Array(20)
+  for (let i = 0; i < 20; i++) {
+    bytes[i] = parseInt(hexAddr.slice(2 + i * 2, 4 + i * 2), 16)
+  }
+  return bech32Encode(prefix, bytes)
+}
+
+/** Convert bech32 address to hex */
+export function bech32ToHex(bech32Addr: string): string | null {
+  const decoded = bech32Decode(bech32Addr)
+  if (!decoded || decoded.bytes.length !== 20) return null
+  return '0x' + Array.from(decoded.bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Get the alternate address format (hex<->bech32) */
+export function getAlternateAddress(address: string, bech32Prefix = 'republic'): string | null {
+  const type = getAddressType(address)
+  if (type === 'cosmos') return bech32ToHex(address)
+  if (type === 'evm') return hexToBech32(address, bech32Prefix)
+  return null
+}
+
 /** Check if EVM address is a contract by calling eth_getCode */
 export async function isEvmContract(address: string, rpcUrl: string): Promise<boolean> {
   try {
