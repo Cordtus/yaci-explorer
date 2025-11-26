@@ -63,9 +63,9 @@ function groupEventsByType(events: any[]) {
   }))
 }
 
-// Check if value looks like an address
+// Check if value looks like an address (bech32 or hex)
 function isAddress(value: string): boolean {
-  return /^(manifest1|0x)[a-zA-Z0-9]{20,}$/.test(value)
+  return /^[a-z]+1[a-z0-9]{38,}$/.test(value) || /^0x[a-fA-F0-9]{40}$/.test(value)
 }
 
 // Helper to check if a string is valid JSON
@@ -252,9 +252,6 @@ export default function TransactionDetailPage() {
                 <><ToggleLeft className={css(styles.toggleIcon)} /> Cosmos View</>
               )}
             </Button>
-            <span className={css(styles.evmToggleLabel)}>
-              {evmView ? 'Showing EVM transaction details' : 'Showing Cosmos SDK transaction details'}
-            </span>
           </div>
         )}
 

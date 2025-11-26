@@ -14,6 +14,8 @@ interface MessageMetadata {
   amount?: CoinAmount | CoinAmount[]
   toAddress?: string
   fromAddress?: string
+  inputs?: Array<{ address: string; coins: CoinAmount[] }>
+  outputs?: Array<{ address: string; coins: CoinAmount[] }>
 
   // Staking
   delegatorAddress?: string
@@ -181,6 +183,70 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
             {displayAmounts.map((amt, idx) => (
               <div key={idx} className={css({ fontSize: 'lg', fontWeight: 'bold', color: 'colorPalette.default' })}>
                 {formatDenom(amt.amount, amt.denom, getDenomDisplay)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Bank MultiSend
+  if (type === '/cosmos.bank.v1beta1.MsgMultiSend') {
+    const inputs = metadata.inputs || []
+    const outputs = metadata.outputs || []
+
+    return (
+      <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
+        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '3' })}>
+          <Coins className={css({ h: '4', w: '4', color: 'colorPalette.default' })} />
+          <span className={css({ fontSize: 'sm', fontWeight: 'semibold' })}>Multi-Send Transfer</span>
+          <Badge variant="outline" className={css({ ml: 'auto' })}>
+            {inputs.length} input{inputs.length !== 1 ? 's' : ''} / {outputs.length} output{outputs.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+
+        {/* Inputs */}
+        {inputs.length > 0 && (
+          <div className={css({ p: '3', bg: 'bg.muted/30', rounded: 'lg' })}>
+            <label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'fg.muted', textTransform: 'uppercase', letterSpacing: 'wider', display: 'block', mb: '2' })}>
+              From ({inputs.length})
+            </label>
+            {inputs.map((input, idx) => (
+              <div key={idx} className={css({ mb: idx < inputs.length - 1 ? '2' : '0' })}>
+                <p className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all' })}>{input.address}</p>
+                <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mt: '1' })}>
+                  {input.coins.map((coin, coinIdx) => (
+                    <Badge key={coinIdx} variant="outline" className={css({ fontSize: 'xs' })}>
+                      {formatDenom(coin.amount, coin.denom, getDenomDisplay)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className={css({ display: 'flex', justifyContent: 'center' })}>
+          <ArrowRight className={css({ h: '4', w: '4', color: 'fg.muted' })} />
+        </div>
+
+        {/* Outputs */}
+        {outputs.length > 0 && (
+          <div className={css({ p: '3', bg: 'colorPalette.a2', rounded: 'lg', borderWidth: '1px', borderColor: 'colorPalette.a5' })}>
+            <label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'colorPalette.default', textTransform: 'uppercase', letterSpacing: 'wider', display: 'block', mb: '2' })}>
+              To ({outputs.length})
+            </label>
+            {outputs.map((output, idx) => (
+              <div key={idx} className={css({ mb: idx < outputs.length - 1 ? '3' : '0', pb: idx < outputs.length - 1 ? '3' : '0', borderBottom: idx < outputs.length - 1 ? '1px solid' : 'none', borderColor: 'colorPalette.a5' })}>
+                <p className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all' })}>{output.address}</p>
+                <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mt: '1' })}>
+                  {output.coins.map((coin, coinIdx) => (
+                    <span key={coinIdx} className={css({ fontSize: 'sm', fontWeight: 'bold', color: 'colorPalette.default' })}>
+                      {formatDenom(coin.amount, coin.denom, getDenomDisplay)}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
