@@ -4,7 +4,7 @@ import { badge, type BadgeVariantProps } from '@/styled-system/recipes'
 
 type LegacyVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, BadgeVariantProps {
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: LegacyVariant | BadgeVariantProps['variant']
 }
 
@@ -18,7 +18,6 @@ const mapVariant = (variant?: BadgeProps['variant']): BadgeVariantProps['variant
 function Badge({ className, variant, ...props }: BadgeProps) {
   const recipeClass = badge({ variant: mapVariant(variant) })
 
-  // Custom color overrides for success/warning/destructive
   const colorOverrides =
     variant === 'success'
       ? css({ bg: 'green.600', color: 'white' })

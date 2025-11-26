@@ -1,117 +1,133 @@
-import { Select as ArkSelect, createListCollection } from '@ark-ui/react/select'
+import * as React from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { cx, css } from '@/styled-system/css'
-import { select } from '@/styled-system/recipes'
 
-const slots = select()
+interface SelectContextValue {
+  value?: string
+  onValueChange?: (value: string) => void
+}
+
+const SelectContext = React.createContext<SelectContextValue>({})
 
 interface SelectProps {
   value?: string
   onValueChange?: (value: string) => void
   children: React.ReactNode
   defaultValue?: string
-  placeholder?: string
   disabled?: boolean
 }
 
-const Select = ({
-  value,
-  onValueChange,
-  children,
-  defaultValue,
-  placeholder,
-  disabled,
-}: SelectProps) => {
-  // For simple cases, we wrap children in a collection
+const Select = ({ value, onValueChange, children, defaultValue }: SelectProps) => {
+  const [internalValue, setInternalValue] = React.useState(defaultValue || '')
+  const currentValue = value !== undefined ? value : internalValue
+
+  const handleChange = (newValue: string) => {
+    if (value === undefined) {
+      setInternalValue(newValue)
+    }
+    onValueChange?.(newValue)
+  }
+
   return (
-    <ArkSelect.Root
-      value={value ? [value] : undefined}
-      defaultValue={defaultValue ? [defaultValue] : undefined}
-      onValueChange={(details) => onValueChange?.(details.value[0])}
-      disabled={disabled}
-    >
+    <SelectContext.Provider value={{ value: currentValue, onValueChange: handleChange }}>
       {children}
-    </ArkSelect.Root>
+    </SelectContext.Provider>
   )
 }
 
-const SelectGroup = ArkSelect.ItemGroup
+const SelectGroup = ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 
-const SelectValue = ({ placeholder }: { placeholder?: string }) => (
-  <ArkSelect.ValueText placeholder={placeholder} />
+interface SelectValueProps {
+  placeholder?: string
+}
+
+const SelectValue = ({ placeholder }: SelectValueProps) => {
+  const { value } = React.useContext(SelectContext)
+  return <span>{value || placeholder}</span>
+}
+
+interface SelectTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode
+}
+
+const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
+  ({ className, children, ...props }, ref) => {
+    const [open, setOpen] = React.useState(false)
+
+    return (
+      <div className={css({ position: 'relative' })}>
+        <button
+          type="button"
+          ref={ref}
+          onClick={() => setOpen(!open)}
+          className={cx(
+            css({
+              display: 'flex',
+              h: '10',
+              w: 'full',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              rounded: 'md',
+              borderWidth: '1px',
+              borderColor: 'border.default',
+              bg: 'bg.default',
+              px: '3',
+              py: '2',
+              fontSize: 'sm',
+              _placeholder: { color: 'fg.muted' },
+              _focus: { outline: 'none', ring: '2', ringColor: 'accent.default', ringOffset: '2' },
+              _disabled: { cursor: 'not-allowed', opacity: '0.5' },
+            }),
+            className
+          )}
+          {...props}
+        >
+          {children}
+          <ChevronDown className={css({ h: '4', w: '4', opacity: '0.5' })} />
+        </button>
+      </div>
+    )
+  }
 )
+SelectTrigger.displayName = 'SelectTrigger'
 
-const SelectTrigger = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof ArkSelect.Trigger>) => (
-  <ArkSelect.Trigger
+interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode
+}
+
+const SelectContent = ({ className, children, ...props }: SelectContentProps) => (
+  <div
     className={cx(
-      slots.trigger,
       css({
-        display: 'flex',
-        h: '10',
-        w: 'full',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        position: 'absolute',
+        top: 'full',
+        left: '0',
+        right: '0',
+        zIndex: '50',
+        mt: '1',
+        maxH: '96',
+        minW: '32',
+        overflow: 'auto',
         rounded: 'md',
         borderWidth: '1px',
-        borderColor: 'border.default',
         bg: 'bg.default',
-        px: '3',
-        py: '2',
-        fontSize: 'sm',
-        _placeholder: { color: 'fg.muted' },
-        _focus: { outline: 'none', ring: '2', ringColor: 'accent.default', ringOffset: '2' },
-        _disabled: { cursor: 'not-allowed', opacity: '0.5' },
+        shadow: 'md',
+        p: '1',
       }),
       className
     )}
     {...props}
   >
     {children}
-    <ArkSelect.Indicator>
-      <ChevronDown className={css({ h: '4', w: '4', opacity: '0.5' })} />
-    </ArkSelect.Indicator>
-  </ArkSelect.Trigger>
+  </div>
 )
 
-const SelectContent = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof ArkSelect.Content>) => (
-  <ArkSelect.Positioner>
-    <ArkSelect.Content
-      className={cx(
-        slots.content,
-        css({
-          position: 'relative',
-          zIndex: '50',
-          maxH: '96',
-          minW: '32',
-          overflow: 'hidden',
-          rounded: 'md',
-          borderWidth: '1px',
-          bg: 'bg.default',
-          shadow: 'md',
-          p: '1',
-        }),
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </ArkSelect.Content>
-  </ArkSelect.Positioner>
-)
+interface SelectLabelProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode
+}
 
-const SelectLabel = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof ArkSelect.ItemGroupLabel>) => (
-  <ArkSelect.ItemGroupLabel
+const SelectLabel = ({ className, ...props }: SelectLabelProps) => (
+  <div
     className={cx(
       css({ py: '1.5', pl: '8', pr: '2', fontSize: 'sm', fontWeight: 'semibold' }),
       className
@@ -120,52 +136,61 @@ const SelectLabel = ({
   />
 )
 
-const SelectItem = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof ArkSelect.Item>) => (
-  <ArkSelect.Item
-    className={cx(
-      slots.item,
-      css({
-        position: 'relative',
-        display: 'flex',
-        w: 'full',
-        cursor: 'default',
-        userSelect: 'none',
-        alignItems: 'center',
-        rounded: 'sm',
-        py: '1.5',
-        pl: '8',
-        pr: '2',
-        fontSize: 'sm',
-        outline: 'none',
-        _focus: { bg: 'bg.muted' },
-        _disabled: { pointerEvents: 'none', opacity: '0.5' },
-      }),
-      className
-    )}
-    {...props}
-  >
-    <span
-      className={css({
-        position: 'absolute',
-        left: '2',
-        display: 'flex',
-        h: '3.5',
-        w: '3.5',
-        alignItems: 'center',
-        justifyContent: 'center',
-      })}
-    >
-      <ArkSelect.ItemIndicator>
-        <Check className={css({ h: '4', w: '4' })} />
-      </ArkSelect.ItemIndicator>
-    </span>
-    <ArkSelect.ItemText>{children}</ArkSelect.ItemText>
-  </ArkSelect.Item>
+interface SelectItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  value: string
+  children: React.ReactNode
+}
+
+const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
+  ({ className, value, children, ...props }, ref) => {
+    const { value: selectedValue, onValueChange } = React.useContext(SelectContext)
+    const isSelected = selectedValue === value
+
+    return (
+      <div
+        ref={ref}
+        role="option"
+        aria-selected={isSelected}
+        onClick={() => onValueChange?.(value)}
+        className={cx(
+          css({
+            position: 'relative',
+            display: 'flex',
+            w: 'full',
+            cursor: 'pointer',
+            userSelect: 'none',
+            alignItems: 'center',
+            rounded: 'sm',
+            py: '1.5',
+            pl: '8',
+            pr: '2',
+            fontSize: 'sm',
+            outline: 'none',
+            _hover: { bg: 'bg.muted' },
+          }),
+          className
+        )}
+        {...props}
+      >
+        <span
+          className={css({
+            position: 'absolute',
+            left: '2',
+            display: 'flex',
+            h: '3.5',
+            w: '3.5',
+            alignItems: 'center',
+            justifyContent: 'center',
+          })}
+        >
+          {isSelected && <Check className={css({ h: '4', w: '4' })} />}
+        </span>
+        {children}
+      </div>
+    )
+  }
 )
+SelectItem.displayName = 'SelectItem'
 
 const SelectSeparator = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
@@ -183,5 +208,4 @@ export {
   SelectLabel,
   SelectItem,
   SelectSeparator,
-  createListCollection,
 }

@@ -9,7 +9,7 @@ const tsRecommended = tsPlugin.configs.recommended
 
 export default [
   {
-    ignores: ['dist', 'build', '.react-router', 'node_modules'],
+    ignores: ['dist', 'build', '.react-router', 'node_modules', 'styled-system'],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

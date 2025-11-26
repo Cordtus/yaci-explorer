@@ -5,15 +5,21 @@ import { checkbox } from '@/styled-system/recipes'
 
 const slots = checkbox()
 
-interface CheckboxProps extends Omit<React.ComponentProps<typeof ArkCheckbox.Root>, 'checked'> {
+interface CheckboxProps {
+  id?: string
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
+  disabled?: boolean
+  className?: string
+  children?: React.ReactNode
 }
 
-const Checkbox = ({ className, checked, onCheckedChange, ...props }: CheckboxProps) => (
+const Checkbox = ({ className, id, checked, onCheckedChange, disabled, ...props }: CheckboxProps) => (
   <ArkCheckbox.Root
+    id={id}
     checked={checked}
     onCheckedChange={(details) => onCheckedChange?.(details.checked === true)}
+    disabled={disabled}
     className={cx(
       slots.root,
       css({

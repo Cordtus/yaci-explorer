@@ -13,7 +13,6 @@ export default defineConfig({
     createPreset({
       accentColor: 'blue',
       grayColor: 'slate',
-      radius: 'md',
     }),
   ],
 
@@ -24,7 +23,6 @@ export default defineConfig({
           '4.5': { value: '1.125rem' },
         },
         colors: {
-          // Chart colors - using direct values
           chartBlue: {
             light: { value: '#3b82f6' },
             dark: { value: '#60a5fa' },
@@ -45,7 +43,6 @@ export default defineConfig({
       },
       semanticTokens: {
         colors: {
-          // Chart colors for analytics
           chart: {
             transactions: {
               value: { base: '{colors.chartBlue.light}', _dark: '{colors.chartBlue.dark}' },

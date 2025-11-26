@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { Dialog as ArkDialog } from '@ark-ui/react/dialog'
 import { X } from 'lucide-react'
 import { cx, css } from '@/styled-system/css'
@@ -5,7 +6,22 @@ import { dialog } from '@/styled-system/recipes'
 
 const slots = dialog()
 
-const Dialog = ArkDialog.Root
+interface DialogProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  defaultOpen?: boolean
+  children: React.ReactNode
+}
+
+const Dialog = ({ open, onOpenChange, children, ...props }: DialogProps) => (
+  <ArkDialog.Root
+    open={open}
+    onOpenChange={(details) => onOpenChange?.(details.open)}
+    {...props}
+  >
+    {children}
+  </ArkDialog.Root>
+)
 const DialogTrigger = ArkDialog.Trigger
 const DialogClose = ArkDialog.CloseTrigger
 

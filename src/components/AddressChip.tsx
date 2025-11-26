@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { css, cx } from '@/styled-system/css'
 
 interface AddressChipProps {
 	address: string
@@ -28,27 +28,40 @@ export function AddressChip({ address, label, truncate = true, link = true, clas
 		: address
 
 	const content = (
-		<span className={cn(
-			"inline-flex items-center gap-1 px-2 py-1 rounded bg-muted/50 text-xs font-mono",
-			link && "hover:bg-muted transition-colors",
+		<span className={cx(
+			css({
+				display: 'inline-flex',
+				alignItems: 'center',
+				gap: '1',
+				px: '2',
+				py: '1',
+				rounded: 'md',
+				bg: 'bg.muted/50',
+				fontSize: 'xs',
+				fontFamily: 'mono',
+				...(link && {
+					_hover: { bg: 'bg.muted' },
+					transition: 'colors'
+				})
+			}),
 			className
 		)}>
-			{label && <span className="text-muted-foreground mr-1">{label}:</span>}
-			<span className={link ? "text-primary" : ""}>{displayAddr}</span>
+			{label && <span className={css({ color: 'fg.muted', mr: '1' })}>{label}:</span>}
+			<span className={link ? css({ color: 'colorPalette.default' }) : ''}>{displayAddr}</span>
 			<Button
 				variant="ghost"
 				size="icon"
-				className="h-4 w-4 ml-1"
+				className={css({ h: '4', w: '4', ml: '1' })}
 				onClick={copyToClipboard}
 			>
-				{copied ? <CheckCircle className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+				{copied ? <CheckCircle className={css({ h: '3', w: '3', color: 'green.500' })} /> : <Copy className={css({ h: '3', w: '3' })} />}
 			</Button>
 		</span>
 	)
 
 	if (link) {
 		return (
-			<Link to={`/address/${address}`} className="inline-block">
+			<Link to={`/address/${address}`} className={css({ display: 'inline-block' })}>
 				{content}
 			</Link>
 		)

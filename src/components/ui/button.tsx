@@ -5,9 +5,7 @@ import { button, type ButtonVariantProps } from '@/styled-system/recipes'
 type LegacyVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 type LegacySize = 'default' | 'sm' | 'lg' | 'icon'
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    ButtonVariantProps {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean
   variant?: LegacyVariant | ButtonVariantProps['variant']
   size?: LegacySize | ButtonVariantProps['size']
@@ -31,7 +29,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
     const recipeClass = button({ variant: mapVariant(variant), size: mapSize(size) })
 
-    // Destructive variant override
     const destructiveStyles =
       variant === 'destructive'
         ? css({
@@ -41,7 +38,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           })
         : undefined
 
-    // Icon size override
     const iconStyles =
       size === 'icon'
         ? css({
@@ -55,11 +51,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const mergedClass = cx(recipeClass, destructiveStyles, iconStyles, className)
 
     if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children as React.ReactElement<{ className?: string }>, {
-        className: cx((children as React.ReactElement<{ className?: string }>).props?.className, mergedClass),
-        ref,
+      return React.cloneElement(children, {
         ...props,
-      })
+        className: cx(
+          (children.props as { className?: string })?.className,
+          mergedClass
+        ),
+      } as React.HTMLAttributes<HTMLElement>)
     }
 
     return (
