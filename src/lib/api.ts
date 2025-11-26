@@ -400,7 +400,7 @@ export class YaciClient {
 		return this.query('message_type_stats')
 	}
 
-	async getGasUsageDistribution(): Promise<Array<{ range: string; count: number }>> {
+	async getGasUsageDistribution(): Promise<Array<{ gas_range: string; count: number }>> {
 		return this.query('gas_usage_distribution')
 	}
 
@@ -408,9 +408,9 @@ export class YaciClient {
 		avgGasLimit: number
 		totalGasLimit: number
 		transactionCount: number
-		data: Array<{ range: string; count: number }>
+		data: Array<{ gas_range: string; count: number }>
 	}> {
-		const data = await this.query<Array<{ range: string; count: number }>>('gas_usage_distribution')
+		const data = await this.query<Array<{ gas_range: string; count: number }>>('gas_usage_distribution')
 		const transactionCount = data.reduce((sum, d) => sum + d.count, 0)
 		// Estimate average based on distribution midpoints
 		const midpoints: Record<string, number> = {
@@ -422,7 +422,7 @@ export class YaciClient {
 		}
 		let totalGasLimit = 0
 		for (const d of data) {
-			totalGasLimit += (midpoints[d.range] || 500000) * d.count
+			totalGasLimit += (midpoints[d.gas_range] || 500000) * d.count
 		}
 		return {
 			avgGasLimit: transactionCount > 0 ? Math.round(totalGasLimit / transactionCount) : 0,
@@ -472,8 +472,31 @@ export class YaciClient {
 		return this.rpc('get_block_time_analysis', { _limit: limit })
 	}
 
-	async getActiveAddressesDaily(days = 30): Promise<Array<{ date: string; count: number }>> {
-		return this.rpc('get_active_addresses_daily', { _days: days })
+	// Denomination endpoints
+
+	async getDenomMetadata(denom?: string): Promise<Array<{
+		denom: string
+		symbol: string
+		name: string | null
+		decimals: number
+		description: string | null
+		logo_uri: string | null
+		coingecko_id: string | null
+		is_native: boolean
+		ibc_source_chain: string | null
+		ibc_source_denom: string | null
+		evm_contract: string | null
+		updated_at: string
+	}>> {
+		const params: Record<string, string> = {}
+		if (denom) params.denom = `eq.${denom}`
+		return this.query('denom_metadata', params)
+	}
+
+	// EVM endpoints
+
+	async requestEvmDecode(txHash: string): Promise<{ success: boolean }> {
+		return this.rpc('request_evm_decode', { _tx_hash: txHash })
 	}
 
 	// Governance endpoints
@@ -540,9 +563,6 @@ export class YaciClient {
 		})
 	}
 
-	async getProposalTally(proposalId: number): Promise<{ yes: number; no: number; abstain: number; no_with_veto: number }> {
-		return this.rpc('compute_proposal_tally', { _proposal_id: proposalId })
-	}
 }
 
 // Singleton instance

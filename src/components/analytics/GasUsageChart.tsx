@@ -17,7 +17,7 @@ async function getGasDistribution(): Promise<{ bins: string[]; counts: number[];
     return { bins: [], counts: [], avgGas: 0, totalTx: 0 }
   }
 
-  const bins = distribution.map(d => d.range)
+  const bins = distribution.map(d => d.gas_range)
   const counts = distribution.map(d => d.count)
   const totalTx = counts.reduce((a, b) => a + b, 0)
 
@@ -31,7 +31,7 @@ async function getGasDistribution(): Promise<{ bins: string[]; counts: number[];
   }
   let totalGas = 0
   distribution.forEach(d => {
-    totalGas += (midpoints[d.range] || 200000) * d.count
+    totalGas += (midpoints[d.gas_range] || 200000) * d.count
   })
   const avgGas = totalTx > 0 ? Math.round(totalGas / totalTx) : 0
 
