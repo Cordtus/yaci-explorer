@@ -8,6 +8,8 @@ import AddressPage from './routes/addr.$id'
 import AnalyticsPage from './routes/analytics'
 import BlocksPage from './routes/blocks'
 import BlockDetailPage from './routes/blocks.$id'
+import EvmContractsPage from './routes/evm-contracts'
+import EvmTokensPage from './routes/evm-tokens'
 import GovernancePage from './routes/governance'
 import GovernanceDetailPage from './routes/governance.$id'
 import HomePage from './routes/home'
@@ -28,6 +30,8 @@ const router = createBrowserRouter([
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'governance', element: <GovernancePage /> },
       { path: 'governance/:id', element: <GovernanceDetailPage /> },
+      { path: 'evm/contracts', element: <EvmContractsPage /> },
+      { path: 'evm/tokens', element: <EvmTokensPage /> },
     ],
   },
 ])

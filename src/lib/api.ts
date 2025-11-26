@@ -499,6 +499,104 @@ export class YaciClient {
 		return this.rpc('request_evm_decode', { _tx_hash: txHash })
 	}
 
+	async getEvmContracts(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		creator: string | null
+		creation_tx: string | null
+		bytecode_hash: string | null
+		name: string | null
+		verified: boolean
+		created_at: string
+	}>> {
+		return this.query('evm_contracts', {
+			order: 'created_at.desc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async getEvmTokens(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		name: string | null
+		symbol: string | null
+		decimals: number | null
+		total_supply: string | null
+		token_type: string | null
+		updated_at: string
+	}>> {
+		return this.query('evm_tokens', {
+			order: 'updated_at.desc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async getEvmTokenTransfers(
+		limit = 50,
+		offset = 0,
+		filters?: { tokenAddress?: string; fromAddress?: string; toAddress?: string }
+	): Promise<Array<{
+		tx_id: string
+		log_index: number
+		token_address: string
+		from_address: string
+		to_address: string
+		value: string
+	}>> {
+		const params: Record<string, string> = {
+			order: 'tx_id.desc',
+			limit: String(limit),
+			offset: String(offset)
+		}
+		if (filters?.tokenAddress) params.token_address = `eq.${filters.tokenAddress}`
+		if (filters?.fromAddress) params.from_address = `eq.${filters.fromAddress}`
+		if (filters?.toAddress) params.to_address = `eq.${filters.toAddress}`
+		return this.query('evm_token_transfers', params)
+	}
+
+	// Validator endpoints
+
+	async getValidators(limit = 100, offset = 0): Promise<Array<{
+		operator_address: string
+		consensus_pubkey: string | null
+		moniker: string | null
+		identity: string | null
+		website: string | null
+		details: string | null
+		commission_rate: string | null
+		tokens: string | null
+		delegator_shares: string | null
+		jailed: boolean
+		status: string | null
+		updated_at: string
+	}>> {
+		return this.query('validators', {
+			order: 'tokens.desc.nullslast',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	// IBC endpoints
+
+	async getIbcChannels(limit = 50, offset = 0): Promise<Array<{
+		channel_id: string
+		port_id: string
+		counterparty_channel_id: string | null
+		counterparty_port_id: string | null
+		connection_id: string | null
+		state: string | null
+		ordering: string | null
+		version: string | null
+		updated_at: string
+	}>> {
+		return this.query('ibc_channels', {
+			order: 'channel_id.asc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
 	// Governance endpoints
 
 	async getGovernanceProposals(

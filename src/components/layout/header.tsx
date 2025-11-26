@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Blocks, Home, Vote } from 'lucide-react'
+import { Activity, BarChart3, Blocks, FileCode2, Home, Vote } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
@@ -9,6 +9,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
+  { name: 'EVM', href: '/evm/contracts', icon: FileCode2 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Governance', href: '/governance', icon: Vote },
 ]
@@ -36,7 +37,8 @@ export function Header() {
             <nav className={styles.nav}>
               {navigation.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href ||
+                  (item.href.startsWith('/evm') && pathname.startsWith('/evm'))
                 return (
                   <Link
                     key={item.name}
