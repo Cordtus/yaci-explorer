@@ -54,7 +54,7 @@ test.describe('Frontend Audit', () => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
-    await page.goto(`${BASE_URL}/transactions`)
+    await page.goto(`${BASE_URL}/tx`)
     await page.waitForLoadState('networkidle')
 
     // Check table exists
@@ -74,7 +74,7 @@ test.describe('Frontend Audit', () => {
     })
 
     // Use known transaction hash
-    await page.goto(`${BASE_URL}/transactions/488a71f3eb96db3e7ec35cd8b1e6e4a6f29af551a26c512c53df48bc4d14308a`)
+    await page.goto(`${BASE_URL}/tx/488a71f3eb96db3e7ec35cd8b1e6e4a6f29af551a26c512c53df48bc4d14308a`)
     await page.waitForLoadState('networkidle')
 
     // Check for Messages & Events section

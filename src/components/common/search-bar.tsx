@@ -55,11 +55,11 @@ export function SearchBar() {
           navigate(`/blocks/${result.value.id}`)
           break
         case 'transaction':
-          navigate(`/transactions/${result.value.id}`)
+          navigate(`/tx/${result.value.id}`)
           break
         case 'evm_transaction':
           // EVM hash search - navigate to tx with EVM view enabled
-          navigate(`/transactions/${result.value.tx_id}?evm=true`)
+          navigate(`/tx/${result.value.tx_id}?evm=true`)
           break
         case 'address':
           navigate(`/addr/${result.value.address}`)
