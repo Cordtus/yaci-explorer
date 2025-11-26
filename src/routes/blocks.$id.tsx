@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { css } from '@/styled-system/css'
 
 export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
@@ -45,20 +46,20 @@ export default function BlockDetailPage() {
 
   if (mounted && blockError) {
     return (
-      <div className="space-y-4">
-        <Link to="/blocks" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
+      <div className={styles.errorContainer}>
+        <Link to="/blocks" className={styles.backLink}>
+          <ArrowLeft className={styles.icon} />
           Back to Blocks
         </Link>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <BlocksIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-red-600 mb-2">Block Not Found</h2>
-              <p className="text-muted-foreground mb-4">
+          <CardContent className={styles.errorCardContent}>
+            <div className={styles.errorContent}>
+              <BlocksIcon className={styles.errorIcon} />
+              <h2 className={styles.errorTitle}>Block Not Found</h2>
+              <p className={styles.errorMessage}>
                 The requested block could not be found.
               </p>
-              <p className="text-sm text-red-500">{String(blockError)}</p>
+              <p className={styles.errorDetails}>{String(blockError)}</p>
             </div>
           </CardContent>
         </Card>
@@ -68,10 +69,10 @@ export default function BlockDetailPage() {
 
   if (!mounted || blockLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className={styles.loadingContainer}>
+        <Skeleton className={styles.skeletonHeader} />
+        <Skeleton className={styles.skeletonMedium} />
+        <Skeleton className={styles.skeletonLarge} />
       </div>
     )
   }
@@ -90,77 +91,77 @@ export default function BlockDetailPage() {
   const hasMissingTxs = !txLoading && missingTxCount > 0
 
   return (
-    <div className="space-y-6">
+    <div className={styles.pageContainer}>
       {/* Header */}
       <div>
-        <Link to="/blocks" className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" />
+        <Link to="/blocks" className={styles.backLinkWithMargin}>
+          <ArrowLeft className={styles.icon} />
           Back to Blocks
         </Link>
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold">Block #{formatNumber(block.id)}</h1>
+        <div className={styles.headerContent}>
+          <h1 className={styles.pageTitle}>Block #{formatNumber(block.id)}</h1>
           <Badge variant="outline">
-            <BlocksIcon className="h-3 w-3 mr-1" />
+            <BlocksIcon className={styles.badgeIcon} />
             {txCount} {txCount === 1 ? 'transaction' : 'transactions'}
           </Badge>
         </div>
         {timestamp && (
-          <p className="text-sm text-muted-foreground">
+          <p className={styles.timestamp}>
             {formatTimeAgo(timestamp)} • {new Date(timestamp).toLocaleString()}
           </p>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      <div className={styles.mainGrid}>
+        <div className={styles.mainColumn}>
           {/* Block Overview */}
           <Card>
             <CardHeader>
               <CardTitle>Block Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className={styles.overviewContent}>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Block Hash</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm font-mono break-all">{blockHash || 'N/A'}</p>
+                  <label className={styles.label}>Block Hash</label>
+                  <div className={styles.hashRow}>
+                    <p className={styles.hashText}>{blockHash || 'N/A'}</p>
                     {blockHash && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5"
+                        className={styles.copyButton}
                         onClick={() => copyToClipboard(blockHash)}
                       >
-                        {copied ? <CheckCircle className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
                       </Button>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={styles.statsGrid}>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Height</label>
-                    <p className="text-lg font-bold">{formatNumber(block.id)}</p>
+                    <label className={styles.label}>Height</label>
+                    <p className={styles.statValue}>{formatNumber(block.id)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Chain ID</label>
-                    <p className="text-sm">{chainId}</p>
+                    <label className={styles.label}>Chain ID</label>
+                    <p className={styles.textSm}>{chainId}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Transactions</label>
-                    <p className="text-lg font-bold">{txCount}</p>
+                    <label className={styles.label}>Transactions</label>
+                    <p className={styles.statValue}>{txCount}</p>
                   </div>
                   {timestamp && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Timestamp</label>
-                      <p className="text-sm">{formatTimeAgo(timestamp)}</p>
+                      <label className={styles.label}>Timestamp</label>
+                      <p className={styles.textSm}>{formatTimeAgo(timestamp)}</p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Proposer Address</label>
-                  <p className="text-sm font-mono break-all mt-1">{proposerAddress}</p>
+                  <label className={styles.label}>Proposer Address</label>
+                  <p className={styles.proposerAddress}>{proposerAddress}</p>
                 </div>
               </div>
             </CardContent>
@@ -173,7 +174,7 @@ export default function BlockDetailPage() {
             </CardHeader>
             <CardContent>
               {hasMissingTxs && (
-                <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                <div className={styles.warningBox}>
                   {missingTxCount === txCount ? (
                     <p>
                       This block references {txCount} transaction{txCount === 1 ? '' : 's'}, but none could be decoded
@@ -186,52 +187,52 @@ export default function BlockDetailPage() {
                       large, etc.).
                     </p>
                   )}
-                  <p className="mt-1 text-xs">
+                  <p className={styles.warningSubtext}>
                     Ensure the node exposes full `GetTx` responses or re-sync from a non-pruned peer to see complete
                     data.
                   </p>
                 </div>
               )}
               {txLoading ? (
-                <div className="space-y-3">
+                <div className={styles.skeletonList}>
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
+                    <Skeleton key={i} className={styles.skeletonItem} />
                   ))}
                 </div>
               ) : transactions && transactions.data.length > 0 ? (
-                <div className="space-y-3">
+                <div className={styles.txList}>
                   {transactions.data.map((tx) => {
                     const status = getTransactionStatus(tx.error)
                     return (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between py-3 border-b last:border-0"
+                        className={styles.txRow}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Activity className="h-5 w-5 text-primary" />
+                        <div className={styles.txContent}>
+                          <div className={styles.txIcon}>
+                            <Activity className={styles.activityIcon} />
                           </div>
                           <div>
                             <Link
                               to={`/transactions/${tx.id}`}
-                              className="font-medium hover:text-primary font-mono text-sm"
+                              className={styles.txLink}
                             >
                               {formatHash(tx.id, 12)}
                             </Link>
-                            <div className="text-xs text-muted-foreground">
+                            <div className={styles.txTimestamp}>
                               {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className={styles.txRight}>
                           <Badge
                             variant={tx.error ? 'destructive' : 'success'}
-                            className="mb-1"
+                            className={styles.statusBadge}
                           >
                             {status.label}
                           </Badge>
                           {tx.fee?.amount && tx.fee.amount.length > 0 && (
-                            <div className="text-xs text-muted-foreground">
+                            <div className={styles.txFee}>
                               {formatNumber(tx.fee.amount[0].amount)} {tx.fee.amount[0].denom}
                             </div>
                           )}
@@ -241,7 +242,7 @@ export default function BlockDetailPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className={styles.emptyMessage}>
                   No transactions in this block
                 </p>
               )}
@@ -250,25 +251,25 @@ export default function BlockDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className={styles.sidebar}>
           <Card>
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Height</span>
-                  <span className="font-medium">{formatNumber(block.id)}</span>
+              <div className={styles.summaryContent}>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Height</span>
+                  <span className={styles.summaryValue}>{formatNumber(block.id)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transactions</span>
-                  <span className="font-medium">{txCount}</span>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Transactions</span>
+                  <span className={styles.summaryValue}>{txCount}</span>
                 </div>
                 {timestamp && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Age</span>
-                    <span className="font-medium">{formatTimeAgo(timestamp)}</span>
+                  <div className={styles.summaryRow}>
+                    <span className={styles.summaryLabel}>Age</span>
+                    <span className={styles.summaryValue}>{formatTimeAgo(timestamp)}</span>
                   </div>
                 )}
               </div>
@@ -281,17 +282,17 @@ export default function BlockDetailPage() {
               <CardTitle>Navigation</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className={styles.navButtons}>
                 <Link to={`/blocks/${block.id - 1}`}>
-                  <Button variant="outline" className="w-full justify-start" disabled={block.id <= 1}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className={styles.navButton} disabled={block.id <= 1}>
+                    <ArrowLeft className={styles.navIcon} />
                     Previous Block
                   </Button>
                 </Link>
                 <Link to={`/blocks/${block.id + 1}`}>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className={styles.navButton}>
                     Next Block
-                    <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+                    <ArrowLeft className={styles.navIconRotated} />
                   </Button>
                 </Link>
               </div>
@@ -301,4 +302,288 @@ export default function BlockDetailPage() {
       </div>
     </div>
   )
+}
+
+const styles = {
+  errorContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  }),
+  backLink: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'fg.muted',
+    _hover: {
+      color: 'fg.default',
+    },
+  }),
+  icon: css({
+    height: '1rem',
+    width: '1rem',
+  }),
+  errorCardContent: css({
+    paddingTop: '1.5rem',
+  }),
+  errorContent: css({
+    textAlign: 'center',
+    paddingY: '3rem',
+  }),
+  errorIcon: css({
+    height: '3rem',
+    width: '3rem',
+    color: 'red.500',
+    marginX: 'auto',
+    marginBottom: '1rem',
+  }),
+  errorTitle: css({
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: 'red.600',
+    marginBottom: '0.5rem',
+  }),
+  errorMessage: css({
+    color: 'fg.muted',
+    marginBottom: '1rem',
+  }),
+  errorDetails: css({
+    fontSize: 'sm',
+    color: 'red.500',
+  }),
+  loadingContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  }),
+  skeletonHeader: css({
+    height: '2rem',
+    width: '12rem',
+  }),
+  skeletonMedium: css({
+    height: '16rem',
+    width: '100%',
+  }),
+  skeletonLarge: css({
+    height: '24rem',
+    width: '100%',
+  }),
+  pageContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  }),
+  backLinkWithMargin: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'fg.muted',
+    marginBottom: '1rem',
+    _hover: {
+      color: 'fg.default',
+    },
+  }),
+  headerContent: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '0.5rem',
+  }),
+  pageTitle: css({
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+  }),
+  badgeIcon: css({
+    height: '0.75rem',
+    width: '0.75rem',
+    marginRight: '0.25rem',
+  }),
+  timestamp: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  mainGrid: css({
+    display: 'grid',
+    gap: '1.5rem',
+    gridTemplateColumns: { base: '1fr', lg: 'repeat(3, 1fr)' },
+  }),
+  mainColumn: css({
+    gridColumn: { base: 'span 1', lg: 'span 2' },
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  }),
+  overviewContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  }),
+  label: css({
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'fg.muted',
+  }),
+  hashRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginTop: '0.25rem',
+  }),
+  hashText: css({
+    fontSize: 'sm',
+    fontFamily: 'mono',
+    wordBreak: 'break-all',
+  }),
+  copyButton: css({
+    height: '1.25rem',
+    width: '1.25rem',
+  }),
+  copyIcon: css({
+    height: '0.75rem',
+    width: '0.75rem',
+  }),
+  statsGrid: css({
+    display: 'grid',
+    gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' },
+    gap: '1rem',
+  }),
+  statValue: css({
+    fontSize: 'lg',
+    fontWeight: 'bold',
+  }),
+  textSm: css({
+    fontSize: 'sm',
+  }),
+  proposerAddress: css({
+    fontSize: 'sm',
+    fontFamily: 'mono',
+    wordBreak: 'break-all',
+    marginTop: '0.25rem',
+  }),
+  warningBox: css({
+    marginBottom: '1rem',
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'amber.200',
+    backgroundColor: 'amber.50',
+    padding: '0.75rem',
+    fontSize: 'sm',
+    color: 'amber.900',
+  }),
+  warningSubtext: css({
+    marginTop: '0.25rem',
+    fontSize: 'xs',
+  }),
+  skeletonList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  }),
+  skeletonItem: css({
+    height: '4rem',
+    width: '100%',
+  }),
+  txList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  }),
+  txRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingY: '0.75rem',
+    borderBottom: '1px solid',
+    borderColor: 'border.default',
+    _last: {
+      borderBottom: '0',
+    },
+  }),
+  txContent: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  }),
+  txIcon: css({
+    height: '2.5rem',
+    width: '2.5rem',
+    borderRadius: 'full',
+    backgroundColor: 'colorPalette.10',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  activityIcon: css({
+    height: '1.25rem',
+    width: '1.25rem',
+    color: 'colorPalette.default',
+  }),
+  txLink: css({
+    fontWeight: 'medium',
+    fontFamily: 'mono',
+    fontSize: 'sm',
+    _hover: {
+      color: 'colorPalette.default',
+    },
+  }),
+  txTimestamp: css({
+    fontSize: 'xs',
+    color: 'fg.muted',
+  }),
+  txRight: css({
+    textAlign: 'right',
+  }),
+  statusBadge: css({
+    marginBottom: '0.25rem',
+  }),
+  txFee: css({
+    fontSize: 'xs',
+    color: 'fg.muted',
+  }),
+  emptyMessage: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+    textAlign: 'center',
+    paddingY: '2rem',
+  }),
+  sidebar: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  }),
+  summaryContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  }),
+  summaryRow: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  summaryLabel: css({
+    color: 'fg.muted',
+  }),
+  summaryValue: css({
+    fontWeight: 'medium',
+  }),
+  navButtons: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  }),
+  navButton: css({
+    width: '100%',
+    justifyContent: 'flex-start',
+  }),
+  navIcon: css({
+    height: '1rem',
+    width: '1rem',
+    marginRight: '0.5rem',
+  }),
+  navIconRotated: css({
+    height: '1rem',
+    width: '1rem',
+    marginLeft: '0.5rem',
+    rotate: '180deg',
+  }),
 }

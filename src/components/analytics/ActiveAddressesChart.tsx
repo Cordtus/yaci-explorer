@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import ReactECharts from 'echarts-for-react'
 import { api } from '@/lib/api'
+import { css } from '@/styled-system/css'
 
 interface AddressActivity {
   dates: string[]
@@ -50,7 +51,7 @@ export function ActiveAddressesChart() {
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className={styles.skeleton} />
         </CardContent>
       </Card>
     )
@@ -108,4 +109,8 @@ export function ActiveAddressesChart() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  skeleton: css({ h: '64', w: 'full' }),
 }

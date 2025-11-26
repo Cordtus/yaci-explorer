@@ -5,6 +5,7 @@ import { api, type BlockRaw } from '@/lib/api'
 import { clearChainInfoCache } from '@/lib/chain-info'
 import { IBC_CACHE_KEY, CHANNEL_CACHE_KEY } from '@/lib/ibc-resolver'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
 
 type ChainFingerprint = {
   chainId: string
@@ -111,13 +112,13 @@ export function ResetNotice() {
   }
 
   return (
-    <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-sm font-semibold">Chain reset detected</p>
-            <p className="text-sm">
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <AlertTriangle className={styles.icon} />
+          <div className={styles.textContent}>
+            <p className={styles.title}>Chain reset detected</p>
+            <p className={styles.description}>
               The chain appears to have restarted from genesis (or changed chain ID). Reset the indexer database and clear cached chain info to resume syncing.
             </p>
           </div>
@@ -125,25 +126,111 @@ export function ResetNotice() {
         <button
           type="button"
           onClick={dismiss}
-          className="text-amber-700 hover:text-amber-900"
+          className={styles.dismissButton}
           aria-label="Dismiss reset notice"
         >
-          <X className="h-4 w-4" />
+          <X className={styles.dismissIcon} />
         </button>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className={styles.actions}>
         <button
           type="button"
           onClick={clearLocalCaches}
-          className="inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 transition-colors"
+          className={styles.resetButton}
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className={styles.resetIcon} />
           Reset cache
         </button>
-        <span className="text-xs text-amber-800">
-          After resetting data, restart the indexer (see deployment guide: “Resetting after a devnet/genesis restart”).
+        <span className={styles.helperText}>
+          After resetting data, restart the indexer (see deployment guide: "Resetting after a devnet/genesis restart").
         </span>
       </div>
     </div>
   )
+}
+
+const styles = {
+  container: css({
+    marginTop: '2',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'amber.300',
+    bg: 'amber.50',
+    px: '4',
+    py: '3',
+    color: 'amber.900',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2'
+  }),
+  header: css({
+    display: 'flex',
+    alignItems: 'start',
+    justifyContent: 'space-between',
+    gap: '3'
+  }),
+  headerContent: css({
+    display: 'flex',
+    alignItems: 'start',
+    gap: '3'
+  }),
+  icon: css({
+    height: '5',
+    width: '5',
+    color: 'amber.600',
+    marginTop: '0.5'
+  }),
+  textContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1'
+  }),
+  title: css({
+    fontSize: 'sm',
+    fontWeight: 'semibold'
+  }),
+  description: css({
+    fontSize: 'sm'
+  }),
+  dismissButton: css({
+    color: 'amber.700',
+    _hover: {
+      color: 'amber.900'
+    }
+  }),
+  dismissIcon: css({
+    height: '4',
+    width: '4'
+  }),
+  actions: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2'
+  }),
+  resetButton: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '2',
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'amber.300',
+    bg: 'white',
+    px: '3',
+    py: '1.5',
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'amber.900',
+    transition: 'colors',
+    _hover: {
+      bg: 'amber.100'
+    }
+  }),
+  resetIcon: css({
+    height: '4',
+    width: '4'
+  }),
+  helperText: css({
+    fontSize: 'xs',
+    color: 'amber.800'
+  })
 }

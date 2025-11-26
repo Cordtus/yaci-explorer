@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { css, cx } from '@/styled-system/css'
 
 /**
  * Address detail page component
@@ -71,27 +72,27 @@ export default function AddressDetailPage() {
 
   if (!mounted || statsLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className={styles.pageContainer}>
+        <Skeleton className={styles.skeletonHeader} />
+        <Skeleton className={styles.skeletonCard} />
+        <Skeleton className={styles.skeletonTable} />
       </div>
     )
   }
 
   if (!stats) {
     return (
-      <div className="space-y-4">
-        <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
+      <div className={styles.pageContainer}>
+        <Link to="/" className={styles.backLink}>
+          <ArrowLeft className={styles.backIcon} />
           Back to Home
         </Link>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-muted-foreground mb-2">Address Not Found</h2>
-              <p className="text-muted-foreground">
+          <CardContent className={styles.cardPadding}>
+            <div className={styles.notFoundContainer}>
+              <User className={styles.notFoundIcon} />
+              <h2 className={styles.notFoundTitle}>Address Not Found</h2>
+              <p className={styles.notFoundText}>
                 No transactions found for this address.
               </p>
             </div>
@@ -102,83 +103,83 @@ export default function AddressDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={styles.pageContainerLarge}>
       {/* Header */}
       <div>
-        <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" />
+        <Link to="/" className={styles.backLinkWithMargin}>
+          <ArrowLeft className={styles.backIcon} />
           Back to Home
         </Link>
-        <div className="flex items-center gap-3 mb-2">
-          <User className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Address Details</h1>
+        <div className={styles.headerContent}>
+          <User className={styles.headerIcon} />
+          <h1 className={styles.headerTitle}>Address Details</h1>
         </div>
-        <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
-          <p className="font-mono text-sm break-all flex-1">
+        <div className={styles.addressContainer}>
+          <p className={styles.addressText}>
             {params.id}
           </p>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0"
+            className={styles.copyButton}
             onClick={() => copyToClipboard(params.id!)}
           >
-            {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
           </Button>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className={styles.statsGrid}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>Total Transactions</CardTitle>
+            <Activity className={styles.statCardIcon} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.transaction_count)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className={styles.statValue}>{formatNumber(stats.transaction_count)}</div>
+            <p className={styles.statDescription}>
               All transactions involving this address
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-blue-500" />
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>Messages Sent</CardTitle>
+            <ArrowUpRight className={styles.statCardIconBlue} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.total_sent)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className={styles.statValue}>{formatNumber(stats.total_sent)}</div>
+            <p className={styles.statDescription}>
               Messages originated from this address
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Messages Received</CardTitle>
-            <ArrowDownLeft className="h-4 w-4 text-green-500" />
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>Messages Received</CardTitle>
+            <ArrowDownLeft className={styles.statCardIconGreen} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.total_received)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className={styles.statValue}>{formatNumber(stats.total_received)}</div>
+            <p className={styles.statDescription}>
               Messages mentioning this address
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">First Seen</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>First Seen</CardTitle>
+            <CheckCircle className={styles.statCardIcon} />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">
+            <div className={styles.statValueSmall}>
               {stats.first_seen ? formatTimeAgo(stats.first_seen) : 'N/A'}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={styles.statDescription}>
               {stats.first_seen ? new Date(stats.first_seen).toLocaleDateString() : 'No activity'}
             </p>
           </CardContent>
@@ -189,20 +190,20 @@ export default function AddressDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className={styles.tableDescription}>
             All transactions involving this address
           </p>
         </CardHeader>
         <CardContent>
           {txLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+            <div className={styles.skeletonList}>
+              <Skeleton className={styles.skeletonRow} />
+              <Skeleton className={styles.skeletonRow} />
+              <Skeleton className={styles.skeletonRow} />
             </div>
           ) : transactions && transactions.data.length > 0 ? (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className={styles.tableContainer}>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -225,18 +226,18 @@ export default function AddressDetailPage() {
                             <Badge
                               variant={isOut ? 'default' : 'secondary'}
                               className={cn(
-                                'font-medium',
-                                isOut ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'
+                                styles.typeBadge,
+                                isOut ? styles.typeBadgeOut : styles.typeBadgeIn
                               )}
                             >
                               {isOut ? (
                                 <>
-                                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                                  <ArrowUpRight className={styles.typeBadgeIcon} />
                                   OUT
                                 </>
                               ) : (
                                 <>
-                                  <ArrowDownLeft className="h-3 w-3 mr-1" />
+                                  <ArrowDownLeft className={styles.typeBadgeIcon} />
                                   IN
                                 </>
                               )}
@@ -245,7 +246,7 @@ export default function AddressDetailPage() {
                           <TableCell>
                             <Link
                               to={`/transactions/${tx.id}`}
-                              className="font-mono text-sm text-primary hover:text-primary/80"
+                              className={styles.txHashLink}
                             >
                               {formatHash(tx.id, 8)}
                             </Link>
@@ -254,12 +255,12 @@ export default function AddressDetailPage() {
                             {tx.height ? (
                               <Link
                                 to={`/blocks/${tx.height}`}
-                                className="text-primary hover:text-primary/80"
+                                className={styles.blockLink}
                               >
                                 {formatNumber(tx.height)}
                               </Link>
                             ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
+                              <span className={styles.emptyValue}>—</span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -271,7 +272,7 @@ export default function AddressDetailPage() {
                             <Badge variant={isSuccess ? 'success' : 'destructive'}>
                               {isSuccess ? (
                                 <>
-                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  <CheckCircle className={styles.statusIcon} />
                                   Success
                                 </>
                               ) : (
@@ -279,7 +280,7 @@ export default function AddressDetailPage() {
                               )}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className={styles.timeCell}>
                             {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </TableCell>
                         </TableRow>
@@ -291,12 +292,12 @@ export default function AddressDetailPage() {
 
               {/* Pagination */}
               {transactions.pagination.total > pageSize && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
+                <div className={styles.paginationContainer}>
+                  <div className={styles.paginationInfo}>
                     Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, transactions.pagination.total)} of{' '}
                     {transactions.pagination.total} transactions
                   </div>
-                  <div className="flex gap-2">
+                  <div className={styles.paginationButtons}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -318,13 +319,264 @@ export default function AddressDetailPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-12">
-              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No transactions found for this address</p>
+            <div className={styles.emptyState}>
+              <Activity className={styles.emptyStateIcon} />
+              <p className={styles.emptyStateText}>No transactions found for this address</p>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
   )
+}
+
+const styles = {
+  pageContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  }),
+  pageContainerLarge: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  }),
+  skeletonHeader: css({
+    height: '2rem',
+    width: '12rem',
+  }),
+  skeletonCard: css({
+    height: '8rem',
+    width: '100%',
+  }),
+  skeletonTable: css({
+    height: '24rem',
+    width: '100%',
+  }),
+  backLink: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'fg.muted',
+    _hover: {
+      color: 'fg.default',
+    },
+  }),
+  backLinkWithMargin: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'fg.muted',
+    marginBottom: '1rem',
+    _hover: {
+      color: 'fg.default',
+    },
+  }),
+  backIcon: css({
+    height: '1rem',
+    width: '1rem',
+  }),
+  cardPadding: css({
+    paddingTop: '1.5rem',
+  }),
+  notFoundContainer: css({
+    textAlign: 'center',
+    paddingY: '3rem',
+  }),
+  notFoundIcon: css({
+    height: '3rem',
+    width: '3rem',
+    color: 'fg.muted',
+    marginX: 'auto',
+    marginBottom: '1rem',
+  }),
+  notFoundTitle: css({
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: 'fg.muted',
+    marginBottom: '0.5rem',
+  }),
+  notFoundText: css({
+    color: 'fg.muted',
+  }),
+  headerContent: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '0.5rem',
+  }),
+  headerIcon: css({
+    height: '2rem',
+    width: '2rem',
+    color: 'colorPalette.default',
+  }),
+  headerTitle: css({
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+  }),
+  addressContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    backgroundColor: 'bg.muted',
+    padding: '0.75rem',
+    borderRadius: 'lg',
+  }),
+  addressText: css({
+    fontFamily: 'mono',
+    fontSize: 'sm',
+    wordBreak: 'break-all',
+    flex: '1',
+  }),
+  copyButton: css({
+    height: '2rem',
+    width: '2rem',
+    flexShrink: '0',
+  }),
+  copyIcon: css({
+    height: '1rem',
+    width: '1rem',
+  }),
+  statsGrid: css({
+    display: 'grid',
+    gap: '1rem',
+    gridTemplateColumns: {
+      base: '1',
+      md: '2',
+      lg: '4',
+    },
+  }),
+  statCardHeader: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    spaceY: '0',
+    paddingBottom: '0.5rem',
+  }),
+  statCardTitle: css({
+    fontSize: 'sm',
+    fontWeight: 'medium',
+  }),
+  statCardIcon: css({
+    height: '1rem',
+    width: '1rem',
+    color: 'fg.muted',
+  }),
+  statCardIconBlue: css({
+    height: '1rem',
+    width: '1rem',
+    color: 'blue.500',
+  }),
+  statCardIconGreen: css({
+    height: '1rem',
+    width: '1rem',
+    color: 'green.500',
+  }),
+  statValue: css({
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+  }),
+  statValueSmall: css({
+    fontSize: '1.125rem',
+    fontWeight: 'bold',
+  }),
+  statDescription: css({
+    fontSize: 'xs',
+    color: 'fg.muted',
+    marginTop: '0.25rem',
+  }),
+  tableDescription: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  skeletonList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  }),
+  skeletonRow: css({
+    height: '3rem',
+    width: '100%',
+  }),
+  tableContainer: css({
+    borderRadius: 'md',
+    border: '1px solid',
+    overflowX: 'auto',
+  }),
+  typeBadge: css({
+    fontWeight: 'medium',
+  }),
+  typeBadgeOut: css({
+    backgroundColor: 'blue.500',
+    _hover: {
+      backgroundColor: 'blue.600',
+    },
+  }),
+  typeBadgeIn: css({
+    backgroundColor: 'green.500',
+    _hover: {
+      backgroundColor: 'green.600',
+    },
+  }),
+  typeBadgeIcon: css({
+    height: '0.75rem',
+    width: '0.75rem',
+    marginRight: '0.25rem',
+  }),
+  txHashLink: css({
+    fontFamily: 'mono',
+    fontSize: 'sm',
+    color: 'colorPalette.default',
+    _hover: {
+      color: 'colorPalette.default/80',
+    },
+  }),
+  blockLink: css({
+    color: 'colorPalette.default',
+    _hover: {
+      color: 'colorPalette.default/80',
+    },
+  }),
+  emptyValue: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  statusIcon: css({
+    height: '0.75rem',
+    width: '0.75rem',
+    marginRight: '0.25rem',
+  }),
+  timeCell: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  paginationContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: '1rem',
+  }),
+  paginationInfo: css({
+    fontSize: 'sm',
+    color: 'fg.muted',
+  }),
+  paginationButtons: css({
+    display: 'flex',
+    gap: '0.5rem',
+  }),
+  emptyState: css({
+    textAlign: 'center',
+    paddingY: '3rem',
+  }),
+  emptyStateIcon: css({
+    height: '3rem',
+    width: '3rem',
+    color: 'fg.muted',
+    marginX: 'auto',
+    marginBottom: '1rem',
+  }),
+  emptyStateText: css({
+    color: 'fg.muted',
+  }),
 }

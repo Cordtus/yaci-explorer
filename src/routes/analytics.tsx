@@ -7,14 +7,15 @@ import { TopEventTypesCard } from '@/components/analytics/TopEventTypesCard'
 import { GasUsageChart } from '@/components/analytics/GasUsageChart'
 import { TxTypeBreakdown } from '@/components/analytics/TxTypeBreakdown'
 import { ActiveAddressesChart } from '@/components/analytics/ActiveAddressesChart'
+import { css } from '@/styled-system/css'
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Activity className="h-8 w-8 text-primary" />
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <Activity className={styles.icon} />
         <div>
-          <h1 className="text-3xl font-bold">Network Analytics</h1>
+          <h1 className={styles.title}>Network Analytics</h1>
         </div>
       </div>
 
@@ -22,23 +23,61 @@ export default function AnalyticsPage() {
       <NetworkMetricsCard />
 
       {/* Time series charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={styles.gridTwo}>
         <TransactionVolumeChart />
         <BlockIntervalChart />
       </div>
 
       {/* Distribution charts */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className={styles.gridThree}>
         <TxTypeBreakdown />
         <GasUsageChart />
         <ActiveAddressesChart />
       </div>
 
       {/* Breakdown tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={styles.gridTwo}>
         <TopMessageTypesCard />
         <TopEventTypesCard />
       </div>
     </div>
   )
+}
+
+const styles = {
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+  }),
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3',
+  }),
+  icon: css({
+    height: '8',
+    width: '8',
+    color: 'colorPalette.fg',
+  }),
+  title: css({
+    fontSize: '3xl',
+    fontWeight: 'bold',
+  }),
+  gridTwo: css({
+    display: 'grid',
+    gap: '6',
+    gridTemplateColumns: {
+      base: '1',
+      lg: '2',
+    },
+  }),
+  gridThree: css({
+    display: 'grid',
+    gap: '6',
+    gridTemplateColumns: {
+      base: '1',
+      lg: '3',
+    },
+  }),
 }

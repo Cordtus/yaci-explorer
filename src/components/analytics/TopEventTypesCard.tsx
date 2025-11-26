@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
 
 interface EventTypeStats {
   type: string
@@ -49,18 +50,18 @@ async function getTopEventTypes(): Promise<EventTypeStats[]> {
   return stats
 }
 
-function getColorClass(index: number) {
+function getColorStyle(index: number) {
   const colors = [
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-purple-500',
-    'bg-orange-500',
-    'bg-pink-500',
-    'bg-indigo-500',
-    'bg-yellow-500',
-    'bg-red-500',
-    'bg-teal-500',
-    'bg-cyan-500',
+    'blue.500',
+    'green.500',
+    'purple.500',
+    'orange.500',
+    'pink.500',
+    'indigo.500',
+    'yellow.500',
+    'red.500',
+    'teal.500',
+    'cyan.500',
   ]
   return colors[index % colors.length]
 }
@@ -68,11 +69,11 @@ function getColorClass(index: number) {
 function getTrendIcon(trend?: string) {
   switch (trend) {
     case 'up':
-      return <TrendingUp className="h-3 w-3 text-green-500" />
+      return <TrendingUp className={css({ h: '3', w: '3', color: 'green.500' })} />
     case 'down':
-      return <TrendingDown className="h-3 w-3 text-red-500" />
+      return <TrendingDown className={css({ h: '3', w: '3', color: 'red.500' })} />
     default:
-      return <Minus className="h-3 w-3 text-muted-foreground" />
+      return <Minus className={css({ h: '3', w: '3', color: 'fg.muted' })} />
   }
 }
 
@@ -93,17 +94,17 @@ export function TopEventTypesCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+          <CardTitle className={styles.titleFlex}>
+            <BarChart3 className={styles.icon} />
             Top Event Types
           </CardTitle>
           <CardDescription>Most frequently emitted events</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className={styles.spaceY2}>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-8 bg-muted rounded" />
+              <div key={i} className={styles.animatePulse}>
+                <div className={styles.skeletonBar} />
               </div>
             ))}
           </div>
@@ -116,14 +117,14 @@ export function TopEventTypesCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+          <CardTitle className={styles.titleFlex}>
+            <BarChart3 className={styles.icon} />
             Top Event Types
           </CardTitle>
           <CardDescription>No events found in the sampled window</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className={styles.mutedText}>
             Once transactions are included, this card will show the most common event types
             observed in the last {sampleLimitLabel} events.
           </p>
@@ -137,8 +138,8 @@ export function TopEventTypesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
+        <CardTitle className={styles.titleFlex}>
+          <BarChart3 className={styles.icon} />
           Top Event Types
         </CardTitle>
         <CardDescription>
@@ -146,23 +147,23 @@ export function TopEventTypesCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className={styles.spaceY4}>
           {data.map((stat, index) => (
-            <div key={stat.type} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{stat.type}</span>
+            <div key={stat.type} className={styles.spaceY2}>
+              <div className={styles.statHeader}>
+                <div className={styles.statLabel}>
+                  <span className={styles.fontMedium}>{stat.type}</span>
                   {getTrendIcon(stat.trend)}
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className={styles.statValues}>
                   <span>{stat.count.toLocaleString()} events</span>
                   <span>•</span>
                   <span>{stat.percentage.toFixed(1)}%</span>
                 </div>
               </div>
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div className={styles.progressBar}>
                 <div
-                  className={`h-full rounded-full ${getColorClass(index)}`}
+                  className={css({ h: 'full', rounded: 'full', bg: getColorStyle(index) })}
                   style={{ width: `${(stat.count / maxCount) * 100}%` }}
                 />
               </div>
@@ -172,5 +173,20 @@ export function TopEventTypesCard() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  titleFlex: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  icon: css({ h: '5', w: '5' }),
+  spaceY2: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  spaceY4: css({ display: 'flex', flexDirection: 'column', gap: '4' }),
+  animatePulse: css({ animation: 'pulse' }),
+  skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
+  mutedText: css({ fontSize: 'sm', color: 'fg.muted' }),
+  statHeader: css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 'sm' }),
+  statLabel: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  statValues: css({ display: 'flex', alignItems: 'center', gap: '2', color: 'fg.muted' }),
+  fontMedium: css({ fontWeight: 'medium' }),
+  progressBar: css({ h: '2', w: 'full', bg: 'muted', rounded: 'full', overflow: 'hidden' }),
 }
 

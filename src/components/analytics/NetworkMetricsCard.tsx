@@ -3,6 +3,7 @@ import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -138,12 +139,12 @@ export function NetworkMetricsCard() {
           <CardDescription>Loading metrics...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={styles.animatePulse}>
+            <div className={styles.skeletonGrid}>
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-8 bg-muted rounded"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                <div key={i} className={styles.skeletonItem}>
+                  <div className={styles.skeletonBar}></div>
+                  <div className={styles.skeletonText}></div>
                 </div>
               ))}
             </div>
@@ -171,82 +172,82 @@ export function NetworkMetricsCard() {
       label: 'Latest Block',
       value: metrics.latestHeight.toLocaleString(),
       subtext: `${timeSinceLastBlock}s ago`,
-      color: 'text-blue-500'
+      color: 'blue.500'
     },
     {
       icon: Database,
       label: 'Total Transactions',
       value: formatNumber(metrics.totalTransactions),
       subtext: `${metrics.txPerBlock} per block`,
-      color: 'text-green-500'
+      color: 'green.500'
     },
     {
       icon: Clock,
       label: 'Block Time',
       value: `${metrics.avgBlockTime.toFixed(2)}s`,
       subtext: 'average',
-      color: 'text-purple-500'
+      color: 'purple.500'
     },
     {
       icon: Users,
       label: 'Active Validators',
       value: metrics.activeValidators.toString(),
       subtext: 'participating',
-      color: 'text-orange-500'
+      color: 'orange.500'
     },
     {
       icon: TrendingUp,
       label: 'Success Rate',
       value: `${metrics.successRate.toFixed(1)}%`,
       subtext: 'transactions',
-      color: 'text-emerald-500'
+      color: 'emerald.500'
     },
     {
       icon: Zap,
       label: 'Avg Gas Used',
       value: formatNumber(metrics.avgGasUsed),
       subtext: 'per transaction',
-      color: 'text-yellow-500'
+      color: 'yellow.500'
     },
     {
       icon: Database,
       label: 'Total Blocks',
       value: formatNumber(metrics.totalBlocks),
       subtext: 'indexed',
-      color: 'text-indigo-500'
+      color: 'indigo.500'
     },
     {
       icon: Users,
       label: 'Active Addresses',
       value: metrics.uniqueAddresses.toString(),
       subtext: 'recent activity',
-      color: 'text-pink-500'
+      color: 'pink.500'
     }
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Network Overview</CardTitle>
+        <CardTitle className={styles.title}>Network Overview</CardTitle>
         <CardDescription>
           Real-time metrics and statistics for the blockchain network
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className={styles.metricsGrid}>
           {metricsData.map((metric, index) => {
             const Icon = metric.icon
             return (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Icon className={`h-5 w-5 ${metric.color}`} />
-                  <span className="text-sm font-medium text-muted-foreground">
+              <div key={index} className={styles.metricItem}>
+                <div className={styles.metricHeader}>
+                  <Icon className={css({ h: '5', w: '5', color: metric.color })} />
+                  <span className={styles.metricLabel}>
                     {metric.label}
                   </span>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  <div className="text-xs text-muted-foreground">{metric.subtext}</div>
+                <div className={styles.metricValues}>
+                  <div className={styles.metricValue}>{metric.value}</div>
+                  <div className={styles.metricSubtext}>{metric.subtext}</div>
                 </div>
               </div>
             )
@@ -255,4 +256,20 @@ export function NetworkMetricsCard() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  title: css({ fontSize: '2xl' }),
+  animatePulse: css({ animation: 'pulse', display: 'flex', flexDirection: 'column', gap: '4' }),
+  skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: '2', md: '3', lg: '4' }, gap: '4' }),
+  skeletonItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
+  skeletonText: css({ h: '4', bg: 'muted', rounded: 'md', w: '2/3' }),
+  metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: '2', md: '3', lg: '4' }, gap: '6' }),
+  metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),
+  metricValues: css({ display: 'flex', flexDirection: 'column', gap: '1' }),
+  metricValue: css({ fontSize: '2xl', fontWeight: 'bold' }),
+  metricSubtext: css({ fontSize: 'xs', color: 'fg.muted' }),
 }

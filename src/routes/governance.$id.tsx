@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { api } from '@/lib/api'
 import { formatTimestamp, formatAddress } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { css } from '@/styled-system/css'
 
 function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'success' | 'outline' {
 	if (status.includes('PASSED') || status.includes('VOTING_PERIOD')) {
@@ -57,20 +58,20 @@ export default function GovernanceProposalDetailPage() {
 
 	if (mounted && error) {
 		return (
-			<div className="space-y-4">
-				<Link to="/governance" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-					<ArrowLeft className="h-4 w-4" />
+			<div className={styles.container}>
+				<Link to="/governance" className={styles.backLink}>
+					<ArrowLeft className={styles.iconSm} />
 					Back to Governance
 				</Link>
 				<Card>
-					<CardContent className="pt-6">
-						<div className="text-center py-12">
-							<Vote className="h-12 w-12 text-red-500 mx-auto mb-4" />
-							<h2 className="text-2xl font-bold text-red-600 mb-2">Proposal Not Found</h2>
-							<p className="text-muted-foreground mb-4">
+					<CardContent className={styles.cardContentPadded}>
+						<div className={styles.errorContainer}>
+							<Vote className={styles.errorIcon} />
+							<h2 className={styles.errorTitle}>Proposal Not Found</h2>
+							<p className={styles.errorDescription}>
 								The requested governance proposal could not be found.
 							</p>
-							<p className="text-sm text-red-500">{String(error)}</p>
+							<p className={styles.errorMessage}>{String(error)}</p>
 						</div>
 					</CardContent>
 				</Card>
@@ -80,10 +81,10 @@ export default function GovernanceProposalDetailPage() {
 
 	if (!mounted || proposalLoading) {
 		return (
-			<div className="space-y-4">
-				<Skeleton className="h-8 w-48" />
-				<Skeleton className="h-64 w-full" />
-				<Skeleton className="h-96 w-full" />
+			<div className={styles.container}>
+				<Skeleton className={styles.skeletonHeader} />
+				<Skeleton className={styles.skeletonMedium} />
+				<Skeleton className={styles.skeletonLarge} />
 			</div>
 		)
 	}
@@ -104,27 +105,27 @@ export default function GovernanceProposalDetailPage() {
 	const noWithVetoPercent = totalVotes > 0 ? (noWithVetoCount / totalVotes) * 100 : 0
 
 	return (
-		<div className="space-y-6">
+		<div className={styles.pageContainer}>
 			{/* Header */}
 			<div>
-				<Link to="/governance" className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
-					<ArrowLeft className="h-4 w-4" />
+				<Link to="/governance" className={styles.backLinkWithMargin}>
+					<ArrowLeft className={styles.iconSm} />
 					Back to Governance
 				</Link>
-				<div className="flex items-center gap-3 mb-2">
-					<h1 className="text-3xl font-bold">Proposal #{proposalId}</h1>
+				<div className={styles.titleContainer}>
+					<h1 className={styles.pageTitle}>Proposal #{proposalId}</h1>
 					<Badge variant={getStatusBadgeVariant(proposal.status)}>
 						{formatStatusLabel(proposal.status)}
 					</Badge>
 				</div>
 				{proposal.title && (
-					<h2 className="text-xl text-muted-foreground">{proposal.title}</h2>
+					<h2 className={styles.subtitle}>{proposal.title}</h2>
 				)}
 			</div>
 
-			<div className="grid gap-6 lg:grid-cols-3">
+			<div className={styles.gridLayout}>
 				{/* Main Content */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className={styles.mainContent}>
 					{/* Summary */}
 					{proposal.summary && (
 						<Card>
@@ -132,7 +133,7 @@ export default function GovernanceProposalDetailPage() {
 								<CardTitle>Summary</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<p className="text-sm whitespace-pre-wrap">{proposal.summary}</p>
+								<p className={styles.summaryText}>{proposal.summary}</p>
 							</CardContent>
 						</Card>
 					)}
@@ -140,8 +141,8 @@ export default function GovernanceProposalDetailPage() {
 					{/* Vote Tally */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Vote className="h-5 w-5" />
+							<CardTitle className={styles.voteTallyTitle}>
+								<Vote className={styles.iconMd} />
 								Vote Tally
 							</CardTitle>
 							<CardDescription>
@@ -149,18 +150,18 @@ export default function GovernanceProposalDetailPage() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<div className="space-y-4">
+							<div className={styles.votesContainer}>
 								{/* Yes */}
 								<div>
-									<div className="flex justify-between mb-2">
-										<span className="text-sm font-medium">Yes</span>
-										<span className="text-sm text-muted-foreground">
+									<div className={styles.voteHeader}>
+										<span className={styles.voteLabel}>Yes</span>
+										<span className={styles.votePercent}>
 											{yesPercent.toFixed(2)}% ({yesCount.toLocaleString()})
 										</span>
 									</div>
-									<div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+									<div className={styles.progressBar}>
 										<div
-											className="h-full bg-green-500 transition-all duration-300"
+											className={styles.progressYes}
 											style={{ width: `${yesPercent}%` }}
 										/>
 									</div>
@@ -168,15 +169,15 @@ export default function GovernanceProposalDetailPage() {
 
 								{/* No */}
 								<div>
-									<div className="flex justify-between mb-2">
-										<span className="text-sm font-medium">No</span>
-										<span className="text-sm text-muted-foreground">
+									<div className={styles.voteHeader}>
+										<span className={styles.voteLabel}>No</span>
+										<span className={styles.votePercent}>
 											{noPercent.toFixed(2)}% ({noCount.toLocaleString()})
 										</span>
 									</div>
-									<div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+									<div className={styles.progressBar}>
 										<div
-											className="h-full bg-red-500 transition-all duration-300"
+											className={styles.progressNo}
 											style={{ width: `${noPercent}%` }}
 										/>
 									</div>
@@ -184,15 +185,15 @@ export default function GovernanceProposalDetailPage() {
 
 								{/* Abstain */}
 								<div>
-									<div className="flex justify-between mb-2">
-										<span className="text-sm font-medium">Abstain</span>
-										<span className="text-sm text-muted-foreground">
+									<div className={styles.voteHeader}>
+										<span className={styles.voteLabel}>Abstain</span>
+										<span className={styles.votePercent}>
 											{abstainPercent.toFixed(2)}% ({abstainCount.toLocaleString()})
 										</span>
 									</div>
-									<div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+									<div className={styles.progressBar}>
 										<div
-											className="h-full bg-gray-400 transition-all duration-300"
+											className={styles.progressAbstain}
 											style={{ width: `${abstainPercent}%` }}
 										/>
 									</div>
@@ -200,15 +201,15 @@ export default function GovernanceProposalDetailPage() {
 
 								{/* No with Veto */}
 								<div>
-									<div className="flex justify-between mb-2">
-										<span className="text-sm font-medium">No with Veto</span>
-										<span className="text-sm text-muted-foreground">
+									<div className={styles.voteHeader}>
+										<span className={styles.voteLabel}>No with Veto</span>
+										<span className={styles.votePercent}>
 											{noWithVetoPercent.toFixed(2)}% ({noWithVetoCount.toLocaleString()})
 										</span>
 									</div>
-									<div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+									<div className={styles.progressBar}>
 										<div
-											className="h-full bg-orange-500 transition-all duration-300"
+											className={styles.progressVeto}
 											style={{ width: `${noWithVetoPercent}%` }}
 										/>
 									</div>
@@ -228,22 +229,22 @@ export default function GovernanceProposalDetailPage() {
 							</CardHeader>
 							<CardContent>
 								{snapshotsLoading ? (
-									<div className="space-y-2">
+									<div className={styles.snapshotsLoading}>
 										{Array.from({ length: 3 }).map((_, i) => (
-											<Skeleton key={i} className="h-12 w-full" />
+											<Skeleton key={i} className={styles.snapshotSkeleton} />
 										))}
 									</div>
 								) : (
-									<div className="overflow-x-auto">
+									<div className={styles.tableWrapper}>
 										<Table>
 											<TableHeader>
 												<TableRow>
 													<TableHead>Timestamp</TableHead>
 													<TableHead>Status</TableHead>
-													<TableHead className="text-right">Yes</TableHead>
-													<TableHead className="text-right">No</TableHead>
-													<TableHead className="text-right">Abstain</TableHead>
-													<TableHead className="text-right">No w/ Veto</TableHead>
+													<TableHead className={styles.textRight}>Yes</TableHead>
+													<TableHead className={styles.textRight}>No</TableHead>
+													<TableHead className={styles.textRight}>Abstain</TableHead>
+													<TableHead className={styles.textRight}>No w/ Veto</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -255,24 +256,24 @@ export default function GovernanceProposalDetailPage() {
 
 													return (
 														<TableRow key={idx}>
-															<TableCell className="font-mono text-xs">
+															<TableCell className={styles.timestampCell}>
 																{formatTimestamp(snapshot.snapshot_time)}
 															</TableCell>
 															<TableCell>
-																<Badge variant="outline" className="text-xs">
+																<Badge variant="outline" className={styles.badgeXs}>
 																	{formatStatusLabel(snapshot.status)}
 																</Badge>
 															</TableCell>
-															<TableCell className="text-right text-sm">
+															<TableCell className={styles.numberCell}>
 																{yes.toLocaleString()}
 															</TableCell>
-															<TableCell className="text-right text-sm">
+															<TableCell className={styles.numberCell}>
 																{no.toLocaleString()}
 															</TableCell>
-															<TableCell className="text-right text-sm">
+															<TableCell className={styles.numberCell}>
 																{abstain.toLocaleString()}
 															</TableCell>
-															<TableCell className="text-right text-sm">
+															<TableCell className={styles.numberCell}>
 																{veto.toLocaleString()}
 															</TableCell>
 														</TableRow>
@@ -288,20 +289,20 @@ export default function GovernanceProposalDetailPage() {
 				</div>
 
 				{/* Sidebar */}
-				<div className="space-y-6">
+				<div className={styles.sidebarContainer}>
 					{/* Timeline */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Clock className="h-5 w-5" />
+							<CardTitle className={styles.sidebarTitle}>
+								<Clock className={styles.iconMd} />
 								Timeline
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="space-y-4">
+							<div className={styles.timelineContainer}>
 								<div>
-									<label className="text-sm font-medium text-muted-foreground">Submit Time</label>
-									<p className="text-sm">{formatTimestamp(proposal.submit_time)}</p>
+									<label className={styles.timelineLabel}>Submit Time</label>
+									<p className={styles.timelineValue}>{formatTimestamp(proposal.submit_time)}</p>
 								</div>
 
 								<Separator />
@@ -309,8 +310,8 @@ export default function GovernanceProposalDetailPage() {
 								{proposal.deposit_end_time && (
 									<>
 										<div>
-											<label className="text-sm font-medium text-muted-foreground">Deposit End Time</label>
-											<p className="text-sm">{formatTimestamp(proposal.deposit_end_time)}</p>
+											<label className={styles.timelineLabel}>Deposit End Time</label>
+											<p className={styles.timelineValue}>{formatTimestamp(proposal.deposit_end_time)}</p>
 										</div>
 										<Separator />
 									</>
@@ -319,8 +320,8 @@ export default function GovernanceProposalDetailPage() {
 								{proposal.voting_start_time && (
 									<>
 										<div>
-											<label className="text-sm font-medium text-muted-foreground">Voting Start Time</label>
-											<p className="text-sm">{formatTimestamp(proposal.voting_start_time)}</p>
+											<label className={styles.timelineLabel}>Voting Start Time</label>
+											<p className={styles.timelineValue}>{formatTimestamp(proposal.voting_start_time)}</p>
 										</div>
 										<Separator />
 									</>
@@ -328,8 +329,8 @@ export default function GovernanceProposalDetailPage() {
 
 								{proposal.voting_end_time && (
 									<div>
-										<label className="text-sm font-medium text-muted-foreground">Voting End Time</label>
-										<p className="text-sm">{formatTimestamp(proposal.voting_end_time)}</p>
+										<label className={styles.timelineLabel}>Voting End Time</label>
+										<p className={styles.timelineValue}>{formatTimestamp(proposal.voting_end_time)}</p>
 									</div>
 								)}
 							</div>
@@ -340,15 +341,15 @@ export default function GovernanceProposalDetailPage() {
 					{proposal.proposer && (
 						<Card>
 							<CardHeader>
-								<CardTitle className="flex items-center gap-2">
-									<User className="h-5 w-5" />
+								<CardTitle className={styles.sidebarTitle}>
+									<User className={styles.iconMd} />
 									Proposer
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<Link
 									to={`/addr/${proposal.proposer}`}
-									className="font-mono text-sm text-primary hover:text-primary/80 break-all"
+									className={styles.proposerLink}
 								>
 									{formatAddress(proposal.proposer, 12)}
 								</Link>
@@ -362,20 +363,20 @@ export default function GovernanceProposalDetailPage() {
 							<CardTitle>Details</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="space-y-3">
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Proposal ID</span>
-									<span className="font-medium">#{proposalId}</span>
+							<div className={styles.detailsContainer}>
+								<div className={styles.detailRow}>
+									<span className={styles.detailLabel}>Proposal ID</span>
+									<span className={styles.detailValue}>#{proposalId}</span>
 								</div>
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Status</span>
-									<Badge variant={getStatusBadgeVariant(proposal.status)} className="text-xs">
+								<div className={styles.detailRow}>
+									<span className={styles.detailLabel}>Status</span>
+									<Badge variant={getStatusBadgeVariant(proposal.status)} className={styles.badgeXs}>
 										{formatStatusLabel(proposal.status)}
 									</Badge>
 								</div>
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Last Updated</span>
-									<span className="text-sm">{formatTimestamp(proposal.last_updated)}</span>
+								<div className={styles.detailRow}>
+									<span className={styles.detailLabel}>Last Updated</span>
+									<span className={styles.timelineValue}>{formatTimestamp(proposal.last_updated)}</span>
 								</div>
 							</div>
 						</CardContent>
@@ -384,4 +385,247 @@ export default function GovernanceProposalDetailPage() {
 			</div>
 		</div>
 	)
+}
+
+const styles = {
+	container: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1rem',
+	}),
+	backLink: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+		color: 'fg.muted',
+		_hover: {
+			color: 'fg.default',
+		},
+	}),
+	iconSm: css({
+		height: '1rem',
+		width: '1rem',
+	}),
+	cardContentPadded: css({
+		paddingTop: '1.5rem',
+	}),
+	errorContainer: css({
+		textAlign: 'center',
+		paddingTop: '3rem',
+		paddingBottom: '3rem',
+	}),
+	errorIcon: css({
+		height: '3rem',
+		width: '3rem',
+		color: 'red.500',
+		marginLeft: 'auto',
+		marginRight: 'auto',
+		marginBottom: '1rem',
+	}),
+	errorTitle: css({
+		fontSize: '1.5rem',
+		fontWeight: 'bold',
+		color: 'red.600',
+		marginBottom: '0.5rem',
+	}),
+	errorDescription: css({
+		color: 'fg.muted',
+		marginBottom: '1rem',
+	}),
+	errorMessage: css({
+		fontSize: 'sm',
+		color: 'red.500',
+	}),
+	skeletonHeader: css({
+		height: '2rem',
+		width: '12rem',
+	}),
+	skeletonMedium: css({
+		height: '16rem',
+		width: '100%',
+	}),
+	skeletonLarge: css({
+		height: '24rem',
+		width: '100%',
+	}),
+	pageContainer: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1.5rem',
+	}),
+	backLinkWithMargin: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+		color: 'fg.muted',
+		marginBottom: '1rem',
+		_hover: {
+			color: 'fg.default',
+		},
+	}),
+	titleContainer: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.75rem',
+		marginBottom: '0.5rem',
+	}),
+	pageTitle: css({
+		fontSize: '1.875rem',
+		fontWeight: 'bold',
+	}),
+	subtitle: css({
+		fontSize: '1.25rem',
+		color: 'fg.muted',
+	}),
+	gridLayout: css({
+		display: 'grid',
+		gap: '1.5rem',
+		lg: {
+			gridTemplateColumns: '3',
+		},
+	}),
+	mainContent: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1.5rem',
+		lg: {
+			gridColumn: 'span 2',
+		},
+	}),
+	summaryText: css({
+		fontSize: 'sm',
+		whiteSpace: 'pre-wrap',
+	}),
+	voteTallyTitle: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+	}),
+	iconMd: css({
+		height: '1.25rem',
+		width: '1.25rem',
+	}),
+	votesContainer: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1rem',
+	}),
+	voteHeader: css({
+		display: 'flex',
+		justifyContent: 'space-between',
+		marginBottom: '0.5rem',
+	}),
+	voteLabel: css({
+		fontSize: 'sm',
+		fontWeight: 'medium',
+	}),
+	votePercent: css({
+		fontSize: 'sm',
+		color: 'fg.muted',
+	}),
+	progressBar: css({
+		width: '100%',
+		height: '1rem',
+		backgroundColor: 'bg.muted',
+		borderRadius: 'full',
+		overflow: 'hidden',
+	}),
+	progressYes: css({
+		height: '100%',
+		backgroundColor: 'green.500',
+		transition: 'all',
+		transitionDuration: '300ms',
+	}),
+	progressNo: css({
+		height: '100%',
+		backgroundColor: 'red.500',
+		transition: 'all',
+		transitionDuration: '300ms',
+	}),
+	progressAbstain: css({
+		height: '100%',
+		backgroundColor: 'gray.400',
+		transition: 'all',
+		transitionDuration: '300ms',
+	}),
+	progressVeto: css({
+		height: '100%',
+		backgroundColor: 'orange.500',
+		transition: 'all',
+		transitionDuration: '300ms',
+	}),
+	snapshotsLoading: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '0.5rem',
+	}),
+	snapshotSkeleton: css({
+		height: '3rem',
+		width: '100%',
+	}),
+	tableWrapper: css({
+		overflowX: 'auto',
+	}),
+	textRight: css({
+		textAlign: 'right',
+	}),
+	timestampCell: css({
+		fontFamily: 'mono',
+		fontSize: 'xs',
+	}),
+	badgeXs: css({
+		fontSize: 'xs',
+	}),
+	numberCell: css({
+		textAlign: 'right',
+		fontSize: 'sm',
+	}),
+	sidebarContainer: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1.5rem',
+	}),
+	sidebarTitle: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+	}),
+	timelineContainer: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1rem',
+	}),
+	timelineLabel: css({
+		fontSize: 'sm',
+		fontWeight: 'medium',
+		color: 'fg.muted',
+	}),
+	timelineValue: css({
+		fontSize: 'sm',
+	}),
+	proposerLink: css({
+		fontFamily: 'mono',
+		fontSize: 'sm',
+		color: 'colorPalette.text',
+		wordBreak: 'break-all',
+		_hover: {
+			color: 'colorPalette.text',
+			opacity: 0.8,
+		},
+	}),
+	detailsContainer: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '0.75rem',
+	}),
+	detailRow: css({
+		display: 'flex',
+		justifyContent: 'space-between',
+	}),
+	detailLabel: css({
+		color: 'fg.muted',
+	}),
+	detailValue: css({
+		fontWeight: 'medium',
+	}),
 }

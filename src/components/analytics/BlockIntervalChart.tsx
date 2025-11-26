@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
 
 interface BlockTimeData {
   height: number
@@ -54,7 +55,7 @@ export function BlockIntervalChart() {
           <CardDescription>Block production time over recent blocks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className={styles.loadingContainer}>
             Loading...
           </div>
         </CardContent>
@@ -169,4 +170,8 @@ export function BlockIntervalChart() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

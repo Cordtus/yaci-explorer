@@ -1,14 +1,14 @@
+import { Activity, BarChart3, Blocks, Home, Vote } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
-import { Search, Blocks, Activity, Home, BarChart3, Vote } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
-import { ResetNotice } from '@/components/common/reset-notice'
+import { css, cx } from '@/styled-system/css'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
-  { name: 'Transactions', href: '/transactions', icon: Activity },
+  { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Governance', href: '/governance', icon: Vote },
 ]
@@ -19,35 +19,31 @@ export function Header() {
   const branding = getBrandingConfig()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center space-x-2">
+    <header className={styles.header}>
+      <div className={styles.container}>
+        <div className={styles.inner}>
+          <div className={styles.left}>
+            <Link to="/" className={styles.brand}>
               {branding.logoUrl ? (
-                <img src={branding.logoUrl} alt={branding.appName} className="h-8 w-8" />
+                <img src={branding.logoUrl} alt={branding.appName} className={styles.logo} />
               ) : (
-                <div className="h-8 w-8 rounded-full bg-primary" />
+                <div className={styles.logoPlaceholder} />
               )}
-              <span className="text-xl font-bold hidden sm:inline">{branding.appName}</span>
-              <span className="text-xl font-bold sm:hidden">{branding.appNameShort}</span>
+              <span className={styles.brandNameFull}>{branding.appName}</span>
+              <span className={styles.brandNameShort}>{branding.appNameShort}</span>
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <nav className={styles.nav}>
               {navigation.map((item) => {
                 const Icon = item.icon
+                const isActive = pathname === item.href
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={cn(
-                      'flex items-center gap-2 transition-colors hover:text-foreground/80',
-                      pathname === item.href
-                        ? 'text-foreground'
-                        : 'text-foreground/60'
-                    )}
+                    className={cx(styles.navLink, isActive ? styles.navLinkActive : styles.navLinkInactive)}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={styles.navIcon} />
                     {item.name}
                   </Link>
                 )
@@ -55,14 +51,94 @@ export function Header() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className={styles.right}>
             <SearchBar />
-
-            {/* Network info removed - will be added back with dynamic detection */}
           </div>
         </div>
       </div>
       <ResetNotice />
     </header>
   )
+}
+
+const styles = {
+  header: css({
+    position: 'sticky',
+    top: '0',
+    zIndex: '50',
+    w: 'full',
+    borderBottomWidth: '1px',
+    bg: 'bg.default/95',
+    backdropFilter: 'blur(8px)',
+  }),
+  container: css({
+    maxW: '7xl',
+    mx: 'auto',
+    px: '4',
+  }),
+  inner: css({
+    display: 'flex',
+    h: '16',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
+  left: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6',
+  }),
+  right: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4',
+  }),
+  brand: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+  }),
+  logo: css({
+    h: '8',
+    w: '8',
+  }),
+  logoPlaceholder: css({
+    h: '8',
+    w: '8',
+    rounded: 'full',
+    bg: 'accent.default',
+  }),
+  brandNameFull: css({
+    fontSize: 'xl',
+    fontWeight: 'bold',
+    display: { base: 'none', sm: 'inline' },
+  }),
+  brandNameShort: css({
+    fontSize: 'xl',
+    fontWeight: 'bold',
+    display: { base: 'inline', sm: 'none' },
+  }),
+  nav: css({
+    display: { base: 'none', md: 'flex' },
+    alignItems: 'center',
+    gap: '6',
+    fontSize: 'sm',
+    fontWeight: 'medium',
+  }),
+  navLink: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+    transition: 'colors',
+  }),
+  navLinkActive: css({
+    color: 'fg.default',
+  }),
+  navLinkInactive: css({
+    color: 'fg.muted',
+    _hover: { color: 'fg.default' },
+  }),
+  navIcon: css({
+    h: '4',
+    w: '4',
+  }),
 }

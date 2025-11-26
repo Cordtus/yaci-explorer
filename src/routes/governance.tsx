@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { api, type GovernanceProposal } from '@/lib/api'
 import { formatTimeAgo, formatAddress } from '@/lib/utils'
+import { css } from '@/styled-system/css'
 
 const STATUSES = [
 	'PROPOSAL_STATUS_DEPOSIT_PERIOD',
@@ -43,13 +44,13 @@ export default function GovernancePage() {
 	})
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+		<div className={styles.container}>
+			<div className={styles.header}>
 				<div>
-					<h1 className="text-3xl font-bold">Governance Proposals</h1>
+					<h1 className={styles.title}>Governance Proposals</h1>
 				</div>
 				<Select value={statusFilter || 'all'} onValueChange={(value) => { setStatusFilter(value === 'all' ? '' : value); setPage(0) }}>
-					<SelectTrigger className="w-[250px]">
+					<SelectTrigger className={styles.selectTrigger}>
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
 					<SelectContent>
@@ -87,19 +88,19 @@ export default function GovernancePage() {
 								Array.from({ length: 10 }).map((_, i) => (
 									<TableRow key={i}>
 										<TableCell colSpan={6}>
-											<Skeleton className="h-12 w-full" />
+											<Skeleton className={styles.skeleton} />
 										</TableCell>
 									</TableRow>
 								))
 							) : error ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center text-muted-foreground">
+									<TableCell colSpan={6} className={styles.errorCell}>
 										Error loading proposals
 									</TableCell>
 								</TableRow>
 							) : data?.data.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+									<TableCell colSpan={6} className={styles.emptyCell}>
 										No proposals found
 									</TableCell>
 								</TableRow>
@@ -109,14 +110,14 @@ export default function GovernancePage() {
 										<TableCell>
 											<Link
 												to={`/governance/${proposal.proposal_id}`}
-												className="flex items-center gap-2 font-medium hover:text-primary"
+												className={styles.idLink}
 											>
-												<Vote className="h-4 w-4" />
+												<Vote className={styles.icon} />
 												<span>#{proposal.proposal_id}</span>
 											</Link>
 										</TableCell>
 										<TableCell>
-											<div className="max-w-md truncate">
+											<div className={styles.titleCell}>
 												{proposal.title || 'Untitled Proposal'}
 											</div>
 										</TableCell>
@@ -127,24 +128,24 @@ export default function GovernancePage() {
 										</TableCell>
 										<TableCell>
 											{proposal.proposer ? (
-												<code className="text-xs">{formatAddress(proposal.proposer)}</code>
+												<code className={styles.code}>{formatAddress(proposal.proposer)}</code>
 											) : (
-												<span className="text-sm text-muted-foreground">-</span>
+												<span className={styles.emptyValue}>-</span>
 											)}
 										</TableCell>
 										<TableCell>
-											<div className="text-sm">
+											<div className={styles.textSm}>
 												{formatTimeAgo(proposal.submit_time)}
 											</div>
 										</TableCell>
 										<TableCell>
-											<div className="text-sm">
+											<div className={styles.textSm}>
 												{proposal.voting_start_time && proposal.voting_end_time ? (
 													<>
 														{formatTimeAgo(proposal.voting_start_time)} - {formatTimeAgo(proposal.voting_end_time)}
 													</>
 												) : (
-													<span className="text-muted-foreground">N/A</span>
+													<span className={styles.mutedText}>N/A</span>
 												)}
 											</div>
 										</TableCell>
@@ -166,4 +167,70 @@ export default function GovernancePage() {
 			</Card>
 		</div>
 	)
+}
+
+const styles = {
+	container: css({
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1.5rem',
+	}),
+	header: css({
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+	}),
+	title: css({
+		fontSize: '1.875rem',
+		fontWeight: 'bold',
+	}),
+	selectTrigger: css({
+		width: '250px',
+	}),
+	skeleton: css({
+		height: '3rem',
+		width: '100%',
+	}),
+	errorCell: css({
+		textAlign: 'center',
+		color: 'fg.muted',
+	}),
+	emptyCell: css({
+		textAlign: 'center',
+		color: 'fg.muted',
+		paddingTop: '2rem',
+		paddingBottom: '2rem',
+	}),
+	idLink: css({
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+		fontWeight: 'medium',
+		_hover: {
+			color: 'colorPalette.text',
+		},
+	}),
+	icon: css({
+		height: '1rem',
+		width: '1rem',
+	}),
+	titleCell: css({
+		maxWidth: '28rem',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap',
+	}),
+	code: css({
+		fontSize: 'xs',
+	}),
+	emptyValue: css({
+		fontSize: 'sm',
+		color: 'fg.muted',
+	}),
+	textSm: css({
+		fontSize: 'sm',
+	}),
+	mutedText: css({
+		color: 'fg.muted',
+	}),
 }
