@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { useState } from "react"
 import { Outlet } from "react-router"
 
@@ -44,7 +43,6 @@ export default function Root() {
 						<Outlet />
 					</main>
 				</div>
-				<ReactQueryDevtools initialIsOpen={false} />
 			</DenomProvider>
 		</QueryClientProvider>
 	)

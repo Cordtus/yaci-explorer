@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Blocks, FileCode2, Home, Vote } from 'lucide-react'
+import { Activity, BarChart3, Blocks, FileCode2, Home } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
@@ -11,7 +11,6 @@ const navigation = [
   { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'EVM', href: '/evm/contracts', icon: FileCode2 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Governance', href: '/governance', icon: Vote },
 ]
 
 export function Header() {

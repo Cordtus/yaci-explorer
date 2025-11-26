@@ -3,8 +3,7 @@ import { css } from '../css/index.mjs';
 
 const bleedConfig = {
 transform(props, { map, isCssUnit, isCssVar }) {
-  const { inline, block, ...rest } = props;
-  const valueFn = (v) => isCssUnit(v) || isCssVar(v) ? v : `token(spacing.${v}, ${v})`;
+  const { inline, block, ...rest } = props, valueFn = (v) => isCssUnit(v) || isCssVar(v) ? v : `token(spacing.${v}, ${v})`;
   return {
     "--bleed-x": map(inline, valueFn),
     "--bleed-y": map(block, valueFn),

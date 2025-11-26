@@ -9,7 +9,7 @@ transform(props) {
       position: "absolute",
       inset: "0",
       zIndex: "0",
-      ...props["_before"]
+      ...props._before
     },
     ...props
   };

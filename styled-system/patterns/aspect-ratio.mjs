@@ -3,11 +3,11 @@ import { css } from '../css/index.mjs';
 
 const aspectRatioConfig = {
 transform(props, { map }) {
-  const { ratio = 4 / 3, ...rest } = props;
+  const { ratio = 1.3333333333333333, ...rest } = props;
   return {
     position: "relative",
     _before: {
-      content: `""`,
+      content: '""',
       display: "block",
       height: "0",
       paddingBottom: map(ratio, (r) => `${1 / r * 100}%`)
