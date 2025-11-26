@@ -31,16 +31,23 @@ export default function AddressDetailPage() {
   const params = useParams()
   const pageSize = 20
 
-  const addressType = params.id ? getAddressType(params.id) : null
+  // Track how user arrived - this determines UX emphasis
+  const entryFormat = params.id ? getAddressType(params.id) : null
+  const isEvmFocused = entryFormat === 'evm'
+
   const alternateAddr = params.id ? getAlternateAddress(params.id) : null
+
+  // Compute both address formats for display
+  const hexAddr = isEvmFocused ? params.id : alternateAddr
+  const bech32Addr = isEvmFocused ? alternateAddr : params.id
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Check if EVM address is a contract
+  // Check if address is a contract (using hex address)
   useEffect(() => {
-    if (!params.id || addressType !== 'evm') {
+    if (!hexAddr) {
       setIsContract(null)
       return
     }
@@ -49,8 +56,8 @@ export default function AddressDetailPage() {
       setIsContract(null)
       return
     }
-    isEvmContract(params.id, config.evmRpcEndpoint).then(setIsContract)
-  }, [params.id, addressType])
+    isEvmContract(hexAddr, config.evmRpcEndpoint).then(setIsContract)
+  }, [hexAddr])
 
   // Fetch address statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -130,56 +137,54 @@ export default function AddressDetailPage() {
           Back to Home
         </Link>
         <div className={styles.headerContent}>
-          {addressType === 'evm' && isContract ? (
+          {isContract ? (
             <FileCode className={styles.headerIcon} />
           ) : (
             <Wallet className={styles.headerIcon} />
           )}
           <h1 className={styles.headerTitle}>
-            {addressType === 'evm' && isContract ? 'Contract' : 'Wallet'} Details
+            {isContract ? 'Contract' : 'Account'} Details
           </h1>
-          {addressType && (
-            <Badge variant="outline" className={css({ ml: '2' })}>
-              {addressType === 'cosmos' ? 'Cosmos' : isContract === null ? 'EVM' : isContract ? 'Contract' : 'EOA'}
-            </Badge>
-          )}
+          <Badge variant="outline" className={css({ ml: '2' })}>
+            {isContract === null ? (isEvmFocused ? 'EVM' : 'Cosmos') : isContract ? 'Contract' : 'EOA'}
+          </Badge>
         </div>
         <div className={styles.addressContainer}>
           <div className={css({ flex: '1' })}>
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: alternateAddr ? '2' : '0' })}>
-              <Badge variant="outline" className={css({ fontSize: 'xs' })}>
-                {addressType === 'cosmos' ? 'Bech32' : 'Hex'}
+            {/* Primary address - based on entry format */}
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '2' })}>
+              <Badge variant={isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
+                Hex
               </Badge>
-              <p className={styles.addressText}>
-                {params.id}
+              <p className={cx(styles.addressText, css({ fontWeight: isEvmFocused ? 'semibold' : 'normal' }))}>
+                {hexAddr}
               </p>
               <Button
                 variant="ghost"
                 size="icon"
                 className={styles.copyButton}
-                onClick={() => copyToClipboard(params.id!)}
+                onClick={() => hexAddr && copyToClipboard(hexAddr)}
               >
                 {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
               </Button>
             </div>
-            {alternateAddr && (
-              <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                <Badge variant="outline" className={css({ fontSize: 'xs' })}>
-                  {addressType === 'cosmos' ? 'Hex' : 'Bech32'}
-                </Badge>
-                <p className={styles.addressText}>
-                  {alternateAddr}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={styles.copyButton}
-                  onClick={() => copyToClipboard(alternateAddr)}
-                >
-                  <Copy className={styles.copyIcon} />
-                </Button>
-              </div>
-            )}
+            {/* Secondary address */}
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+              <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
+                Bech32
+              </Badge>
+              <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
+                {bech32Addr}
+              </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={styles.copyButton}
+                onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
+              >
+                <Copy className={styles.copyIcon} />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
