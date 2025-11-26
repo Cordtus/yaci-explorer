@@ -6,16 +6,9 @@ import { DashboardMetrics } from "@/components/common/DashboardMetrics"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { YaciAPIClient } from "@/lib/api/client"
-import {
-	formatHash,
-	formatNumber,
-	formatTimeAgo,
-	getTransactionStatus
-} from "@/lib/utils"
-import { css } from "../../styled-system/css"
-
-const api = new YaciAPIClient()
+import { api } from "@/lib/api"
+import { formatHash, formatTimeAgo, getTransactionStatus } from "@/lib/utils"
+import { css } from "@/styled-system/css"
 
 export default function DashboardPage() {
 	const [mounted, setMounted] = useState(false)
@@ -67,7 +60,7 @@ export default function DashboardPage() {
 						Transactions error: {String(txError)}
 					</p>
 				)}
-				<p className={styles.errorMeta}>API URL: {api["baseUrl"]}</p>
+				<p className={styles.errorMeta}>API URL: {api.baseUrl}</p>
 			</div>
 		)
 	}
@@ -137,49 +130,52 @@ export default function DashboardPage() {
 
 				{/* Latest Transactions */}
 				<Card>
-					<CardHeader className={styles.listHeader}>
-						<CardTitle className={styles.sectionTitle}>
-							Latest Transactions
-						</CardTitle>
-						<Link to="/transactions" className={styles.subtleLink}>
-							View all <ArrowRight className={styles.arrowIcon} />
+					<CardHeader className="flex flex-row items-center justify-between">
+						<CardTitle>Latest Transactions</CardTitle>
+						<Link
+							to="/transactions"
+							className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+						>
+							View all <ArrowRight className="h-4 w-4" />
 						</Link>
 					</CardHeader>
-					<CardContent className={styles.listContent}>
-						<div className={styles.list}>
+					<CardContent>
+						<div className="space-y-4">
 							{txLoading
 								? Array.from({ length: 5 }).map((_, i) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: unordered index is fine for skeletons
-										<Skeleton key={i} className={styles.listSkeleton} />
+										<Skeleton key={i} className="h-16 w-full" />
 									))
 								: transactions?.data.map((tx) => {
 										const status = getTransactionStatus(tx.error)
 										return (
-											<div key={tx.id} className={styles.row}>
-												<div className={styles.rowLeft}>
-													<div className={styles.iconCircle}>
-														<Activity className={styles.rowIcon} />
+											<div
+												key={tx.id}
+												className="flex items-center justify-between py-3 border-b last:border-0"
+											>
+												<div className="flex items-center gap-4">
+													<div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+														<Activity className="h-5 w-5 text-primary" />
 													</div>
 													<div>
 														<Link
 															to={`/transactions/${tx.id}`}
-															className={styles.primaryLink}
+															className="font-medium hover:text-primary"
 														>
 															{formatHash(tx.id, 8)}
 														</Link>
-														<div className={styles.metaText}>
+														<div className="text-sm text-muted-foreground">
 															{formatTimeAgo(tx.timestamp)}
 														</div>
 													</div>
 												</div>
-												<div className={styles.textRight}>
+												<div className="text-right">
 													<Badge
 														variant={tx.error ? "destructive" : "success"}
-														className={styles.badge}
+														className="mb-1"
 													>
 														{status.label}
 													</Badge>
-													<div className={styles.hashText}>
+													<div className="text-xs text-muted-foreground">
 														Block #{tx.height}
 													</div>
 												</div>

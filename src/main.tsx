@@ -3,10 +3,12 @@ import ReactDOM from "react-dom/client"
 import { createBrowserRouter, RouterProvider } from "react-router"
 import { loggingMiddleware } from "./lib/middleware/logging"
 import Root from "./root"
-import AddressRoute from "./routes/addr.$id"
-import AnalyticsRoute from "./routes/analytics"
+import { AddressPage } from "./routes/addr.$id"
+import { AnalyticsPage } from "./routes/analytics"
 import BlocksRoute from "./routes/blocks"
 import BlockDetailRoute from "./routes/blocks.$id"
+import { GovernancePage } from "./routes/governance"
+import GovernanceProposalDetailPage from "./routes/governance.$id"
 import HomeRoute from "./routes/home"
 import TransactionsRoute from "./routes/transactions"
 import TransactionDetailRoute from "./routes/transactions.$hash"
@@ -32,8 +34,15 @@ const router = createBrowserRouter([
 					{ path: ":hash", element: <TransactionDetailRoute /> }
 				]
 			},
-			{ path: "analytics", element: <AnalyticsRoute /> },
-			{ path: "addr/:id", element: <AddressRoute /> }
+			{ path: "analytics", element: <AnalyticsPage /> },
+			{ path: "addr/:id", element: <AddressPage /> },
+			{
+				path: "governance",
+				children: [
+					{ index: true, element: <GovernancePage /> },
+					{ path: ":id", element: <GovernanceProposalDetailPage /> }
+				]
+			}
 		]
 	}
 ])

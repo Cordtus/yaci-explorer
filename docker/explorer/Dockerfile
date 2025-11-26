@@ -4,10 +4,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 
 # Install dependencies
-RUN npm ci
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate && yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -15,7 +15,7 @@ COPY . .
 # Build the application with /api as the PostgREST URL
 # This ensures the built JS uses relative URLs that work with the nginx proxy
 ENV PUBLIC_POSTGREST_URL=/api
-RUN npm run build
+RUN bun run build
 
 # Production stage
 FROM nginx:alpine
