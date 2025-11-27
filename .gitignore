@@ -51,3 +51,4 @@ docs/
 packages/database-client/dist/
 test-results/
 SYSTEM_OVERVIEW.md
+.playwright-mcp/
