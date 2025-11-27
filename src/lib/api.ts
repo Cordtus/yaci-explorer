@@ -104,8 +104,8 @@ export interface AddressStats {
 	transaction_count: number
 	first_seen: string | null
 	last_seen: string | null
-	total_sent: number
-	total_received: number
+	total_sent?: number
+	total_received?: number
 }
 
 export interface ChainStats {

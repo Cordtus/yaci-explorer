@@ -59,22 +59,24 @@ export default function AddressDetailPage() {
     isEvmContract(hexAddr, config.evmRpcEndpoint).then(setIsContract)
   }, [hexAddr])
 
-  // Fetch address statistics
+  // Fetch address statistics (always use bech32 format for API queries)
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['address-stats', params.id],
+    queryKey: ['address-stats', bech32Addr],
     queryFn: async () => {
-      return await api.getAddressStats(params.id!)
+      if (!bech32Addr) return null
+      return await api.getAddressStats(bech32Addr)
     },
-    enabled: mounted && !!params.id,
+    enabled: mounted && !!bech32Addr,
   })
 
-  // Fetch transactions for this address
+  // Fetch transactions for this address (always use bech32 format for API queries)
   const { data: transactions, isLoading: txLoading} = useQuery({
-    queryKey: ['address-transactions', params.id, page],
+    queryKey: ['address-transactions', bech32Addr, page],
     queryFn: async () => {
-      return await api.getTransactionsByAddress(params.id!, pageSize, page * pageSize)
+      if (!bech32Addr) return { data: [], pagination: { total: 0, limit: pageSize, offset: 0, has_next: false, has_prev: false } }
+      return await api.getTransactionsByAddress(bech32Addr, pageSize, page * pageSize)
     },
-    enabled: mounted && !!params.id,
+    enabled: mounted && !!bech32Addr,
   })
 
   /**
@@ -206,34 +208,8 @@ export default function AddressDetailPage() {
 
         <Card>
           <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>Messages Sent</CardTitle>
-            <ArrowUpRight className={styles.statCardIconBlue} />
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValue}>{formatNumber(stats.total_sent)}</div>
-            <p className={styles.statDescription}>
-              Messages originated from this address
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>Messages Received</CardTitle>
-            <ArrowDownLeft className={styles.statCardIconGreen} />
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValue}>{formatNumber(stats.total_received)}</div>
-            <p className={styles.statDescription}>
-              Messages mentioning this address
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
             <CardTitle className={styles.statCardTitle}>First Seen</CardTitle>
-            <CheckCircle className={styles.statCardIcon} />
+            <ArrowDownLeft className={styles.statCardIconGreen} />
           </CardHeader>
           <CardContent>
             <div className={styles.statValueSmall}>
@@ -241,6 +217,36 @@ export default function AddressDetailPage() {
             </div>
             <p className={styles.statDescription}>
               {stats.first_seen ? new Date(stats.first_seen).toLocaleDateString() : 'No activity'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>Last Active</CardTitle>
+            <Activity className={styles.statCardIconBlue} />
+          </CardHeader>
+          <CardContent>
+            <div className={styles.statValueSmall}>
+              {stats.last_seen ? formatTimeAgo(stats.last_seen) : 'N/A'}
+            </div>
+            <p className={styles.statDescription}>
+              {stats.last_seen ? new Date(stats.last_seen).toLocaleDateString() : 'No activity'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={styles.statCardTitle}>Account Type</CardTitle>
+            {isContract ? <FileCode className={styles.statCardIcon} /> : <Wallet className={styles.statCardIcon} />}
+          </CardHeader>
+          <CardContent>
+            <div className={styles.statValueSmall}>
+              {isContract === null ? 'Loading...' : isContract ? 'Contract' : 'EOA'}
+            </div>
+            <p className={styles.statDescription}>
+              {isContract === null ? 'Checking...' : isContract ? 'Smart contract' : 'Externally owned account'}
             </p>
           </CardContent>
         </Card>
@@ -468,7 +474,7 @@ const styles = {
   headerIcon: css({
     height: '2rem',
     width: '2rem',
-    color: 'colorPalette.default',
+    color: 'accent.default',
   }),
   headerTitle: css({
     fontSize: '1.875rem',
@@ -501,9 +507,9 @@ const styles = {
     display: 'grid',
     gap: '1rem',
     gridTemplateColumns: {
-      base: '1',
-      md: '2',
-      lg: '4',
+      base: '1fr',
+      md: 'repeat(2, 1fr)',
+      lg: 'repeat(4, 1fr)',
     },
   }),
   statCardHeader: css({
@@ -562,6 +568,7 @@ const styles = {
   tableContainer: css({
     borderRadius: 'md',
     border: '1px solid',
+    borderColor: 'border.default',
     overflowX: 'auto',
   }),
   typeBadge: css({
@@ -587,15 +594,15 @@ const styles = {
   txHashLink: css({
     fontFamily: 'mono',
     fontSize: 'sm',
-    color: 'colorPalette.default',
+    color: 'accent.default',
     _hover: {
-      color: 'colorPalette.default/80',
+      color: 'accent.default/80',
     },
   }),
   blockLink: css({
-    color: 'colorPalette.default',
+    color: 'accent.default',
     _hover: {
-      color: 'colorPalette.default/80',
+      color: 'accent.default/80',
     },
   }),
   emptyValue: css({
