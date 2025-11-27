@@ -1,47 +1,18 @@
-import { Activity, BarChart3, Blocks, FileCode2, Home, Moon, Sun, Monitor } from 'lucide-react'
+import { Activity, BarChart3, Blocks, Home } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
-import { useTheme } from '@/contexts/ThemeContext'
 import { css, cx } from '@/styled-system/css'
-import { Button } from '@/components/ui/button'
+import { EthereumIcon, RepublicLogo } from '@/components/icons/icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
-  { name: 'EVM', href: '/evm/contracts', icon: FileCode2 },
+  { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
-
-function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-
-  const cycleTheme = () => {
-    if (theme === 'system') setTheme('light')
-    else if (theme === 'light') setTheme('dark')
-    else setTheme('system')
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={cycleTheme}
-      className={css({ h: '9', w: '9' })}
-      title={`Theme: ${theme} (${resolvedTheme})`}
-    >
-      {theme === 'system' ? (
-        <Monitor className={css({ h: '4', w: '4' })} />
-      ) : resolvedTheme === 'dark' ? (
-        <Moon className={css({ h: '4', w: '4' })} />
-      ) : (
-        <Sun className={css({ h: '4', w: '4' })} />
-      )}
-    </Button>
-  )
-}
 
 export function Header() {
   const location = useLocation()
@@ -57,7 +28,7 @@ export function Header() {
               {branding.logoUrl ? (
                 <img src={branding.logoUrl} alt={branding.appName} className={styles.logo} />
               ) : (
-                <div className={styles.logoPlaceholder} />
+                <RepublicLogo className={styles.logo} />
               )}
               <span className={styles.brandNameFull}>{branding.appName}</span>
               <span className={styles.brandNameShort}>{branding.appNameShort}</span>
@@ -84,7 +55,6 @@ export function Header() {
 
           <div className={styles.right}>
             <SearchBar />
-            <ThemeToggle />
           </div>
         </div>
       </div>

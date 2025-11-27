@@ -70,90 +70,83 @@ export function BlockIntervalChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      borderColor: 'rgba(52, 211, 153, 0.5)',
+      textStyle: { color: '#f1f5f9' },
       axisPointer: {
-        type: 'cross',
+        type: 'line',
+        lineStyle: { color: '#34d399', width: 1 }
       },
       formatter: (params: any) => {
         const point = params[0]
-        return `
-          <div style="font-size: 12px;">
-            <strong>Block ${point.name}</strong><br/>
-            Interval: ${point.value[1].toFixed(2)}s
-          </div>
-        `
+        return `<div style="font-size: 13px;">
+          <strong>Block ${Number(point.name).toLocaleString()}</strong><br/>
+          Interval: <span style="color: #6ee7b7; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
+        </div>`
       },
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '3%',
-      top: '15%',
+      bottom: '8%',
+      top: '8%',
       containLabel: true,
     },
     xAxis: {
       type: 'category',
       data: data.map((d) => d.height),
       axisLabel: {
-        rotate: 45,
-        interval: Math.floor(data.length / 10),
+        color: '#cbd5e1',
+        fontSize: 11,
+        rotate: 0,
+        interval: Math.floor(data.length / 6),
         formatter: (value: number) => value.toLocaleString(),
       },
-      name: 'Block Height',
-      nameLocation: 'middle',
-      nameGap: 50,
+      axisLine: { lineStyle: { color: '#475569' } },
+      splitLine: { show: false },
     },
     yAxis: {
       type: 'value',
-      name: 'Seconds',
-      nameLocation: 'middle',
-      nameGap: 50,
       axisLabel: {
+        color: '#cbd5e1',
+        fontSize: 11,
         formatter: '{value}s',
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#334155', type: 'dashed' } },
     },
-    series: [
-      {
-        name: 'Block Interval',
-        type: 'line',
-        data: data.map((d) => [d.height, d.time]),
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 4,
-        lineStyle: {
-          width: 2,
-          color: '#3b82f6',
-        },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' },
-            ],
-          },
-        },
-        markLine: {
-          silent: true,
-          symbol: 'none',
-          lineStyle: {
-            type: 'dashed',
-            color: '#10b981',
-          },
-          data: [
-            {
-              yAxis: avgBlockTime,
-              label: {
-                formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
-              },
-            },
+    series: [{
+      name: 'Block Interval',
+      type: 'line',
+      data: data.map((d) => [d.height, d.time]),
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 6,
+      itemStyle: { color: '#34d399' },
+      lineStyle: { width: 3, color: '#34d399' },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(52, 211, 153, 0.4)' },
+            { offset: 1, color: 'rgba(52, 211, 153, 0.05)' },
           ],
         },
       },
-    ],
+      markLine: {
+        silent: true,
+        symbol: 'none',
+        lineStyle: { type: 'dashed', color: '#fbbf24', width: 2 },
+        label: {
+          color: '#fcd34d',
+          fontSize: 12,
+          fontWeight: 'bold',
+          formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
+        },
+        data: [{ yAxis: avgBlockTime }],
+      },
+    }],
   }
 
   return (
@@ -166,7 +159,7 @@ export function BlockIntervalChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
+        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
       </CardContent>
     </Card>
   )

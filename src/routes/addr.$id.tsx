@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, type EnhancedTransaction } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress } from '@/lib/utils'
+import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
 import { css, cx } from '@/styled-system/css'
 
 /**
@@ -28,6 +29,9 @@ export default function AddressDetailPage() {
   const [page, setPage] = useState(0)
   const params = useParams()
   const pageSize = 20
+
+  // Validate the address format early
+  const isValidAddr = params.id ? isValidAddress(params.id) : false
 
   // Track how user arrived - this determines UX emphasis
   const entryFormat = params.id ? getAddressType(params.id) : null
@@ -93,12 +97,38 @@ export default function AddressDetailPage() {
     return tx.messages?.some(msg => msg.sender === params.id) ?? false
   }
 
-  if (!mounted || statsLoading) {
+  if (!mounted || (isValidAddr && statsLoading)) {
     return (
       <div className={styles.pageContainer}>
         <Skeleton className={styles.skeletonHeader} />
         <Skeleton className={styles.skeletonCard} />
         <Skeleton className={styles.skeletonTable} />
+      </div>
+    )
+  }
+
+  // Show error for invalid address format
+  if (!isValidAddr) {
+    return (
+      <div className={styles.pageContainer}>
+        <Link to="/" className={styles.backLink}>
+          <ArrowLeft className={styles.backIcon} />
+          Back to Home
+        </Link>
+        <Card>
+          <CardContent className={styles.cardPadding}>
+            <div className={styles.notFoundContainer}>
+              <AlertCircle className={styles.invalidIcon} />
+              <h2 className={styles.notFoundTitle}>Invalid Address</h2>
+              <p className={styles.notFoundText}>
+                "{params.id}" is not a valid address format.
+              </p>
+              <p className={styles.invalidHint}>
+                Valid formats: bech32 (e.g. republic1...) or hex (0x...)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -149,7 +179,7 @@ export default function AddressDetailPage() {
         <div className={styles.addressContainer}>
           <div className={css({ flex: '1' })}>
             {/* Primary address - based on entry format */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '2' })}>
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: isContract ? '0' : '2' })}>
               <Badge variant={isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
                 Hex
               </Badge>
@@ -165,23 +195,25 @@ export default function AddressDetailPage() {
                 {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
               </Button>
             </div>
-            {/* Secondary address */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-              <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
-                Bech32
-              </Badge>
-              <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
-                {bech32Addr}
-              </p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={styles.copyButton}
-                onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
-              >
-                <Copy className={styles.copyIcon} />
-              </Button>
-            </div>
+            {/* Secondary address - hide for contracts since bech32 is incorrect/irrelevant */}
+            {!isContract && (
+              <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
+                  Bech32
+                </Badge>
+                <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
+                  {bech32Addr}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={styles.copyButton}
+                  onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
+                >
+                  <Copy className={styles.copyIcon} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -195,9 +227,6 @@ export default function AddressDetailPage() {
           </CardHeader>
           <CardContent>
             <div className={styles.statValue}>{formatNumber(stats.transaction_count)}</div>
-            <p className={styles.statDescription}>
-              All transactions involving this address
-            </p>
           </CardContent>
         </Card>
 
@@ -251,9 +280,6 @@ export default function AddressDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
-          <p className={styles.tableDescription}>
-            All transactions involving this address
-          </p>
         </CardHeader>
         <CardContent>
           {txLoading ? (
@@ -353,30 +379,12 @@ export default function AddressDetailPage() {
 
               {/* Pagination */}
               {transactions.pagination.total > pageSize && (
-                <div className={styles.paginationContainer}>
-                  <div className={styles.paginationInfo}>
-                    Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, transactions.pagination.total)} of{' '}
-                    {transactions.pagination.total} transactions
-                  </div>
-                  <div className={styles.paginationButtons}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={!transactions.pagination.has_prev}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => p + 1)}
-                      disabled={!transactions.pagination.has_next}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                <Pagination
+                  currentPage={page}
+                  totalPages={Math.ceil(transactions.pagination.total / pageSize)}
+                  onPageChange={setPage}
+                  isLoading={txLoading}
+                />
               )}
             </>
           ) : (
@@ -459,6 +467,18 @@ const styles = {
   }),
   notFoundText: css({
     color: 'fg.muted',
+  }),
+  invalidIcon: css({
+    height: '3rem',
+    width: '3rem',
+    color: 'red.500',
+    marginX: 'auto',
+    marginBottom: '1rem',
+  }),
+  invalidHint: css({
+    color: 'fg.muted',
+    fontSize: 'sm',
+    marginTop: '0.5rem',
   }),
   headerContent: css({
     display: 'flex',
@@ -547,10 +567,6 @@ const styles = {
     color: 'fg.muted',
     marginTop: '0.25rem',
   }),
-  tableDescription: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
-  }),
   skeletonList: css({
     display: 'flex',
     flexDirection: 'column',
@@ -612,20 +628,6 @@ const styles = {
   timeCell: css({
     fontSize: 'sm',
     color: 'fg.muted',
-  }),
-  paginationContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: '1rem',
-  }),
-  paginationInfo: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
-  }),
-  paginationButtons: css({
-    display: 'flex',
-    gap: '0.5rem',
   }),
   emptyState: css({
     textAlign: 'center',

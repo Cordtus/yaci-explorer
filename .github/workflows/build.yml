@@ -1,18 +1,6 @@
 name: build
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'tsconfig.json'
-      - 'panda.config.ts'
-      - 'eslint.config.js'
-      - '.github/workflows/build.yml'
   push:
     branches:
       - main
@@ -52,3 +40,4 @@ jobs:
         run: bun run build
         env:
           VITE_POSTGREST_URL: https://yaci-explorer-apis.fly.dev
+          VITE_CHAIN_REST_ENDPOINT: https://api.republicai.io

@@ -1,0 +1,189 @@
+/**
+ * Custom chain-related icons for the block explorer
+ * These icons complement lucide-react for chain-specific branding
+ */
+
+interface IconProps {
+  className?: string
+}
+
+export const EthereumIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 256 417"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M127.961 0L125.343 9.066v283.296l2.618 2.617 127.962-75.638L127.961 0z" fill="currentColor"/>
+    <path d="M127.961 0L0 219.341l127.961 75.638V157.724L127.961 0z" fill="currentColor" fillOpacity="0.6"/>
+    <path d="M127.961 312.187L126.386 314.154v98.29l1.575 4.6L256 236.587l-128.039 75.6z" fill="currentColor"/>
+    <path d="M127.961 417.044v-104.857L0 236.587l127.961 180.457z" fill="currentColor" fillOpacity="0.6"/>
+    <path d="M127.961 295.979l127.962-76.638-127.962-58.022v134.66z" fill="currentColor" fillOpacity="0.45"/>
+    <path d="M0 219.341l127.961 76.638V161.319L0 219.341z" fill="currentColor" fillOpacity="0.45"/>
+  </svg>
+)
+
+export const CosmosIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 102 100"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M63.4122 29.4633L30.4746 61.7665C30.0498 60.9583 29.6666 60.1161 29.323 59.2428C28.1727 56.3076 27.5976 53.1936 27.5976 49.9048C27.5976 46.6132 28.1727 43.5002 29.323 40.5653C30.4746 37.629 32.0697 35.0816 34.1092 32.9193C36.1486 30.7585 38.5998 29.0494 41.4608 27.7908C44.3233 26.5335 47.4639 25.9041 50.884 25.9041C54.3056 25.9041 57.4636 26.5491 60.3567 27.8404C61.4322 28.3196 62.4507 28.8601 63.4122 29.4633ZM60.5055 72.2104C57.6434 73.469 54.5025 74.0971 51.0824 74.0971C47.6608 74.0971 44.5031 73.4522 41.6086 72.1621C40.5342 71.6816 39.5157 71.1412 38.556 70.5366L71.4921 38.2362C71.9166 39.043 72.3001 39.8837 72.6434 40.7584C73.7937 43.6936 74.3692 46.8076 74.3692 50.0978C74.3692 53.3881 73.7937 56.501 72.6434 59.4373C71.4921 62.3722 69.897 64.9196 67.8572 67.0806C65.8177 69.2415 63.368 70.9517 60.5055 72.2104ZM65.489 82.2262C69.897 80.3551 73.7125 77.8235 76.9357 74.6284C80.1589 71.4361 82.6577 67.7097 84.4341 63.4522C86.2111 59.1946 87.0992 54.6782 87.0992 49.9048C87.0992 45.13 86.2111 40.6136 84.4341 36.3546C83.3807 33.8296 82.084 31.4976 80.5449 29.3576L101.968 8.34836L93.4552 0L71.9671 21.0732C70.0381 19.7833 67.9437 18.6682 65.686 17.7268C61.278 15.8885 56.4106 14.968 51.0824 14.968C45.7531 14.968 40.8857 15.9042 36.4777 17.7752C32.0697 19.6462 28.2539 22.1778 25.0307 25.3715C21.8075 28.5651 19.3072 32.2915 17.5312 36.5491C15.7553 40.807 14.8671 45.323 14.8671 50.0978C14.8671 54.8713 15.7553 59.3862 17.5312 63.6456C18.5857 66.172 19.8823 68.5036 21.4214 70.645L0 91.6517L8.5126 100L29.9992 78.9279C31.9283 80.2181 34.0226 81.333 36.2804 82.2744C40.6888 84.113 45.5562 85.032 50.884 85.032C56.2133 85.032 61.0807 84.0958 65.489 82.2262Z"
+      fill="currentColor"
+    />
+  </svg>
+)
+
+export const IBCIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 338 202"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g clipPath="url(#clip0_ibc)">
+      <path d="M25.9685 3.75977H0V198.467H25.9685V3.75977Z" fill="currentColor" />
+      <path d="M122.642 127.439H109.271C81.6502 127.439 59.1836 105.062 59.1836 77.5506V3.69934H136.028C163.649 3.69934 186.115 26.0767 186.115 53.5878V72.9H160.147V53.5878C160.147 40.3456 149.323 29.5646 136.028 29.5646H85.1521V77.5506C85.1521 90.7928 95.9761 101.574 109.271 101.574H122.642V127.439ZM188.708 148.412V125.174C188.708 97.663 166.241 75.2857 138.62 75.2857H122.642V101.151H138.62C151.915 101.151 162.739 111.932 162.739 125.174V148.412C162.739 161.654 151.915 172.435 138.62 172.435H85.1521V129.13H59.1836V198.301H138.62C166.241 198.301 188.708 175.923 188.708 148.412Z" fill="currentColor" />
+      <path d="M277.148 202H272.827C239.279 202 211.977 174.806 211.977 141.391V60.594C211.977 27.179 239.279 -0.0150146 272.827 -0.0150146H277.148C310.696 -0.0150146 337.999 27.179 337.999 60.594H312.03C312.03 41.448 296.386 25.8654 277.163 25.8654H272.843C253.62 25.8654 237.975 41.448 237.975 60.594V141.391C237.975 160.537 253.62 176.12 272.843 176.12H277.163C296.386 176.12 312.03 160.537 312.03 141.391H337.999C337.999 174.806 310.696 202 277.148 202Z" fill="currentColor" />
+    </g>
+    <defs>
+      <clipPath id="clip0_ibc">
+        <rect width="338" height="202" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+)
+
+export const GasIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M3 22h12V2H3v20z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15 22h3a2 2 0 002-2v-8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M20 12l-2-2v-2a2 2 0 012-2h0a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 2v4h4V2" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+export const ValidatorIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12 2l-8 3v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+export const GovernanceIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <line x1="3" y1="21" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="12" y1="17" x2="12" y2="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="6" y1="8" x2="18" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M4 8a4 4 0 0 0 8 0" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+    <path d="M12 8a4 4 0 0 0 8 0" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+  </svg>
+)
+
+export const StakingIcon = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+export const RepublicLogo = ({ className = '' }: IconProps) => (
+  <svg
+    viewBox="0 0 230 239"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M53.1465 26.3098L46.5156 32.5379V154.651L61.501 168.683L61.7878 168.953V24.9985H56.4555C55.2247 24.9985 54.0422 25.4657 53.1465 26.3098Z" fill="url(#paint0_republic)"/>
+    <path d="M29.8307 51.3103L23.2031 57.5352V132.375L38.4205 146.983L38.4753 147.035V49.999H33.1397C31.9089 49.999 30.7264 50.4662 29.8307 51.3103Z" fill="url(#paint1_republic)"/>
+    <path d="M6.63402 76.197L0 82.4286V95.1549C0.931152 106.406 6.11207 116.939 14.5666 124.556L15.2754 125.194V74.8857H9.94302C8.71223 74.8857 7.52974 75.3526 6.63402 76.197Z" fill="url(#paint2_republic)"/>
+    <path d="M172.754 24.9985H167.422V168.953L167.709 168.683L182.694 154.651V32.5379L176.064 26.3098C175.168 25.469 173.985 24.9985 172.754 24.9985Z" fill="url(#paint3_republic)"/>
+    <path d="M196.074 49.999H190.738V147.035L190.793 146.983L206.01 132.375V57.5352L199.383 51.3103C198.487 50.4695 197.304 49.999 196.074 49.999Z" fill="url(#paint4_republic)"/>
+    <path d="M222.579 76.197C221.683 75.3564 220.501 74.8857 219.269 74.8857H213.938V125.194L214.646 124.556C223.101 116.939 228.282 106.406 229.212 95.1549V82.4286L222.579 76.197Z" fill="url(#paint5_republic)"/>
+    <path d="M144.784 0V74.7045C144.784 79.7695 144.414 84.1423 143.724 87.8991C141.559 99.7302 136.262 105.478 129.564 107.54V88.3205L134.039 83.8424L131.709 81.5129H104.519L95.8553 90.1801L98.2301 94.0046C99.2122 94.03 100.121 94.2561 100.933 94.636C101.742 95.0159 102.451 95.5512 103.034 96.1918C105.267 98.6504 105.251 102.417 103.15 104.991C103.15 104.991 100.84 107.694 100.795 107.681C93.8734 105.745 88.3801 100.007 86.1637 87.8991C85.4739 84.1423 85.1032 79.7695 85.1032 74.7045V0H79.7713C78.5401 0 77.3581 0.467184 76.4621 1.31131L69.8281 7.54262V177.673L84.9325 191.286L85.1032 191.44V190.877L98.9223 157.813L110.341 151.378L85.107 211.764L114.949 238.262L144.791 211.764L119.556 151.381L130.972 157.813L144.788 190.877V191.44L144.958 191.286L160.063 177.673V6.01221L154.247 1.13091C153.377 0.399522 152.275 0 151.141 0H144.784Z" fill="url(#paint6_republic)"/>
+    <defs>
+      <linearGradient id="paint0_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint1_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint2_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint3_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint4_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint5_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+      <linearGradient id="paint6_republic" x1="127" y1="182" x2="127" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0.274" stopColor="#DDF4FF"/>
+        <stop offset="1" stopColor="#506974"/>
+      </linearGradient>
+    </defs>
+  </svg>
+)
+
+export const XIcon = ({ className = '' }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/>
+  </svg>
+)
+
+export const DiscordIcon = ({ className = '' }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" fill="currentColor"/>
+  </svg>
+)
+
+export const GitHubIcon = ({ className = '' }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="currentColor"/>
+  </svg>
+)
+
+export const DocumentIcon = ({ className = '' }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg" fill="none">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="10,9 9,9 8,9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)

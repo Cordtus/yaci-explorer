@@ -61,7 +61,7 @@ export function AddressChip({ address, label, truncate = true, link = true, clas
 
 	if (link) {
 		return (
-			<Link to={`/address/${address}`} className={css({ display: 'inline-block' })}>
+			<Link to={`/addr/${address}`} className={css({ display: 'inline-block' })}>
 				{content}
 			</Link>
 		)

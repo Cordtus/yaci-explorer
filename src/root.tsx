@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Outlet } from "react-router"
 
 import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
 import { appConfig } from "@/config/app"
 import { DenomProvider } from "@/contexts/DenomContext"
 import { ThemeProvider } from "@/contexts/ThemeContext"
@@ -29,6 +30,8 @@ export default function Root() {
 					<div
 						className={css({
 							minH: "100vh",
+							display: "flex",
+							flexDirection: "column",
 							bg: "bg.subtle",
 							color: "fg.default"
 						})}
@@ -36,14 +39,17 @@ export default function Root() {
 						<Header />
 						<main
 							className={css({
+								flex: "1",
 								maxW: "6xl",
 								mx: "auto",
+								w: "full",
 								px: { base: "4", md: "6" },
 								py: { base: "6", md: "8" }
 							})}
 						>
 							<Outlet />
 						</main>
+						<Footer />
 					</div>
 				</DenomProvider>
 			</ThemeProvider>

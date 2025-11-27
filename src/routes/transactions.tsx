@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
-import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction } from '@/lib/utils'
+import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction, formatNativeFee } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Pagination } from '@/components/ui/pagination'
@@ -416,7 +416,9 @@ export default function TransactionsPage() {
 											</TableCell>
 											<TableCell>
 												<div className={css(styles.feeText)}>
-													{tx.fee?.amount?.[0]?.amount || '0'} {tx.fee?.amount?.[0]?.denom || ''}
+													{tx.fee?.amount?.[0]
+														? formatNativeFee(tx.fee.amount[0].amount, tx.fee.amount[0].denom)
+														: '-'}
 												</div>
 											</TableCell>
 										</TableRow>

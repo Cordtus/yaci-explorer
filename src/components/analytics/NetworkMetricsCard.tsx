@@ -1,9 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
+import { Activity, TrendingUp, Clock, Database, Users, Zap, DollarSign } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
 import { getEnv } from '@/lib/env'
+import { api } from '@/lib/api'
+import { formatDenomAmount } from '@/lib/denom'
+import { DenomDisplay } from '@/components/common/DenomDisplay'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -131,6 +134,12 @@ export function NetworkMetricsCard() {
     refetchInterval: appConfig.analytics.networkRefetchMs,
   })
 
+  const { data: feeRevenue } = useQuery({
+    queryKey: ['feeRevenue'],
+    queryFn: () => api.getTotalFeeRevenue(),
+    refetchInterval: 30000,
+  })
+
   if (isLoading || !metrics) {
     return (
       <Card>
@@ -165,6 +174,14 @@ export function NetworkMetricsCard() {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
     return num.toString()
   }
+
+  // Format fee revenue for display
+  const feeRevenueDisplay = feeRevenue
+    ? Object.entries(feeRevenue).slice(0, 2).map(([denom, amount]) => ({
+        denom,
+        formatted: formatDenomAmount(amount, denom, { maxDecimals: 2 })
+      }))
+    : []
 
   const metricsData = [
     {
@@ -222,6 +239,22 @@ export function NetworkMetricsCard() {
       value: metrics.uniqueAddresses.toString(),
       subtext: 'recent activity',
       color: 'pink.500'
+    },
+    {
+      icon: DollarSign,
+      label: 'Fee Revenue',
+      value: feeRevenueDisplay.length > 0 ? feeRevenueDisplay[0].formatted : '-',
+      subtext: feeRevenueDisplay.length > 0 ? 'total collected' : 'loading...',
+      color: 'cyan.500',
+      customRender: feeRevenueDisplay.length > 0 ? (
+        <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
+          {feeRevenueDisplay.map(({ denom, formatted }) => (
+            <span key={denom} className={css({ display: 'inline-flex', alignItems: 'center', gap: '1', fontSize: 'sm' })}>
+              {formatted} <DenomDisplay denom={denom} />
+            </span>
+          ))}
+        </div>
+      ) : null
     }
   ]
 
@@ -246,7 +279,11 @@ export function NetworkMetricsCard() {
                   </span>
                 </div>
                 <div className={styles.metricValues}>
-                  <div className={styles.metricValue}>{metric.value}</div>
+                  {'customRender' in metric && metric.customRender ? (
+                    metric.customRender
+                  ) : (
+                    <div className={styles.metricValue}>{metric.value}</div>
+                  )}
                   <div className={styles.metricSubtext}>{metric.subtext}</div>
                 </div>
               </div>
