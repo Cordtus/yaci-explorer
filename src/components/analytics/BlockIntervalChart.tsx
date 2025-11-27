@@ -70,90 +70,82 @@ export function BlockIntervalChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      borderColor: 'rgba(71, 85, 105, 0.5)',
+      textStyle: { color: '#e2e8f0' },
       axisPointer: {
         type: 'cross',
+        label: { backgroundColor: '#334155' }
       },
       formatter: (params: any) => {
         const point = params[0]
-        return `
-          <div style="font-size: 12px;">
-            <strong>Block ${point.name}</strong><br/>
-            Interval: ${point.value[1].toFixed(2)}s
-          </div>
-        `
+        return `<div style="font-size: 13px;">
+          <strong>Block ${Number(point.name).toLocaleString()}</strong><br/>
+          Interval: <span style="color: #34d399; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
+        </div>`
       },
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '3%',
-      top: '15%',
+      bottom: '8%',
+      top: '8%',
       containLabel: true,
     },
     xAxis: {
       type: 'category',
       data: data.map((d) => d.height),
       axisLabel: {
-        rotate: 45,
-        interval: Math.floor(data.length / 10),
+        color: '#94a3b8',
+        fontSize: 11,
+        rotate: 0,
+        interval: Math.floor(data.length / 6),
         formatter: (value: number) => value.toLocaleString(),
       },
-      name: 'Block Height',
-      nameLocation: 'middle',
-      nameGap: 50,
+      axisLine: { lineStyle: { color: '#334155' } },
+      splitLine: { show: false },
     },
     yAxis: {
       type: 'value',
-      name: 'Seconds',
-      nameLocation: 'middle',
-      nameGap: 50,
       axisLabel: {
+        color: '#94a3b8',
+        fontSize: 11,
         formatter: '{value}s',
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
     },
-    series: [
-      {
-        name: 'Block Interval',
-        type: 'line',
-        data: data.map((d) => [d.height, d.time]),
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 4,
-        lineStyle: {
-          width: 2,
-          color: '#3b82f6',
-        },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.05)' },
-            ],
-          },
-        },
-        markLine: {
-          silent: true,
-          symbol: 'none',
-          lineStyle: {
-            type: 'dashed',
-            color: '#10b981',
-          },
-          data: [
-            {
-              yAxis: avgBlockTime,
-              label: {
-                formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
-              },
-            },
+    series: [{
+      name: 'Block Interval',
+      type: 'line',
+      data: data.map((d) => [d.height, d.time]),
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 6,
+      itemStyle: { color: '#10b981' },
+      lineStyle: { width: 2.5, color: '#10b981' },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(16, 185, 129, 0.35)' },
+            { offset: 1, color: 'rgba(16, 185, 129, 0.05)' },
           ],
         },
       },
-    ],
+      markLine: {
+        silent: true,
+        symbol: 'none',
+        lineStyle: { type: 'dashed', color: '#f59e0b', width: 1.5 },
+        label: {
+          color: '#fbbf24',
+          fontSize: 11,
+          formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
+        },
+        data: [{ yAxis: avgBlockTime }],
+      },
+    }],
   }
 
   return (

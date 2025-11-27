@@ -27,7 +27,10 @@ export const appConfig = {
     itemCount: toNumber(env.VITE_DASHBOARD_ITEM_COUNT, 5),
   },
   transactions: {
-    pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 20),
+    pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 10),
+  },
+  blocks: {
+    pageSize: toNumber(env.VITE_BLOCKS_PAGE_SIZE, 10),
   },
   search: {
     addressResultLimit: toNumber(env.VITE_SEARCH_ADDRESS_LIMIT, 20),

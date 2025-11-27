@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
@@ -20,7 +21,7 @@ export default function BlocksPage() {
   const [minTxCount, setMinTxCount] = useState<string>('')
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
-  const limit = 20
+  const limit = appConfig.blocks.pageSize
 
   const hasActiveFilters = minTxCount || fromDate || toDate
 
