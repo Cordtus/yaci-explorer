@@ -1,6 +1,6 @@
 import { defineConfig } from '@pandacss/dev'
 import { createPreset } from '@park-ui/panda-preset'
-import blue from '@park-ui/panda-preset/colors/blue'
+import cyan from '@park-ui/panda-preset/colors/cyan'
 import slate from '@park-ui/panda-preset/colors/slate'
 
 export default defineConfig({
@@ -12,10 +12,14 @@ export default defineConfig({
     './build/**/*',
   ],
   outdir: 'styled-system',
+  conditions: {
+    light: '[data-color-mode=light] &',
+    dark: '[data-color-mode=dark] &, .dark &',
+  },
 
   presets: [
     createPreset({
-      accentColor: blue,
+      accentColor: cyan,
       grayColor: slate,
       radius: 'md',
     }),
@@ -39,16 +43,16 @@ export default defineConfig({
         colors: {
           chart: {
             transactions: {
-              value: { base: '#3b82f6', _dark: '#60a5fa' },
+              value: { base: '#00d2ff', _dark: '#00d2ff' },
             },
             gas: {
               value: { base: '#10b981', _dark: '#34d399' },
             },
             grid: {
-              value: { base: '#e5e7eb', _dark: '#1f2937' },
+              value: { base: '#e5e7eb', _dark: '#30363d' },
             },
             axis: {
-              value: { base: '#9ca3af', _dark: '#94a3b8' },
+              value: { base: '#9ca3af', _dark: '#8b949e' },
             },
           },
         },

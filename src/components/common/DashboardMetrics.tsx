@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Blocks, Activity, TrendingUp, DollarSign } from 'lucide-react'
+import { Blocks, Activity, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { api } from '@/lib/api'
 import { formatNumber } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatDenomAmount } from '@/lib/denom'
-import { DenomDisplay } from '@/components/common/DenomDisplay'
 import { getOverviewMetrics } from '@/lib/metrics'
 import { css } from '@/styled-system/css'
-import { ValidatorIcon, GasIcon } from '@/components/icons/icons'
+import { ValidatorIcon } from '@/components/icons/icons'
 
 /**
  * Dashboard metrics component displaying key chain statistics
@@ -26,20 +23,6 @@ export function DashboardMetrics() {
     queryKey: ['overview-metrics'],
     queryFn: getOverviewMetrics,
     refetchInterval: 10000,
-    enabled: mounted,
-  })
-
-  const { data: feeRevenue } = useQuery({
-    queryKey: ['feeRevenue'],
-    queryFn: () => api.getTotalFeeRevenue(),
-    refetchInterval: 30000,
-    enabled: mounted,
-  })
-
-  const { data: gasEfficiency } = useQuery({
-    queryKey: ['gasEfficiency'],
-    queryFn: () => api.getGasEfficiency(),
-    refetchInterval: 30000,
     enabled: mounted,
   })
 
@@ -127,57 +110,6 @@ export function DashboardMetrics() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Secondary Metrics */}
-      <div className={css({
-        display: 'grid',
-        gap: '4',
-        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }
-      })}>
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Fee Revenue</CardTitle>
-            <DollarSign className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueTextSmall)}>
-              {!feeRevenue ? (
-                <Skeleton className={css(styles.skeletonSmall)} />
-              ) : (
-                <div className={css(styles.revenueContainer)}>
-                  {Object.entries(feeRevenue).slice(0, 2).map(([denom, amount]) => {
-                    const formatted = formatDenomAmount(amount, denom, { maxDecimals: 2 })
-                    return (
-                      <span key={denom} className={css(styles.revenueItem)}>
-                        {formatted} <DenomDisplay denom={denom} />
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Avg Gas Limit</CardTitle>
-            <GasIcon className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueTextSmall)}>
-              {!gasEfficiency ? (
-                <Skeleton className={css(styles.skeletonSmall)} />
-              ) : (
-                `${(gasEfficiency.avgGasLimit / 1000).toFixed(0)}K`
-              )}
-            </div>
-            <p className={css(styles.helperText)}>
-              {gasEfficiency && `${formatNumber(gasEfficiency.transactionCount)} txs`}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </>
   )
 }
@@ -204,10 +136,6 @@ const styles = {
     fontSize: '2xl',
     fontWeight: 'bold',
   },
-  valueTextSmall: {
-    fontSize: 'xl',
-    fontWeight: 'bold',
-  },
   helperText: {
     fontSize: 'xs',
     color: 'fg.muted',
@@ -219,20 +147,5 @@ const styles = {
   skeletonLarge: {
     height: '2rem',
     width: '6rem',
-  },
-  skeletonSmall: {
-    height: '1.5rem',
-    width: '5rem',
-  },
-  revenueContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem',
-  },
-  revenueItem: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.25rem',
-    fontSize: 'sm',
   },
 }

@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { Search, Loader2, Box, Hash, Wallet, FileCode } from 'lucide-react'
 import { css } from '@/styled-system/css'
 import { api } from '@/lib/api'
-import { detectSearchInputType, formatAddress, type SearchInputType } from '@/lib/utils'
+import { detectSearchInputType, formatAddress, getAlternateAddress, type SearchInputType } from '@/lib/utils'
 
 /**
  * Universal search bar component for searching blocks, transactions, and addresses
@@ -18,21 +18,57 @@ export function SearchBar() {
   const [isSearching, setIsSearching] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isContract, setIsContract] = useState<boolean | null>(null)
+  const [checkingContract, setCheckingContract] = useState(false)
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Detect input type as user types
   const inputType = useMemo(() => detectSearchInputType(query), [query])
 
-  // Result item config for display
-  const resultConfig: Record<SearchInputType, { icon: typeof Search; label: string; format: (q: string) => string }> = {
+  // Check if EVM address is a contract
+  const checkContract = useCallback(async (address: string) => {
+    setCheckingContract(true)
+    try {
+      // Get hex address for contract lookup
+      const hexAddr = address.startsWith('0x') ? address : getAlternateAddress(address)
+      if (hexAddr) {
+        const result = await api.isEvmContract(hexAddr)
+        setIsContract(result)
+      } else {
+        setIsContract(false)
+      }
+    } catch {
+      setIsContract(false)
+    } finally {
+      setCheckingContract(false)
+    }
+  }, [])
+
+  // Trigger contract check when input is an EVM address
+  useEffect(() => {
+    if (inputType === 'evm_address' && query.trim()) {
+      checkContract(query.trim())
+    } else {
+      setIsContract(null)
+    }
+  }, [inputType, query, checkContract])
+
+  // Result item config for display - dynamically update for EVM addresses
+  const getResultConfig = (): Record<SearchInputType, { icon: typeof Search; label: string; format: (q: string) => string }> => ({
     block_height: { icon: Box, label: 'Block', format: (q) => `#${q}` },
     tx_hash: { icon: Hash, label: 'Transaction', format: (q) => formatAddress(q, 10) },
     evm_tx_hash: { icon: Hash, label: 'EVM Transaction', format: (q) => formatAddress(q, 10) },
-    bech32_address: { icon: Wallet, label: 'Wallet', format: (q) => formatAddress(q, 10) },
-    evm_address: { icon: FileCode, label: 'Address', format: (q) => formatAddress(q, 10) },
+    bech32_address: { icon: Wallet, label: 'Account', format: (q) => formatAddress(q, 10) },
+    evm_address: {
+      icon: isContract ? FileCode : Wallet,
+      label: checkingContract ? 'Checking...' : (isContract ? 'Contract' : 'Account'),
+      format: (q) => formatAddress(q, 10)
+    },
     unknown: { icon: Search, label: 'Search', format: (q) => q }
-  }
+  })
+
+  const resultConfig = getResultConfig()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Blocks, Activity } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
@@ -63,7 +63,7 @@ export default function DashboardPage() {
       })}>
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle>Latest Blocks</CardTitle>
+            <CardTitle>Recent Blocks</CardTitle>
             <Link
               to="/blocks"
               className={css(styles.viewAllLink)}
@@ -84,9 +84,6 @@ export default function DashboardPage() {
                     className={css(styles.listItem)}
                   >
                     <div className={css(styles.itemLeft)}>
-                      <div className={css(styles.iconCircle)}>
-                        <Blocks className={css(styles.icon)} />
-                      </div>
                       <div>
                         <Link
                           to={`/blocks/${block.id}`}
@@ -116,7 +113,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle>Latest Transactions</CardTitle>
+            <CardTitle>Recent Transactions</CardTitle>
             <Link
               to="/tx"
               className={css(styles.viewAllLink)}
@@ -139,9 +136,6 @@ export default function DashboardPage() {
                       className={css(styles.listItem)}
                     >
                       <div className={css(styles.itemLeft)}>
-                        <div className={css(styles.iconCircle)}>
-                          <Activity className={css(styles.icon)} />
-                        </div>
                         <div>
                           <Link
                             to={`/tx/${tx.id}`}
@@ -243,20 +237,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '4',
-  },
-  iconCircle: {
-    height: '10',
-    width: '10',
-    borderRadius: 'full',
-    backgroundColor: 'colorPalette.a10',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    height: '5',
-    width: '5',
-    color: 'colorPalette',
   },
   itemLink: {
     fontWeight: 'medium',

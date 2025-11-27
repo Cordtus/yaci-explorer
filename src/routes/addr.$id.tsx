@@ -179,7 +179,7 @@ export default function AddressDetailPage() {
         <div className={styles.addressContainer}>
           <div className={css({ flex: '1' })}>
             {/* Primary address - based on entry format */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '2' })}>
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: isContract ? '0' : '2' })}>
               <Badge variant={isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
                 Hex
               </Badge>
@@ -195,23 +195,25 @@ export default function AddressDetailPage() {
                 {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
               </Button>
             </div>
-            {/* Secondary address */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-              <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
-                Bech32
-              </Badge>
-              <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
-                {bech32Addr}
-              </p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={styles.copyButton}
-                onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
-              >
-                <Copy className={styles.copyIcon} />
-              </Button>
-            </div>
+            {/* Secondary address - hide for contracts since bech32 is incorrect/irrelevant */}
+            {!isContract && (
+              <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
+                  Bech32
+                </Badge>
+                <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
+                  {bech32Addr}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={styles.copyButton}
+                  onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
+                >
+                  <Copy className={styles.copyIcon} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -225,9 +227,6 @@ export default function AddressDetailPage() {
           </CardHeader>
           <CardContent>
             <div className={styles.statValue}>{formatNumber(stats.transaction_count)}</div>
-            <p className={styles.statDescription}>
-              All transactions involving this address
-            </p>
           </CardContent>
         </Card>
 
@@ -281,9 +280,6 @@ export default function AddressDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
-          <p className={styles.tableDescription}>
-            All transactions involving this address
-          </p>
         </CardHeader>
         <CardContent>
           {txLoading ? (
@@ -570,10 +566,6 @@ const styles = {
     fontSize: 'xs',
     color: 'fg.muted',
     marginTop: '0.25rem',
-  }),
-  tableDescription: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
   }),
   skeletonList: css({
     display: 'flex',
