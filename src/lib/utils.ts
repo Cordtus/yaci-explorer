@@ -45,14 +45,67 @@ export function formatAmount(amount: string, decimals = 6, symbol = ''): string 
   return symbol ? `${formatted} ${symbol}` : formatted
 }
 
+/**
+ * Validate bech32 checksum using BCH code
+ * Returns true if the checksum is valid
+ */
+function verifyBech32Checksum(hrp: string, data: number[]): boolean {
+  const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+  const polymod = (values: number[]): number => {
+    let chk = 1
+    for (const v of values) {
+      const b = chk >> 25
+      chk = ((chk & 0x1ffffff) << 5) ^ v
+      for (let i = 0; i < 5; i++) {
+        if ((b >> i) & 1) chk ^= GEN[i]
+      }
+    }
+    return chk
+  }
+
+  const hrpExpand = [...hrp].map(c => c.charCodeAt(0) >> 5)
+    .concat([0])
+    .concat([...hrp].map(c => c.charCodeAt(0) & 31))
+
+  return polymod([...hrpExpand, ...data]) === 1
+}
+
+/**
+ * Validate a bech32 address with full checksum verification
+ * Returns true only if format AND checksum are valid
+ */
+export function isValidBech32Address(address: string): boolean {
+  const lower = address.toLowerCase()
+  // Basic format check: lowercase, has separator, correct charset
+  if (!/^[a-z]+1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,}$/.test(lower)) {
+    return false
+  }
+
+  const pos = lower.lastIndexOf('1')
+  if (pos < 1 || pos + 7 > lower.length) return false
+
+  const hrp = lower.slice(0, pos)
+  const dataStr = lower.slice(pos + 1)
+
+  // Decode data characters to 5-bit values
+  const values: number[] = []
+  for (const char of dataStr) {
+    const idx = BECH32_ALPHABET.indexOf(char)
+    if (idx === -1) return false
+    values.push(idx)
+  }
+
+  // Verify checksum
+  return verifyBech32Checksum(hrp, values)
+}
+
 export function isValidAddress(address: string): boolean {
-  if (address.match(/^[a-z]+1[a-z0-9]{38,}$/)) {
+  // EVM address: 0x + 40 hex chars
+  if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return true
   }
-  if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return true
-  }
-  return false
+  // Bech32 address with checksum validation
+  return isValidBech32Address(address)
 }
 
 export type AddressType = 'cosmos' | 'evm'
@@ -190,6 +243,51 @@ export async function isEvmContract(address: string, rpcUrl: string): Promise<bo
 
 export function isValidTxHash(hash: string): boolean {
   return /^[A-F0-9]{64}$/i.test(hash)
+}
+
+export function isValidEvmTxHash(hash: string): boolean {
+  return /^0x[a-fA-F0-9]{64}$/.test(hash)
+}
+
+export function isBlockHeight(input: string): boolean {
+  return /^\d+$/.test(input) && parseInt(input, 10) > 0
+}
+
+export type SearchInputType = 'block_height' | 'tx_hash' | 'evm_tx_hash' | 'bech32_address' | 'evm_address' | 'unknown'
+
+/**
+ * Detect the type of search input
+ * Priority: block height > tx hash > evm tx hash > bech32 address > evm address > unknown
+ */
+export function detectSearchInputType(input: string): SearchInputType {
+  const trimmed = input.trim()
+
+  // Block height: purely numeric
+  if (isBlockHeight(trimmed)) {
+    return 'block_height'
+  }
+
+  // EVM tx hash: 0x + 64 hex chars
+  if (isValidEvmTxHash(trimmed)) {
+    return 'evm_tx_hash'
+  }
+
+  // EVM address: 0x + 40 hex chars
+  if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
+    return 'evm_address'
+  }
+
+  // Cosmos tx hash: 64 hex chars (no 0x prefix)
+  if (isValidTxHash(trimmed)) {
+    return 'tx_hash'
+  }
+
+  // Bech32 address with full checksum validation
+  if (isValidBech32Address(trimmed)) {
+    return 'bech32_address'
+  }
+
+  return 'unknown'
 }
 
 export function getTransactionStatus(error: string | null): {

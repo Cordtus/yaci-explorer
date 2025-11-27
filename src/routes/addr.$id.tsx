@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, type EnhancedTransaction } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress } from '@/lib/utils'
+import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -29,6 +29,9 @@ export default function AddressDetailPage() {
   const [page, setPage] = useState(0)
   const params = useParams()
   const pageSize = 20
+
+  // Validate the address format early
+  const isValidAddr = params.id ? isValidAddress(params.id) : false
 
   // Track how user arrived - this determines UX emphasis
   const entryFormat = params.id ? getAddressType(params.id) : null
@@ -94,12 +97,38 @@ export default function AddressDetailPage() {
     return tx.messages?.some(msg => msg.sender === params.id) ?? false
   }
 
-  if (!mounted || statsLoading) {
+  if (!mounted || (isValidAddr && statsLoading)) {
     return (
       <div className={styles.pageContainer}>
         <Skeleton className={styles.skeletonHeader} />
         <Skeleton className={styles.skeletonCard} />
         <Skeleton className={styles.skeletonTable} />
+      </div>
+    )
+  }
+
+  // Show error for invalid address format
+  if (!isValidAddr) {
+    return (
+      <div className={styles.pageContainer}>
+        <Link to="/" className={styles.backLink}>
+          <ArrowLeft className={styles.backIcon} />
+          Back to Home
+        </Link>
+        <Card>
+          <CardContent className={styles.cardPadding}>
+            <div className={styles.notFoundContainer}>
+              <AlertCircle className={styles.invalidIcon} />
+              <h2 className={styles.notFoundTitle}>Invalid Address</h2>
+              <p className={styles.notFoundText}>
+                "{params.id}" is not a valid address format.
+              </p>
+              <p className={styles.invalidHint}>
+                Valid formats: bech32 (e.g. republic1...) or hex (0x...)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -442,6 +471,18 @@ const styles = {
   }),
   notFoundText: css({
     color: 'fg.muted',
+  }),
+  invalidIcon: css({
+    height: '3rem',
+    width: '3rem',
+    color: 'red.500',
+    marginX: 'auto',
+    marginBottom: '1rem',
+  }),
+  invalidHint: css({
+    color: 'fg.muted',
+    fontSize: 'sm',
+    marginTop: '0.5rem',
   }),
   headerContent: css({
     display: 'flex',
