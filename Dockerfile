@@ -5,10 +5,15 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
+# Cache bust on every build
+ARG CACHEBUST=1
+
 COPY . .
 
 ARG VITE_POSTGREST_URL
+ARG VITE_CHAIN_REST_ENDPOINT
 ENV VITE_POSTGREST_URL=$VITE_POSTGREST_URL
+ENV VITE_CHAIN_REST_ENDPOINT=$VITE_CHAIN_REST_ENDPOINT
 
 RUN bun run build
 
