@@ -71,11 +71,11 @@ export function TransactionVolumeChart() {
     tooltip: {
       trigger: 'axis',
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      borderColor: 'rgba(71, 85, 105, 0.5)',
-      textStyle: { color: '#e2e8f0' },
+      borderColor: 'rgba(6, 182, 212, 0.5)',
+      textStyle: { color: '#f1f5f9' },
       axisPointer: {
-        type: 'cross',
-        label: { backgroundColor: '#334155' }
+        type: 'line',
+        lineStyle: { color: '#06b6d4', width: 1 }
       },
       formatter: (params: any) => {
         const date = new Date(params[0].axisValue)
@@ -83,7 +83,7 @@ export function TransactionVolumeChart() {
         const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
         return `<div style="font-size: 13px;">
           <strong>${dateStr} ${timeStr}</strong><br/>
-          Transactions: <span style="color: #60a5fa; font-weight: 600;">${params[0].value}</span>
+          Transactions: <span style="color: #22d3ee; font-weight: 600;">${params[0].value}</span>
         </div>`
       }
     },
@@ -99,7 +99,7 @@ export function TransactionVolumeChart() {
       boundaryGap: false,
       data: data.map(d => d.time),
       axisLabel: {
-        color: '#94a3b8',
+        color: '#cbd5e1',
         fontSize: 11,
         formatter: (value: string) => {
           const date = new Date(value)
@@ -107,18 +107,18 @@ export function TransactionVolumeChart() {
         },
         interval: Math.floor(data.length / 8)
       },
-      axisLine: { lineStyle: { color: '#334155' } },
+      axisLine: { lineStyle: { color: '#475569' } },
       splitLine: { show: false }
     },
     yAxis: {
       type: 'value',
       axisLabel: {
-        color: '#94a3b8',
+        color: '#cbd5e1',
         fontSize: 11,
         formatter: '{value}'
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } }
+      splitLine: { lineStyle: { color: '#334155', type: 'dashed' } }
     },
     series: [{
       name: 'Transactions',
@@ -127,15 +127,15 @@ export function TransactionVolumeChart() {
       symbol: 'circle',
       symbolSize: 6,
       sampling: 'average',
-      itemStyle: { color: '#3b82f6' },
-      lineStyle: { width: 2.5, color: '#3b82f6' },
+      itemStyle: { color: '#06b6d4' },
+      lineStyle: { width: 3, color: '#06b6d4' },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(59, 130, 246, 0.35)' },
-            { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+            { offset: 0, color: 'rgba(6, 182, 212, 0.4)' },
+            { offset: 1, color: 'rgba(6, 182, 212, 0.05)' }
           ]
         }
       },

@@ -71,17 +71,17 @@ export function BlockIntervalChart() {
     tooltip: {
       trigger: 'axis',
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      borderColor: 'rgba(71, 85, 105, 0.5)',
-      textStyle: { color: '#e2e8f0' },
+      borderColor: 'rgba(52, 211, 153, 0.5)',
+      textStyle: { color: '#f1f5f9' },
       axisPointer: {
-        type: 'cross',
-        label: { backgroundColor: '#334155' }
+        type: 'line',
+        lineStyle: { color: '#34d399', width: 1 }
       },
       formatter: (params: any) => {
         const point = params[0]
         return `<div style="font-size: 13px;">
           <strong>Block ${Number(point.name).toLocaleString()}</strong><br/>
-          Interval: <span style="color: #34d399; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
+          Interval: <span style="color: #6ee7b7; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
         </div>`
       },
     },
@@ -96,24 +96,24 @@ export function BlockIntervalChart() {
       type: 'category',
       data: data.map((d) => d.height),
       axisLabel: {
-        color: '#94a3b8',
+        color: '#cbd5e1',
         fontSize: 11,
         rotate: 0,
         interval: Math.floor(data.length / 6),
         formatter: (value: number) => value.toLocaleString(),
       },
-      axisLine: { lineStyle: { color: '#334155' } },
+      axisLine: { lineStyle: { color: '#475569' } },
       splitLine: { show: false },
     },
     yAxis: {
       type: 'value',
       axisLabel: {
-        color: '#94a3b8',
+        color: '#cbd5e1',
         fontSize: 11,
         formatter: '{value}s',
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
+      splitLine: { lineStyle: { color: '#334155', type: 'dashed' } },
     },
     series: [{
       name: 'Block Interval',
@@ -122,25 +122,26 @@ export function BlockIntervalChart() {
       smooth: true,
       symbol: 'circle',
       symbolSize: 6,
-      itemStyle: { color: '#10b981' },
-      lineStyle: { width: 2.5, color: '#10b981' },
+      itemStyle: { color: '#34d399' },
+      lineStyle: { width: 3, color: '#34d399' },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(16, 185, 129, 0.35)' },
-            { offset: 1, color: 'rgba(16, 185, 129, 0.05)' },
+            { offset: 0, color: 'rgba(52, 211, 153, 0.4)' },
+            { offset: 1, color: 'rgba(52, 211, 153, 0.05)' },
           ],
         },
       },
       markLine: {
         silent: true,
         symbol: 'none',
-        lineStyle: { type: 'dashed', color: '#f59e0b', width: 1.5 },
+        lineStyle: { type: 'dashed', color: '#fbbf24', width: 2 },
         label: {
-          color: '#fbbf24',
-          fontSize: 11,
+          color: '#fcd34d',
+          fontSize: 12,
+          fontWeight: 'bold',
           formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
         },
         data: [{ yAxis: avgBlockTime }],
