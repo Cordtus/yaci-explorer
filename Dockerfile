@@ -1,20 +1,20 @@
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
 ARG VITE_POSTGREST_URL
 ENV VITE_POSTGREST_URL=$VITE_POSTGREST_URL
 
-RUN yarn build
+RUN bun run build
 
 FROM nginx:alpine
 
-COPY --from=builder /app/build/client /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

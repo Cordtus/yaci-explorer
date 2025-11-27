@@ -3,11 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import ReactECharts from 'echarts-for-react'
 import { api } from '@/lib/api'
-
-interface GasData {
-  gasLimit: number
-  gasUsed: number
-}
+import { css } from '@/styled-system/css'
 
 async function getGasDistribution(): Promise<{ bins: string[]; counts: number[]; avgGas: number; totalTx: number }> {
   const distribution = await api.getGasUsageDistribution()
@@ -16,7 +12,7 @@ async function getGasDistribution(): Promise<{ bins: string[]; counts: number[];
     return { bins: [], counts: [], avgGas: 0, totalTx: 0 }
   }
 
-  const bins = distribution.map(d => d.range)
+  const bins = distribution.map(d => d.gas_range)
   const counts = distribution.map(d => d.count)
   const totalTx = counts.reduce((a, b) => a + b, 0)
 
@@ -30,7 +26,7 @@ async function getGasDistribution(): Promise<{ bins: string[]; counts: number[];
   }
   let totalGas = 0
   distribution.forEach(d => {
-    totalGas += (midpoints[d.range] || 200000) * d.count
+    totalGas += (midpoints[d.gas_range] || 200000) * d.count
   })
   const avgGas = totalTx > 0 ? Math.round(totalGas / totalTx) : 0
 
@@ -52,7 +48,7 @@ export function GasUsageChart() {
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className={styles.skeleton} />
         </CardContent>
       </Card>
     )
@@ -109,4 +105,8 @@ export function GasUsageChart() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  skeleton: css({ h: '64', w: 'full' }),
 }

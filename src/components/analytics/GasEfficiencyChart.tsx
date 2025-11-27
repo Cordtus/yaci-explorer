@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { css } from '@/styled-system/css'
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
@@ -24,7 +25,7 @@ export function GasEfficiencyChart() {
           <CardDescription>Distribution and efficiency metrics</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className={styles.loadingContainer}>
             Loading...
           </div>
         </CardContent>
@@ -57,7 +58,7 @@ export function GasEfficiencyChart() {
     },
     xAxis: {
       type: 'category',
-      data: distribution.map((d) => d.range),
+      data: distribution.map((d) => d.gas_range),
       axisLabel: {
         rotate: 45,
       },
@@ -119,4 +120,8 @@ export function GasEfficiencyChart() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

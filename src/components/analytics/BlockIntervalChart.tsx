@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
+import { getEnv } from '@/lib/env'
 
 interface BlockTimeData {
   height: number
@@ -11,9 +12,9 @@ interface BlockTimeData {
 }
 
 async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    return []
   }
   const response = await fetch(
     `${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`
@@ -54,7 +55,7 @@ export function BlockIntervalChart() {
           <CardDescription>Block production time over recent blocks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className={styles.loadingContainer}>
             Loading...
           </div>
         </CardContent>
@@ -169,4 +170,8 @@ export function BlockIntervalChart() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

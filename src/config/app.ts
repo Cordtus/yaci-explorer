@@ -1,3 +1,5 @@
+import { env } from '@/lib/env'
+
 const toNumber = (value: string | undefined, fallback: number): number => {
   if (value === undefined || value === null || value === '') {
     return fallback
@@ -12,8 +14,6 @@ const toBoolean = (value: string | undefined, fallback: boolean): boolean => {
   }
   return ['true', '1', 'yes', 'on'].includes(value.toLowerCase())
 }
-
-const env = import.meta.env
 
 export const appConfig = {
   queries: {

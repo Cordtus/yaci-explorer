@@ -25,7 +25,6 @@ export interface Transaction {
 	error: string | null
 	height: number
 	timestamp: string
-	proposal_ids: number[] | null
 	messages: Message[]
 	events: Event[]
 	ingest_error: IngestError | null
@@ -105,8 +104,8 @@ export interface AddressStats {
 	transaction_count: number
 	first_seen: string | null
 	last_seen: string | null
-	total_sent: number
-	total_received: number
+	total_sent?: number
+	total_received?: number
 }
 
 export interface ChainStats {
@@ -153,35 +152,6 @@ export interface BlockRaw {
 			}
 		}
 	}
-}
-
-export interface GovernanceProposal {
-	proposal_id: number
-	title: string | null
-	summary: string | null
-	status: string
-	submit_time: string
-	deposit_end_time: string | null
-	voting_start_time: string | null
-	voting_end_time: string | null
-	proposer: string | null
-	tally: {
-		yes: string | null
-		no: string | null
-		abstain: string | null
-		no_with_veto: string | null
-	}
-	last_updated: string
-}
-
-export interface ProposalSnapshot {
-	proposal_id: number
-	status: string
-	yes_count: string
-	no_count: string
-	abstain_count: string
-	no_with_veto_count: string
-	snapshot_time: string
 }
 
 // Legacy type aliases for compatibility
@@ -400,7 +370,7 @@ export class YaciClient {
 		return this.query('message_type_stats')
 	}
 
-	async getGasUsageDistribution(): Promise<Array<{ range: string; count: number }>> {
+	async getGasUsageDistribution(): Promise<Array<{ gas_range: string; count: number }>> {
 		return this.query('gas_usage_distribution')
 	}
 
@@ -408,9 +378,9 @@ export class YaciClient {
 		avgGasLimit: number
 		totalGasLimit: number
 		transactionCount: number
-		data: Array<{ range: string; count: number }>
+		data: Array<{ gas_range: string; count: number }>
 	}> {
-		const data = await this.query<Array<{ range: string; count: number }>>('gas_usage_distribution')
+		const data = await this.query<Array<{ gas_range: string; count: number }>>('gas_usage_distribution')
 		const transactionCount = data.reduce((sum, d) => sum + d.count, 0)
 		// Estimate average based on distribution midpoints
 		const midpoints: Record<string, number> = {
@@ -422,7 +392,7 @@ export class YaciClient {
 		}
 		let totalGasLimit = 0
 		for (const d of data) {
-			totalGasLimit += (midpoints[d.range] || 500000) * d.count
+			totalGasLimit += (midpoints[d.gas_range] || 500000) * d.count
 		}
 		return {
 			avgGasLimit: transactionCount > 0 ? Math.round(totalGasLimit / transactionCount) : 0,
@@ -472,79 +442,144 @@ export class YaciClient {
 		return this.rpc('get_block_time_analysis', { _limit: limit })
 	}
 
-	async getActiveAddressesDaily(days = 30): Promise<Array<{ date: string; count: number }>> {
-		return this.rpc('get_active_addresses_daily', { _days: days })
+	// Denomination endpoints
+
+	async getDenomMetadata(denom?: string): Promise<Array<{
+		denom: string
+		symbol: string
+		name: string | null
+		decimals: number
+		description: string | null
+		logo_uri: string | null
+		coingecko_id: string | null
+		is_native: boolean
+		ibc_source_chain: string | null
+		ibc_source_denom: string | null
+		evm_contract: string | null
+		updated_at: string
+	}>> {
+		const params: Record<string, string> = {}
+		if (denom) params.denom = `eq.${denom}`
+		return this.query('denom_metadata', params)
 	}
 
-	// Governance endpoints
+	// EVM endpoints
 
-	async getGovernanceProposals(
-		limit = 20,
+	async requestEvmDecode(txHash: string): Promise<{ success: boolean }> {
+		return this.rpc('request_evm_decode', { _tx_hash: txHash })
+	}
+
+	async getEvmContracts(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		creator: string | null
+		creation_tx: string | null
+		bytecode_hash: string | null
+		name: string | null
+		verified: boolean
+		creation_height: number
+	}>> {
+		return this.query('evm_contracts', {
+			order: 'creation_height.desc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async isEvmContract(address: string): Promise<boolean> {
+		const result = await this.query<Array<{ address: string }>>('evm_contracts', {
+			address: `eq.${address.toLowerCase()}`,
+			limit: '1',
+			select: 'address'
+		})
+		return result.length > 0
+	}
+
+	async getEvmTokens(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		name: string | null
+		symbol: string | null
+		decimals: number | null
+		total_supply: string | null
+		type: string | null
+		first_seen_height: number | null
+	}>> {
+		return this.query('evm_tokens', {
+			order: 'first_seen_height.desc.nullslast,address.asc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async getEvmTokenTransfers(
+		limit = 50,
 		offset = 0,
-		status?: string
-	): Promise<PaginatedResponse<GovernanceProposal>> {
-		return this.rpc('get_governance_proposals', {
-			_limit: limit,
-			_offset: offset,
-			_status: status
-		})
-	}
-
-	async getProposalDetail(proposalId: number): Promise<GovernanceProposal | undefined> {
-		// Query returns flat columns, need to transform to nested tally object
-		const result = await this.query<Array<{
-			proposal_id: number
-			title: string | null
-			summary: string | null
-			status: string
-			submit_time: string
-			deposit_end_time: string | null
-			voting_start_time: string | null
-			voting_end_time: string | null
-			proposer: string | null
-			yes_count: string | null
-			no_count: string | null
-			abstain_count: string | null
-			no_with_veto_count: string | null
-			last_updated: string
-		}>>('governance_proposals', {
-			proposal_id: `eq.${proposalId}`,
-			limit: '1'
-		})
-		if (!result[0]) return undefined
-		const row = result[0]
-		return {
-			proposal_id: row.proposal_id,
-			title: row.title,
-			summary: row.summary,
-			status: row.status,
-			submit_time: row.submit_time,
-			deposit_end_time: row.deposit_end_time,
-			voting_start_time: row.voting_start_time,
-			voting_end_time: row.voting_end_time,
-			proposer: row.proposer,
-			tally: {
-				yes: row.yes_count,
-				no: row.no_count,
-				abstain: row.abstain_count,
-				no_with_veto: row.no_with_veto_count
-			},
-			last_updated: row.last_updated
+		filters?: { tokenAddress?: string; fromAddress?: string; toAddress?: string }
+	): Promise<Array<{
+		tx_id: string
+		log_index: number
+		token_address: string
+		from_address: string
+		to_address: string
+		value: string
+	}>> {
+		const params: Record<string, string> = {
+			order: 'tx_id.desc',
+			limit: String(limit),
+			offset: String(offset)
 		}
+		if (filters?.tokenAddress) params.token_address = `eq.${filters.tokenAddress}`
+		if (filters?.fromAddress) params.from_address = `eq.${filters.fromAddress}`
+		if (filters?.toAddress) params.to_address = `eq.${filters.toAddress}`
+		return this.query('evm_token_transfers', params)
 	}
 
-	async getProposalSnapshots(proposalId: number): Promise<ProposalSnapshot[]> {
-		return this.query('governance_snapshots', {
-			proposal_id: `eq.${proposalId}`,
-			order: 'snapshot_time.desc'
+	// Validator endpoints
+
+	async getValidators(limit = 100, offset = 0): Promise<Array<{
+		operator_address: string
+		consensus_pubkey: string | null
+		moniker: string | null
+		identity: string | null
+		website: string | null
+		details: string | null
+		commission_rate: string | null
+		tokens: string | null
+		delegator_shares: string | null
+		jailed: boolean
+		status: string | null
+		updated_at: string
+	}>> {
+		return this.query('validators', {
+			order: 'tokens.desc.nullslast',
+			limit: String(limit),
+			offset: String(offset)
 		})
 	}
 
-	async getProposalTally(proposalId: number): Promise<{ yes: number; no: number; abstain: number; no_with_veto: number }> {
-		return this.rpc('compute_proposal_tally', { _proposal_id: proposalId })
+	// IBC endpoints
+
+	async getIbcChannels(limit = 50, offset = 0): Promise<Array<{
+		channel_id: string
+		port_id: string
+		counterparty_channel_id: string | null
+		counterparty_port_id: string | null
+		connection_id: string | null
+		state: string | null
+		ordering: string | null
+		version: string | null
+		updated_at: string
+	}>> {
+		return this.query('ibc_channels', {
+			order: 'channel_id.asc',
+			limit: String(limit),
+			offset: String(offset)
+		})
 	}
+
 }
 
+import { getEnv } from './env'
+
 // Singleton instance
-const baseUrl = import.meta.env.VITE_POSTGREST_URL || 'http://localhost:3000'
+const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
 export const api = new YaciClient({ baseUrl })

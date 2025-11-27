@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { css, cx } from '@/styled-system/css'
 
 interface JsonViewerProps {
   data: any
@@ -44,13 +44,13 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
   // Primitive value rendering
   if (!isObject) {
     return (
-      <div className="flex gap-2 py-0.5" style={{ paddingLeft: `${indent}px` }}>
-        {name && <span className="text-blue-600 dark:text-blue-400">{name}:</span>}
-        <span className={cn(
-          typeof data === 'string' && 'text-green-600 dark:text-green-400',
-          typeof data === 'number' && 'text-purple-600 dark:text-purple-400',
-          typeof data === 'boolean' && 'text-orange-600 dark:text-orange-400',
-          data === null && 'text-gray-500 dark:text-gray-400'
+      <div className={css({ display: 'flex', gap: '2', py: '0.5' })} style={{ paddingLeft: `${indent}px` }}>
+        {name && <span className={css({ color: 'blue.600', _dark: { color: 'blue.400' } })}>{name}:</span>}
+        <span className={cx(
+          typeof data === 'string' && css({ color: 'green.600', _dark: { color: 'green.400' } }),
+          typeof data === 'number' && css({ color: 'purple.600', _dark: { color: 'purple.400' } }),
+          typeof data === 'boolean' && css({ color: 'orange.600', _dark: { color: 'orange.400' } }),
+          data === null && css({ color: 'gray.500', _dark: { color: 'gray.400' } })
         )}>
           {typeof data === 'string' ? `"${data}"` : String(data)}
         </span>
@@ -59,26 +59,42 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
   }
 
   // Object/Array rendering
-  const entries = isArray ? data : Object.entries(data)
   const itemCount = isArray ? data.length : Object.keys(data).length
   const preview = isArray ? `[${itemCount}]` : `{${itemCount}}`
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setIsExpanded(!isExpanded)
+    }
+  }
 
   return (
     <div>
       <div
-        className="flex gap-2 py-0.5 cursor-pointer hover:bg-muted/50 rounded"
+        role="button"
+        tabIndex={0}
+        className={css({
+          display: 'flex',
+          gap: '2',
+          py: '0.5',
+          cursor: 'pointer',
+          rounded: 'md',
+          _hover: { bg: 'bg.muted/50' }
+        })}
         style={{ paddingLeft: `${indent}px` }}
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={handleKeyDown}
       >
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <ChevronDown className={css({ h: '4', w: '4', color: 'fg.muted', flexShrink: '0', mt: '0.5' })} />
         ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <ChevronRight className={css({ h: '4', w: '4', color: 'fg.muted', flexShrink: '0', mt: '0.5' })} />
         )}
-        {name && <span className="text-blue-600 dark:text-blue-400">{name}:</span>}
-        <span className="text-gray-600 dark:text-gray-400">
+        {name && <span className={css({ color: 'blue.600', _dark: { color: 'blue.400' } })}>{name}:</span>}
+        <span className={css({ color: 'gray.600', _dark: { color: 'gray.400' } })}>
           {isArray ? '[' : '{'}
-          {!isExpanded && <span className="text-xs text-muted-foreground ml-1">{preview}</span>}
+          {!isExpanded && <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>{preview}</span>}
         </span>
       </div>
 
@@ -106,7 +122,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
             ))
           )}
           <div
-            className="text-gray-600 dark:text-gray-400 py-0.5"
+            className={css({ color: 'gray.600', _dark: { color: 'gray.400' }, py: '0.5' })}
             style={{ paddingLeft: `${indent}px` }}
           >
             {isArray ? ']' : '}'}
@@ -116,7 +132,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
 
       {!isExpanded && (
         <div
-          className="text-gray-600 dark:text-gray-400 py-0.5"
+          className={css({ color: 'gray.600', _dark: { color: 'gray.400' }, py: '0.5' })}
           style={{ paddingLeft: `${indent}px` }}
         >
           {isArray ? ']' : '}'}
@@ -136,13 +152,20 @@ export function JsonViewer({ data, maxHeight = 300, className }: JsonViewerProps
       // If parsing fails, display as plain text
       return (
         <div
-          className={cn(
-            'bg-muted/30 rounded-md p-3 overflow-auto font-mono text-xs',
+          className={cx(
+            css({
+              bg: 'bg.muted/30',
+              rounded: 'md',
+              p: '3',
+              overflow: 'auto',
+              fontFamily: 'mono',
+              fontSize: 'xs'
+            }),
             className
           )}
           style={{ maxHeight: `${maxHeight}px` }}
         >
-          <pre className="whitespace-pre-wrap break-words">{data}</pre>
+          <pre className={css({ whiteSpace: 'pre-wrap', wordBreak: 'break-word' })}>{data}</pre>
         </div>
       )
     }
@@ -150,8 +173,15 @@ export function JsonViewer({ data, maxHeight = 300, className }: JsonViewerProps
 
   return (
     <div
-      className={cn(
-        'bg-muted/30 rounded-md p-3 overflow-auto font-mono text-xs',
+      className={cx(
+        css({
+          bg: 'bg.muted/30',
+          rounded: 'md',
+          p: '3',
+          overflow: 'auto',
+          fontFamily: 'mono',
+          fontSize: 'xs'
+        }),
         className
       )}
       style={{ maxHeight: `${maxHeight}px` }}

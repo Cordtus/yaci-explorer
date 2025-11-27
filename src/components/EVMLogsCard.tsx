@@ -4,6 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { css } from '@/styled-system/css'
 import type { EvmLog } from '@/lib/api'
 
 interface EVMLogsCardProps {
@@ -39,13 +40,13 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 		<Button
 			variant="ghost"
 			size="icon"
-			className="h-5 w-5"
+			className={css({ h: '5', w: '5' })}
 			onClick={() => copyToClipboard(text, field)}
 		>
 			{copied === field ? (
-				<CheckCircle className="h-3 w-3 text-green-500" />
+				<CheckCircle className={css({ h: '3', w: '3', color: 'green.500' })} />
 			) : (
-				<Copy className="h-3 w-3" />
+				<Copy className={css({ h: '3', w: '3' })} />
 			)}
 		</Button>
 	)
@@ -57,9 +58,9 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">EVM Logs ({logs.length})</CardTitle>
+				<CardTitle className={css({ fontSize: 'lg' })}>EVM Logs ({logs.length})</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-2">
+			<CardContent className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
 				{logs.map((log, idx) => {
 					const isExpanded = expandedLogs[idx]
 					const eventName = log.topics.length > 0 ? getEventName(log.topics[0]) : 'No Topics'
@@ -70,40 +71,40 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 							open={isExpanded}
 							onOpenChange={() => setExpandedLogs(prev => ({ ...prev, [idx]: !prev[idx] }))}
 						>
-							<div className="border rounded-lg overflow-hidden">
-								<CollapsibleTrigger className="w-full p-3 hover:bg-muted/50 transition-colors">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-3">
+							<div className={css({ border: '1px solid', borderColor: 'border.default', rounded: 'lg', overflow: 'hidden' })}>
+								<CollapsibleTrigger className={css({ w: 'full', p: '3', _hover: { bg: 'bg.muted/50' }, transition: 'colors' })}>
+									<div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between' })}>
+										<div className={css({ display: 'flex', alignItems: 'center', gap: '3' })}>
 											{isExpanded ? (
-												<ChevronDown className="h-4 w-4 text-muted-foreground" />
+												<ChevronDown className={css({ h: '4', w: '4', color: 'fg.muted' })} />
 											) : (
-												<ChevronRight className="h-4 w-4 text-muted-foreground" />
+												<ChevronRight className={css({ h: '4', w: '4', color: 'fg.muted' })} />
 											)}
-											<div className="text-left">
-												<div className="flex items-center gap-2">
-													<Badge variant="outline" className="font-mono text-xs">
+											<div className={css({ textAlign: 'left' })}>
+												<div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+													<Badge variant="outline" className={css({ fontFamily: 'mono', fontSize: 'xs' })}>
 														#{log.logIndex}
 													</Badge>
-													<span className="text-sm font-medium">{eventName}</span>
+													<span className={css({ fontSize: 'sm', fontWeight: 'medium' })}>{eventName}</span>
 												</div>
-												<div className="text-xs text-muted-foreground mt-1">
+												<div className={css({ fontSize: 'xs', color: 'fg.muted', mt: '1' })}>
 													Contract: {formatAddress(log.address)}
 												</div>
 											</div>
 										</div>
-										<div className="text-xs text-muted-foreground">
+										<div className={css({ fontSize: 'xs', color: 'fg.muted' })}>
 											{log.topics.length} topics
 										</div>
 									</div>
 								</CollapsibleTrigger>
 
 								<CollapsibleContent>
-									<div className="px-3 pb-3 space-y-3 border-t">
+									<div className={css({ px: '3', pb: '3', display: 'flex', flexDir: 'column', gap: '3', borderTop: '1px solid', borderColor: 'border.default' })}>
 										{/* Contract Address */}
-										<div className="pt-3">
-											<label className="text-xs font-medium text-muted-foreground">Contract Address</label>
-											<div className="flex items-center gap-1 mt-1">
-												<code className="text-xs bg-muted px-2 py-1 rounded">{log.address}</code>
+										<div className={css({ pt: '3' })}>
+											<label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'fg.muted' })}>Contract Address</label>
+											<div className={css({ display: 'flex', alignItems: 'center', gap: '1', mt: '1' })}>
+												<code className={css({ fontSize: 'xs', bg: 'bg.muted', px: '2', py: '1', rounded: 'md' })}>{log.address}</code>
 												<CopyButton text={log.address} field={`log-${idx}-address`} />
 											</div>
 										</div>
@@ -111,17 +112,17 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 										{/* Topics */}
 										{log.topics.length > 0 && (
 											<div>
-												<label className="text-xs font-medium text-muted-foreground">
+												<label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'fg.muted' })}>
 													Topics ({log.topics.length})
 												</label>
-												<div className="space-y-1 mt-1">
+												<div className={css({ display: 'flex', flexDir: 'column', gap: '1', mt: '1' })}>
 													{log.topics.map((topic, topicIdx) => (
-														<div key={topicIdx} className="flex items-start gap-2">
-															<span className="text-xs text-muted-foreground min-w-[60px]">
+														<div key={topicIdx} className={css({ display: 'flex', alignItems: 'start', gap: '2' })}>
+															<span className={css({ fontSize: 'xs', color: 'fg.muted', minW: '60px' })}>
 																[{topicIdx}]
 															</span>
-															<div className="flex items-center gap-1 flex-1">
-																<code className="text-xs bg-muted px-2 py-1 rounded break-all flex-1">
+															<div className={css({ display: 'flex', alignItems: 'center', gap: '1', flex: '1' })}>
+																<code className={css({ fontSize: 'xs', bg: 'bg.muted', px: '2', py: '1', rounded: 'md', wordBreak: 'break-all', flex: '1' })}>
 																	{topic}
 																</code>
 																<CopyButton text={topic} field={`log-${idx}-topic-${topicIdx}`} />
@@ -135,14 +136,14 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 										{/* Data */}
 										{log.data && log.data !== '0x' && (
 											<div>
-												<label className="text-xs font-medium text-muted-foreground">Data</label>
-												<div className="flex items-center gap-1 mt-1">
-													<code className="text-xs bg-muted px-2 py-1 rounded break-all flex-1">
+												<label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'fg.muted' })}>Data</label>
+												<div className={css({ display: 'flex', alignItems: 'center', gap: '1', mt: '1' })}>
+													<code className={css({ fontSize: 'xs', bg: 'bg.muted', px: '2', py: '1', rounded: 'md', wordBreak: 'break-all', flex: '1' })}>
 														{log.data}
 													</code>
 													<CopyButton text={log.data} field={`log-${idx}-data`} />
 												</div>
-												<div className="text-xs text-muted-foreground mt-1">
+												<div className={css({ fontSize: 'xs', color: 'fg.muted', mt: '1' })}>
 													{(log.data.length - 2) / 2} bytes
 												</div>
 											</div>

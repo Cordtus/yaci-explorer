@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { getDenomMetadata } from '@/lib/denom'
+import { getEnv } from '@/lib/env'
 
 interface DenomContextType {
   getDenomDisplay: (denom: string) => string
@@ -24,9 +25,11 @@ export function DenomProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadDenomMetadata = async () => {
       try {
-        const postgrestUrl = import.meta.env.VITE_POSTGREST_URL
+        const postgrestUrl = getEnv('VITE_POSTGREST_URL')
         if (!postgrestUrl) {
-          throw new Error('VITE_POSTGREST_URL environment variable is not set')
+          console.warn('VITE_POSTGREST_URL environment variable is not set')
+          setIsLoading(false)
+          return
         }
         const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol`)
 

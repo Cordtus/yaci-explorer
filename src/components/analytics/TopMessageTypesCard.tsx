@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { api } from '@/lib/api'
+import { css } from '@/styled-system/css'
 
 interface MessageTypeStats {
   type: string
@@ -42,17 +43,17 @@ export function TopMessageTypesCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+          <CardTitle className={styles.titleFlex}>
+            <BarChart3 className={styles.icon} />
             Top Message Types
           </CardTitle>
           <CardDescription>Most frequently used message types</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className={styles.spaceY2}>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-8 bg-muted rounded"></div>
+              <div key={i} className={styles.animatePulse}>
+                <div className={styles.skeletonBar}></div>
               </div>
             ))}
           </div>
@@ -63,19 +64,18 @@ export function TopMessageTypesCard() {
 
   const maxCount = Math.max(...data.map(d => d.count))
 
-  // Color classes for the bars
-  const getColorClass = (index: number) => {
+  const getColorStyle = (index: number) => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-yellow-500',
-      'bg-red-500',
-      'bg-teal-500',
-      'bg-cyan-500'
+      'blue.500',
+      'green.500',
+      'purple.500',
+      'orange.500',
+      'pink.500',
+      'indigo.500',
+      'yellow.500',
+      'red.500',
+      'teal.500',
+      'cyan.500'
     ]
     return colors[index % colors.length]
   }
@@ -83,19 +83,19 @@ export function TopMessageTypesCard() {
   const getTrendIcon = (trend?: string) => {
     switch (trend) {
       case 'up':
-        return <TrendingUp className="h-3 w-3 text-green-500" />
+        return <TrendingUp className={css({ h: '3', w: '3', color: 'green.500' })} />
       case 'down':
-        return <TrendingDown className="h-3 w-3 text-red-500" />
+        return <TrendingDown className={css({ h: '3', w: '3', color: 'red.500' })} />
       default:
-        return <Minus className="h-3 w-3 text-muted-foreground" />
+        return <Minus className={css({ h: '3', w: '3', color: 'fg.muted' })} />
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
+        <CardTitle className={styles.titleFlex}>
+          <BarChart3 className={styles.icon} />
           Top Message Types
         </CardTitle>
         <CardDescription>
@@ -103,35 +103,35 @@ export function TopMessageTypesCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className={styles.spaceY4}>
           {data.map((stat, index) => (
-            <div key={stat.type} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">
+            <div key={stat.type} className={styles.spaceY2}>
+              <div className={styles.statRow}>
+                <div className={styles.statLeft}>
+                  <span className={styles.indexLabel}>
                     #{index + 1}
                   </span>
-                  <span className="font-medium truncate max-w-[200px]" title={stat.type}>
+                  <span className={styles.typeLabel} title={stat.type}>
                     {stat.type}
                   </span>
                   {getTrendIcon(stat.trend)}
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-muted-foreground">
+                <div className={styles.statRight}>
+                  <span className={styles.percentage}>
                     {stat.percentage.toFixed(1)}%
                   </span>
-                  <span className="font-mono font-medium">
+                  <span className={styles.count}>
                     {stat.count.toLocaleString()}
                   </span>
                 </div>
               </div>
-              <div className="relative h-6 bg-muted rounded-md overflow-hidden">
+              <div className={styles.barContainer}>
                 <div
-                  className={`absolute inset-y-0 left-0 ${getColorClass(index)} opacity-80 transition-all duration-500`}
+                  className={css({ position: 'absolute', insetY: '0', left: '0', bg: getColorStyle(index), opacity: '0.8', transition: 'all', transitionDuration: '500ms' })}
                   style={{ width: `${(stat.count / maxCount) * 100}%` }}
                 />
-                <div className="absolute inset-0 flex items-center px-2">
-                  <span className="text-xs font-medium text-white mix-blend-difference">
+                <div className={styles.barLabel}>
+                  <span className={styles.barText}>
                     {stat.count > 1000 ? `${(stat.count / 1000).toFixed(1)}k` : stat.count}
                   </span>
                 </div>
@@ -140,21 +140,44 @@ export function TopMessageTypesCard() {
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t">
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className={styles.summary}>
+          <div className={styles.summaryGrid}>
             <div>
-              <span className="text-muted-foreground">Total Messages:</span>
-              <span className="ml-2 font-medium">
+              <span className={styles.summaryLabel}>Total Messages:</span>
+              <span className={styles.summaryValue}>
                 {data.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground">Unique Types:</span>
-              <span className="ml-2 font-medium">{data.length}</span>
+              <span className={styles.summaryLabel}>Unique Types:</span>
+              <span className={styles.summaryValue}>{data.length}</span>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  titleFlex: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  icon: css({ h: '5', w: '5' }),
+  spaceY2: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  spaceY4: css({ display: 'flex', flexDirection: 'column', gap: '4' }),
+  animatePulse: css({ animation: 'pulse' }),
+  skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
+  statRow: css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 'sm' }),
+  statLeft: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  indexLabel: css({ fontFamily: 'mono', fontSize: 'xs', color: 'fg.muted' }),
+  typeLabel: css({ fontWeight: 'medium', truncate: true, maxW: '200px' }),
+  statRight: css({ display: 'flex', alignItems: 'center', gap: '3', fontSize: 'sm' }),
+  percentage: css({ color: 'fg.muted' }),
+  count: css({ fontFamily: 'mono', fontWeight: 'medium' }),
+  barContainer: css({ position: 'relative', h: '6', bg: 'muted', rounded: 'md', overflow: 'hidden' }),
+  barLabel: css({ position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', px: '2' }),
+  barText: css({ fontSize: 'xs', fontWeight: 'medium', color: 'white', mixBlendMode: 'difference' }),
+  summary: css({ mt: '4', pt: '4', borderTopWidth: '1px' }),
+  summaryGrid: css({ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4', fontSize: 'sm' }),
+  summaryLabel: css({ color: 'fg.muted' }),
+  summaryValue: css({ ml: '2', fontWeight: 'medium' }),
 }

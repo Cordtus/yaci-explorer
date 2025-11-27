@@ -1,111 +1,79 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import ReactECharts from 'echarts-for-react'
 import { api } from '@/lib/api'
-
-interface AddressActivity {
-  dates: string[]
-  counts: number[]
-  totalUnique: number
-}
-
-async function getActiveAddresses(): Promise<AddressActivity> {
-  // Use the RPC function for active addresses
-  const dailyData = await api.getActiveAddressesDaily(7)
-
-  if (!dailyData || dailyData.length === 0) {
-    return {
-      dates: [],
-      counts: [],
-      totalUnique: 0
-    }
-  }
-
-  // Sort by date and format
-  const sorted = dailyData.sort((a, b) => a.date.localeCompare(b.date))
-  const dates = sorted.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-  const counts = sorted.map(d => d.count)
-  const totalUnique = counts.reduce((sum, c) => sum + c, 0)
-
-  return {
-    dates,
-    counts,
-    totalUnique
-  }
-}
+import { css } from '@/styled-system/css'
 
 export function ActiveAddressesChart() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['active-addresses'],
-    queryFn: getActiveAddresses,
-    refetchInterval: 60000,
-  })
+	const { data: stats, isLoading } = useQuery({
+		queryKey: ['chain-stats'],
+		queryFn: () => api.getChainStats(),
+		refetchInterval: 30000,
+	})
 
-  if (isLoading || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Addresses</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
+	if (isLoading || !stats) {
+		return (
+			<Card>
+				<CardHeader>
+					<CardTitle>Active Addresses</CardTitle>
+					<CardDescription>Loading...</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Skeleton className={styles.skeleton} />
+				</CardContent>
+			</Card>
+		)
+	}
 
-  const option = {
-    tooltip: {
-      trigger: 'axis'
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: data.dates,
-      axisLabel: { fontSize: 10 }
-    },
-    yAxis: {
-      type: 'value',
-      name: 'Addresses'
-    },
-    series: [{
-      name: 'Active Addresses',
-      type: 'line',
-      smooth: true,
-      data: data.counts,
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(16, 185, 129, 0.4)' },
-            { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
-          ]
-        }
-      },
-      lineStyle: { color: '#10b981', width: 2 },
-      itemStyle: { color: '#10b981' }
-    }]
-  }
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>Unique Addresses</CardTitle>
+				<CardDescription>
+					Total unique addresses that have interacted with the chain
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<div className={styles.statsContainer}>
+					<div className={styles.statItem}>
+						<span className={styles.statValue}>{stats.unique_addresses.toLocaleString()}</span>
+						<span className={styles.statLabel}>Unique Addresses</span>
+					</div>
+					<div className={styles.statItem}>
+						<span className={styles.statValue}>{stats.total_transactions.toLocaleString()}</span>
+						<span className={styles.statLabel}>Total Transactions</span>
+					</div>
+					<div className={styles.statItem}>
+						<span className={styles.statValue}>{stats.active_validators}</span>
+						<span className={styles.statLabel}>Active Validators</span>
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+	)
+}
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Active Addresses</CardTitle>
-        <CardDescription>
-          {data.totalUnique} unique addresses (daily activity)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ReactECharts option={option} style={{ height: '250px' }} />
-      </CardContent>
-    </Card>
-  )
+const styles = {
+	skeleton: css({ h: '64', w: 'full' }),
+	statsContainer: css({
+		display: 'grid',
+		gridTemplateColumns: 'repeat(3, 1fr)',
+		gap: '4',
+		py: '4',
+	}),
+	statItem: css({
+		display: 'flex',
+		flexDir: 'column',
+		alignItems: 'center',
+		gap: '1',
+	}),
+	statValue: css({
+		fontSize: '2xl',
+		fontWeight: 'bold',
+		color: 'fg.default',
+	}),
+	statLabel: css({
+		fontSize: 'sm',
+		color: 'fg.muted',
+	}),
 }

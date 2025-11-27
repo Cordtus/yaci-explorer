@@ -1,6 +1,7 @@
 import { api } from '@/lib/api'
 import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
 import { subMinutes, subHours, subDays } from 'date-fns'
+import { getEnv } from '@/lib/env'
 
 // Simple cache implementation
 const cacheStore = new Map<string, { value: any; expires: number }>()
@@ -55,8 +56,8 @@ export interface BlockInterval {
 }
 
 // Configuration
-const REST_ENDPOINT = import.meta.env.VITE_CHAIN_REST_ENDPOINT
-const BASE_URL = import.meta.env.VITE_POSTGREST_URL || 'http://localhost:3000'
+const REST_ENDPOINT = getEnv('VITE_CHAIN_REST_ENDPOINT')
+const BASE_URL = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
 
 // Time utilities
 function getStartDate(range: TimeRange): Date {
@@ -96,7 +97,7 @@ async function getTotalTransactions(): Promise<number> {
   })
   if (!response.ok) return 0
   const totalHeader = response.headers.get('Content-Range')
-  return totalHeader ? parseInt(totalHeader.split('/')[1]) : 0
+  return totalHeader ? parseInt(totalHeader.split('/')[1], 10) : 0
 }
 
 /**
@@ -117,7 +118,7 @@ export async function getTransactionsInTimeRange(range: TimeRange): Promise<numb
 
   if (!response.ok) return 0
   const totalHeader = response.headers.get('Content-Range')
-  const count = totalHeader ? parseInt(totalHeader.split('/')[1]) : 0
+  const count = totalHeader ? parseInt(totalHeader.split('/')[1], 10) : 0
 
   cache.set(cacheKey, count)
   return count
@@ -167,7 +168,7 @@ async function getTotalSupply(chainInfo: ChainInfo): Promise<string | null> {
     )
     const raw = data.amount?.amount ? parseFloat(data.amount.amount) : NaN
     if (Number.isNaN(raw)) return null
-    const factor = Math.pow(10, chainInfo.decimals)
+    const factor = 10 ** chainInfo.decimals
     return (raw / factor).toLocaleString(undefined, { maximumFractionDigits: 2 })
   } catch {
     return null
@@ -181,7 +182,7 @@ async function getUniqueAddresses(): Promise<number | null> {
   )
   if (!response.ok) return null
   const totalHeader = response.headers.get('Content-Range')
-  return totalHeader ? parseInt(totalHeader.split('/')[1]) : null
+  return totalHeader ? parseInt(totalHeader.split('/')[1], 10) : null
 }
 
 /**
@@ -255,8 +256,8 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
 
   const blocks = await blocksResponse.json()
   const transactions = await txResponse.json()
-  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0')
-  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0')
+  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
+  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
 
   const avgBlockTime = calculateAvgBlockTime(blocks)
 

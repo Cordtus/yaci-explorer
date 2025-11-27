@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Search, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { css } from '@/styled-system/css'
 import { api } from '@/lib/api'
 
 /**
@@ -55,13 +55,14 @@ export function SearchBar() {
           navigate(`/blocks/${result.value.id}`)
           break
         case 'transaction':
-          navigate(`/transactions/${result.value.id}`)
+          navigate(`/tx/${result.value.id}`)
           break
         case 'evm_transaction':
           // EVM hash search - navigate to tx with EVM view enabled
-          navigate(`/transactions/${result.value.tx_id}?evm=true`)
+          navigate(`/tx/${result.value.tx_id}?evm=true`)
           break
         case 'address':
+        case 'evm_address':
           navigate(`/addr/${result.value.address}`)
           break
         default:
@@ -78,8 +79,8 @@ export function SearchBar() {
   }
 
   return (
-    <div className="relative">
-      <div className="relative">
+    <div className={css(styles.container)}>
+      <div className={css(styles.inputWrapper)}>
         <input
           ref={inputRef}
           type="text"
@@ -93,22 +94,16 @@ export function SearchBar() {
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder="Search by block, tx, address..."
-          className={cn(
-            'h-9 w-[200px] lg:w-[300px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors',
-            'placeholder:text-muted-foreground',
-            'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            'pr-20'
-          )}
+          className={css(styles.input)}
         />
-        <div className="absolute right-0 top-0 flex h-9 items-center pr-3">
+        <div className={css(styles.iconContainer)}>
           {isSearching ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className={css(styles.spinner)} />
           ) : (
             <>
-              <Search className="h-4 w-4 text-muted-foreground mr-2" />
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                <span className="text-xs">⌘</span>K
+              <Search className={css(styles.searchIcon)} />
+              <kbd className={css(styles.kbd)}>
+                <span className={css(styles.cmdSymbol)}>⌘</span>K
               </kbd>
             </>
           )}
@@ -116,12 +111,105 @@ export function SearchBar() {
       </div>
 
       {isOpen && query && (
-        <div className="absolute top-10 w-full rounded-md border bg-popover p-2 shadow-md">
-          <div className="text-xs text-muted-foreground">
+        <div className={css(styles.dropdown)}>
+          <div className={css(styles.dropdownText)}>
             Press Enter to search
           </div>
         </div>
       )}
     </div>
   )
+}
+
+const styles = {
+  container: {
+    position: 'relative',
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  input: {
+    height: '2.25rem',
+    width: '200px',
+    lg: { width: '300px' },
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'input',
+    backgroundColor: 'background',
+    paddingLeft: '0.75rem',
+    paddingRight: '5rem',
+    paddingTop: '0.25rem',
+    paddingBottom: '0.25rem',
+    fontSize: 'sm',
+    boxShadow: 'sm',
+    transitionProperty: 'colors',
+    transitionDuration: 'normal',
+    _placeholder: {
+      color: 'muted.foreground',
+    },
+    _focusVisible: {
+      outline: 'none',
+      ring: '1px',
+      ringColor: 'ring',
+    },
+    _disabled: {
+      cursor: 'not-allowed',
+      opacity: 0.5,
+    },
+  },
+  iconContainer: {
+    position: 'absolute',
+    right: '0',
+    top: '0',
+    display: 'flex',
+    height: '2.25rem',
+    alignItems: 'center',
+    paddingRight: '0.75rem',
+  },
+  spinner: {
+    height: '1rem',
+    width: '1rem',
+    animation: 'spin',
+    color: 'muted.foreground',
+  },
+  searchIcon: {
+    height: '1rem',
+    width: '1rem',
+    color: 'muted.foreground',
+    marginRight: '0.5rem',
+  },
+  kbd: {
+    pointerEvents: 'none',
+    display: 'inline-flex',
+    height: '1.25rem',
+    userSelect: 'none',
+    alignItems: 'center',
+    gap: '0.25rem',
+    borderRadius: 'sm',
+    border: '1px solid',
+    backgroundColor: 'muted',
+    paddingLeft: '0.375rem',
+    paddingRight: '0.375rem',
+    fontFamily: 'mono',
+    fontSize: '10px',
+    fontWeight: 'medium',
+    color: 'muted.foreground',
+  },
+  cmdSymbol: {
+    fontSize: 'xs',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '2.5rem',
+    width: '100%',
+    borderRadius: 'md',
+    border: '1px solid',
+    backgroundColor: 'popover',
+    padding: '0.5rem',
+    boxShadow: 'md',
+  },
+  dropdownText: {
+    fontSize: 'xs',
+    color: 'muted.foreground',
+  },
 }

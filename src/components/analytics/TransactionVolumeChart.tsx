@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { TrendingUp } from 'lucide-react'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
 
 interface VolumeData {
   time: string
@@ -25,7 +26,7 @@ async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
   for (let time = new Date(hoursAgo); time <= endTime; time.setHours(time.getHours() + 1)) {
     const hourStr = `${time.toISOString().split('T')[0]} ${time.getHours().toString().padStart(2, '0')}:00`
     result.push({
-      time: time.toISOString().substring(0, 13) + ':00:00',
+      time: `${time.toISOString().substring(0, 13)}:00:00`,
       count: volumeMap.get(hourStr) || 0,
       gasUsed: 0 // Gas data not available from hourly aggregation
     })
@@ -46,14 +47,14 @@ export function TransactionVolumeChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+          <CardTitle className={styles.titleFlex}>
+            <TrendingUp className={styles.icon} />
             Transaction Volume
           </CardTitle>
           <CardDescription>{hoursLabel}-hour transaction activity</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className={styles.loadingContainer}>
             Loading chart data...
           </div>
         </CardContent>
@@ -189,17 +190,24 @@ export function TransactionVolumeChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+        <CardTitle className={styles.titleFlex}>
+          <TrendingUp className={styles.icon} />
           Transaction Volume
         </CardTitle>
         <CardDescription>
           Last {hoursLabel}h * {totalTx.toLocaleString()} total * {avgTxPerHour} avg/hour * Peak: {peakHour.count} at {new Date(peakHour.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className={styles.content}>
         <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  titleFlex: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  icon: css({ h: '5', w: '5' }),
+  loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
+  content: css({ p: '4' }),
 }

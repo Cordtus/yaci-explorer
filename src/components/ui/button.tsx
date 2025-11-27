@@ -1,56 +1,72 @@
 import * as React from 'react'
-import { Slot } from '@radix-ui/react-slot'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cx, css } from '@/styled-system/css'
+import { button, type ButtonVariantProps } from '@/styled-system/recipes'
 
-import { cn } from '@/lib/utils'
+type LegacyVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+type LegacySize = 'default' | 'sm' | 'lg' | 'icon'
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline:
-          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  }
-)
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean
+  variant?: LegacyVariant | ButtonVariantProps['variant']
+  size?: LegacySize | ButtonVariantProps['size']
+}
+
+const mapVariant = (variant?: ButtonProps['variant']): ButtonVariantProps['variant'] => {
+  if (!variant || variant === 'default') return 'solid'
+  if (variant === 'destructive') return 'solid'
+  if (variant === 'secondary') return 'subtle'
+  return variant as ButtonVariantProps['variant']
+}
+
+const mapSize = (size?: ButtonProps['size']): ButtonVariantProps['size'] => {
+  if (!size || size === 'default') return 'md'
+  if (size === 'icon') return 'md'
+  if (size === 'lg') return 'lg'
+  return size as ButtonVariantProps['size']
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button'
+  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
+    const recipeClass = button({ variant: mapVariant(variant), size: mapSize(size) })
+
+    const destructiveStyles =
+      variant === 'destructive'
+        ? css({
+            bg: 'red.600',
+            color: 'white',
+            _hover: { bg: 'red.700' },
+          })
+        : undefined
+
+    const iconStyles =
+      size === 'icon'
+        ? css({
+            w: '10',
+            h: '10',
+            p: '0',
+            minW: '10',
+          })
+        : undefined
+
+    const mergedClass = cx(recipeClass, destructiveStyles, iconStyles, className)
+
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        className: cx(
+          (children.props as { className?: string })?.className,
+          mergedClass
+        ),
+      } as React.HTMLAttributes<HTMLElement>)
+    }
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
+      <button className={mergedClass} ref={ref} {...props}>
+        {children}
+      </button>
     )
   }
 )
 Button.displayName = 'Button'
 
-export { Button, buttonVariants }
+export { Button }

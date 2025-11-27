@@ -1,40 +1,33 @@
-import * as React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
+import type * as React from 'react'
+import { cx, css } from '@/styled-system/css'
+import { badge, type BadgeVariantProps } from '@/styled-system/recipes'
 
-import { cn } from '@/lib/utils'
+type LegacyVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
-        success:
-          'border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-        warning:
-          'border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-)
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: LegacyVariant | BadgeVariantProps['variant']
 }
 
-export { Badge, badgeVariants }
+const mapVariant = (variant?: BadgeProps['variant']): BadgeVariantProps['variant'] => {
+  if (!variant || variant === 'default') return 'solid'
+  if (variant === 'secondary') return 'subtle'
+  if (variant === 'destructive' || variant === 'success' || variant === 'warning') return 'solid'
+  return variant as BadgeVariantProps['variant']
+}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  const recipeClass = badge({ variant: mapVariant(variant) })
+
+  const colorOverrides =
+    variant === 'success'
+      ? css({ bg: 'green.600', color: 'white' })
+      : variant === 'warning'
+        ? css({ bg: 'yellow.500', color: 'black' })
+        : variant === 'destructive'
+          ? css({ bg: 'red.600', color: 'white' })
+          : undefined
+
+  return <div className={cx(recipeClass, colorOverrides, className)} {...props} />
+}
+
+export { Badge }

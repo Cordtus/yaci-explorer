@@ -159,7 +159,7 @@ export function formatDenomAmount(
   if (isNaN(numAmount)) return '0'
 
   // Convert from base units
-  const converted = numAmount / Math.pow(10, decimals)
+  const converted = numAmount / 10 ** decimals
 
   // Abbreviate large numbers if requested
   if (options?.abbreviated) {

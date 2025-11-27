@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import type { EvmData } from '@/lib/api'
+import { css } from '@/styled-system/css'
 
 interface EVMTransactionCardProps {
   evmData: EvmData
@@ -110,13 +111,13 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     <Button
       variant="ghost"
       size="icon"
-      className="h-5 w-5"
+      className={css({ h: '5', w: '5' })}
       onClick={() => copyToClipboard(text, field)}
     >
       {copied === field ? (
-        <CheckCircle className="h-3 w-3 text-green-500" />
+        <CheckCircle className={css({ h: '3', w: '3', color: 'green.500' })} />
       ) : (
-        <Copy className="h-3 w-3" />
+        <Copy className={css({ h: '3', w: '3' })} />
       )}
     </Button>
   )
@@ -137,10 +138,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">EVM Transaction Details</CardTitle>
+          <CardTitle className={css({ fontSize: 'lg' })}>Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-muted-foreground">EVM data not available</div>
+          <div className={css({ color: 'fg.muted' })}>EVM data not available</div>
         </CardContent>
       </Card>
     )
@@ -151,78 +152,78 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">EVM Transaction Details</CardTitle>
+        <div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between' })}>
+          <CardTitle className={css({ fontSize: 'lg' })}>Details</CardTitle>
           <Badge variant={evmData.status === 1 ? 'success' : 'destructive'}>
             {evmData.status === 1 ? 'Success' : 'Failed'}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={css({ display: 'flex', flexDir: 'column', gap: '4' })}>
         {/* Transaction Summary */}
-        <div className="bg-muted/50 p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
+        <div className={css({ bg: 'bg.muted', opacity: '0.5', p: '4', rounded: 'lg', borderWidth: '1px', borderColor: 'border.default' })}>
+          <div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between' })}>
             <div>
-              <div className="font-medium text-lg">{action.label}</div>
-              <div className="text-sm text-muted-foreground">{action.description}</div>
+              <div className={css({ fontWeight: 'medium', fontSize: 'lg' })}>{action.label}</div>
+              <div className={css({ fontSize: 'sm', color: 'fg.muted' })}>{action.description}</div>
             </div>
-            <div className="text-right">
-              <div className="font-mono font-medium">
+            <div className={css({ textAlign: 'right' })}>
+              <div className={css({ fontFamily: 'mono', fontWeight: 'medium' })}>
                 {formatWei(evmData.value)} RAI
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className={css({ fontSize: 'xs', color: 'fg.muted' })}>
                 Fee: {formatWei(transactionFee)} RAI
               </div>
             </div>
           </div>
         </div>
         {/* Transaction Hash */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">EVM Hash:</span>
-          <div className="flex items-center gap-1">
-            <code className="text-xs break-all">{evmData.hash}</code>
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>EVM Hash:</span>
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
+            <code className={css({ fontSize: 'xs', wordBreak: 'break-all' })}>{evmData.hash}</code>
             <CopyButton text={evmData.hash} field="hash" />
           </div>
         </div>
 
         {/* Transaction Type */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Type:</span>
-          <Badge variant="outline" className="w-fit text-xs">
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Type:</span>
+          <Badge variant="outline" className={css({ w: 'fit', fontSize: 'xs' })}>
             {getTxTypeLabel(evmData.type)}
           </Badge>
         </div>
 
         {/* From/To */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">From:</span>
-          <div className="flex items-center gap-1">
-            <code className="text-xs">{evmData.from || 'N/A'}</code>
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>From:</span>
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
+            <code className={css({ fontSize: 'xs' })}>{evmData.from || 'N/A'}</code>
             {evmData.from && <CopyButton text={evmData.from} field="from" />}
           </div>
         </div>
 
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">To:</span>
-          <div className="flex items-center gap-1">
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>To:</span>
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
             {evmData.to ? (
               <>
-                <code className="text-xs">{evmData.to}</code>
+                <code className={css({ fontSize: 'xs' })}>{evmData.to}</code>
                 <CopyButton text={evmData.to} field="to" />
               </>
             ) : (
-              <span className="text-muted-foreground italic">Contract Creation</span>
+              <span className={css({ color: 'fg.muted', fontStyle: 'italic' })}>Contract Creation</span>
             )}
           </div>
         </div>
 
         {/* Value */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Value:</span>
-          <span className="font-medium">
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Value:</span>
+          <span className={css({ fontWeight: 'medium' })}>
             {formatWei(evmData.value)} RAI
             {evmData.value !== '0' && (
-              <span className="text-xs text-muted-foreground ml-1">
+              <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
                 ({evmData.value} arai)
               </span>
             )}
@@ -230,30 +231,30 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         </div>
 
         {/* Transaction Fee */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Tx Fee:</span>
-          <span className="font-medium">
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Tx Fee:</span>
+          <span className={css({ fontWeight: 'medium' })}>
             {formatWei(transactionFee)} RAI
           </span>
         </div>
 
         {/* Gas */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Gas Used:</span>
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Gas Used:</span>
           <span>
             {formatNumber(gasUsed)} / {formatNumber(Number(gasLimit))}
-            <span className="text-xs text-muted-foreground ml-1">
+            <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
               ({gasEfficiency}%)
             </span>
           </span>
         </div>
 
         {/* Gas Price */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Gas Price:</span>
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Gas Price:</span>
           <span>
             {formatGwei(evmData.gasPrice)} Gwei
-            <span className="text-xs text-muted-foreground ml-1">
+            <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
               ({evmData.gasPrice} arai)
             </span>
           </span>
@@ -263,14 +264,14 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         {evmData.type === 2 && (
           <>
             {evmData.maxFeePerGas && (
-              <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-                <span className="text-muted-foreground">Max Fee:</span>
+              <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+                <span className={css({ color: 'fg.muted' })}>Max Fee:</span>
                 <span>{formatGwei(evmData.maxFeePerGas)} Gwei</span>
               </div>
             )}
             {evmData.maxPriorityFeePerGas && (
-              <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-                <span className="text-muted-foreground">Max Priority:</span>
+              <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+                <span className={css({ color: 'fg.muted' })}>Max Priority:</span>
                 <span>{formatGwei(evmData.maxPriorityFeePerGas)} Gwei</span>
               </div>
             )}
@@ -278,39 +279,39 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         )}
 
         {/* Nonce */}
-        <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-          <span className="text-muted-foreground">Nonce:</span>
+        <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+          <span className={css({ color: 'fg.muted' })}>Nonce:</span>
           <span>{evmData.nonce}</span>
         </div>
 
         {/* Input Data */}
         {evmData.data && evmData.data !== '0x' && (
           <Collapsible open={inputExpanded} onOpenChange={setInputExpanded}>
-            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              {inputExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <CollapsibleTrigger className={css({ display: 'flex', alignItems: 'center', gap: '2', fontSize: 'sm', color: 'fg.muted', _hover: { color: 'fg.default' } })}>
+              {inputExpanded ? <ChevronDown className={css({ h: '4', w: '4' })} /> : <ChevronRight className={css({ h: '4', w: '4' })} />}
               Input Data ({evmData.data.length / 2 - 1} bytes)
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2">
-              <div className="space-y-3">
+            <CollapsibleContent className={css({ mt: '2' })}>
+              <div className={css({ display: 'flex', flexDir: 'column', gap: '3' })}>
                 {/* Decoded function call */}
                 {evmData.functionName && (
-                  <div className="bg-muted/50 p-3 rounded text-sm space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Function:</span>
+                  <div className={css({ bg: 'bg.muted', opacity: '0.5', p: '3', rounded: 'md', fontSize: 'sm', display: 'flex', flexDir: 'column', gap: '2' })}>
+                    <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                      <span className={css({ color: 'fg.muted' })}>Function:</span>
                       <Badge variant="secondary">
                         {evmData.functionName}
                       </Badge>
                     </div>
                     {evmData.functionSignature && (
-                      <div className="text-xs text-muted-foreground font-mono">
+                      <div className={css({ fontSize: 'xs', color: 'fg.muted', fontFamily: 'mono' })}>
                         {evmData.functionSignature}
                       </div>
                     )}
                   </div>
                 )}
                 {/* Raw hex data */}
-                <div className="bg-muted p-3 rounded overflow-auto max-h-32">
-                  <code className="text-xs break-all">{evmData.data}</code>
+                <div className={css({ bg: 'bg.muted', p: '3', rounded: 'md', overflowX: 'auto', maxH: '32' })}>
+                  <code className={css({ fontSize: 'xs', wordBreak: 'break-all' })}>{evmData.data}</code>
                 </div>
               </div>
             </CollapsibleContent>

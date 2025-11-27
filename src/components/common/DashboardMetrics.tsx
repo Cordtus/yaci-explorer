@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
 import { getOverviewMetrics } from '@/lib/metrics'
+import { css } from '@/styled-system/css'
 
 /**
  * Dashboard metrics component displaying key chain statistics
@@ -48,74 +49,78 @@ export function DashboardMetrics() {
   return (
     <>
       {/* Primary Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className={css({
+        display: 'grid',
+        gap: '4',
+        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }
+      })}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Latest Block</CardTitle>
-            <Blocks className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Latest Block</CardTitle>
+            <Blocks className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.latestBlock || 0)}
+            <div className={css(styles.valueText)}>
+              {statsLoading ? <Skeleton className={css(styles.skeletonLarge)} /> : formatNumber(stats?.latestBlock || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={css(styles.helperText)}>
               {avgBlockTime.toFixed(2)}s avg block time
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Transactions</CardTitle>
+            <Activity className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {statsLoading ? <Skeleton className="h-8 w-24" /> : formatNumber(stats?.totalTransactions || 0)}
+            <div className={css(styles.valueText)}>
+              {statsLoading ? <Skeleton className={css(styles.skeletonLarge)} /> : formatNumber(stats?.totalTransactions || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={css(styles.helperText)}>
               Total indexed
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Validators</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Active Validators</CardTitle>
+            <Users className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={css(styles.valueText)}>
               {statsLoading ? (
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className={css(styles.skeletonLarge)} />
               ) : hasActiveValidators ? (
                 activeValidators
               ) : (
-                <span className="text-muted-foreground text-base">-</span>
+                <span className={css(styles.mutedValue)}>-</span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={css(styles.helperText)}>
               {hasActiveValidators ? 'Active set' : 'Fetching validator data...'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Supply</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Total Supply</CardTitle>
+            <TrendingUp className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={css(styles.valueText)}>
               {statsLoading ? (
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className={css(styles.skeletonLarge)} />
               ) : stats?.totalSupply ? (
                 stats.totalSupply
               ) : (
-                <span className="text-muted-foreground text-base">-</span>
+                <span className={css(styles.mutedValue)}>-</span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={css(styles.helperText)}>
               {stats?.totalSupply ? 'Native Token' : 'Not available'}
             </p>
           </CardContent>
@@ -123,22 +128,26 @@ export function DashboardMetrics() {
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className={css({
+        display: 'grid',
+        gap: '4',
+        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }
+      })}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fee Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Fee Revenue</CardTitle>
+            <DollarSign className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">
+            <div className={css(styles.valueTextSmall)}>
               {!feeRevenue ? (
-                <Skeleton className="h-6 w-20" />
+                <Skeleton className={css(styles.skeletonSmall)} />
               ) : (
-                <div className="flex flex-col gap-1">
+                <div className={css(styles.revenueContainer)}>
                   {Object.entries(feeRevenue).slice(0, 2).map(([denom, amount]) => {
                     const formatted = formatDenomAmount(amount, denom, { maxDecimals: 2 })
                     return (
-                      <span key={denom} className="inline-flex items-center gap-1 text-sm">
+                      <span key={denom} className={css(styles.revenueItem)}>
                         {formatted} <DenomDisplay denom={denom} />
                       </span>
                     )
@@ -150,19 +159,19 @@ export function DashboardMetrics() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Gas Limit</CardTitle>
-            <Gauge className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={css(styles.cardHeader)}>
+            <CardTitle className={css(styles.cardTitle)}>Avg Gas Limit</CardTitle>
+            <Gauge className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">
+            <div className={css(styles.valueTextSmall)}>
               {!gasEfficiency ? (
-                <Skeleton className="h-6 w-20" />
+                <Skeleton className={css(styles.skeletonSmall)} />
               ) : (
                 `${(gasEfficiency.avgGasLimit / 1000).toFixed(0)}K`
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={css(styles.helperText)}>
               {gasEfficiency && `${formatNumber(gasEfficiency.transactionCount)} txs`}
             </p>
           </CardContent>
@@ -170,4 +179,59 @@ export function DashboardMetrics() {
       </div>
     </>
   )
+}
+
+const styles = {
+  cardHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    spaceY: '0',
+    paddingBottom: '0.5rem',
+  },
+  cardTitle: {
+    fontSize: 'sm',
+    fontWeight: 'medium',
+  },
+  icon: {
+    height: '1rem',
+    width: '1rem',
+    color: 'fg.muted',
+  },
+  valueText: {
+    fontSize: '2xl',
+    fontWeight: 'bold',
+  },
+  valueTextSmall: {
+    fontSize: 'xl',
+    fontWeight: 'bold',
+  },
+  helperText: {
+    fontSize: 'xs',
+    color: 'fg.muted',
+  },
+  mutedValue: {
+    color: 'fg.muted',
+    fontSize: 'base',
+  },
+  skeletonLarge: {
+    height: '2rem',
+    width: '6rem',
+  },
+  skeletonSmall: {
+    height: '1.5rem',
+    width: '5rem',
+  },
+  revenueContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+  },
+  revenueItem: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    fontSize: 'sm',
+  },
 }

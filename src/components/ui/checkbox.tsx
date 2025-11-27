@@ -1,30 +1,59 @@
-"use client"
+import { Checkbox as ArkCheckbox } from '@ark-ui/react/checkbox'
+import { Check } from 'lucide-react'
+import { cx, css } from '@/styled-system/css'
+import { checkbox } from '@/styled-system/recipes'
 
-import * as React from "react"
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
-import { Check } from "lucide-react"
+const slots = checkbox()
 
-import { cn } from "@/lib/utils"
+interface CheckboxProps {
+  id?: string
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+  disabled?: boolean
+  className?: string
+  children?: React.ReactNode
+}
 
-const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+const Checkbox = ({ className, id, checked, onCheckedChange, disabled, ...props }: CheckboxProps) => (
+  <ArkCheckbox.Root
+    id={id}
+    checked={checked}
+    onCheckedChange={(details) => onCheckedChange?.(details.checked === true)}
+    disabled={disabled}
+    className={cx(
+      slots.root,
+      css({
+        display: 'inline-flex',
+        alignItems: 'center',
+      }),
       className
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator
-      className={cn("flex items-center justify-center text-current")}
+    <ArkCheckbox.Control
+      className={cx(
+        slots.control,
+        css({
+          h: '4',
+          w: '4',
+          flexShrink: '0',
+          rounded: 'sm',
+          borderWidth: '1px',
+          borderColor: 'accent.default',
+          _focus: { outline: 'none', ring: '2', ringColor: 'accent.default', ringOffset: '2' },
+          _disabled: { cursor: 'not-allowed', opacity: '0.5' },
+          _checked: { bg: 'accent.default', color: 'white' },
+        })
+      )}
     >
-      <Check className="h-4 w-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
-))
-Checkbox.displayName = CheckboxPrimitive.Root.displayName
+      <ArkCheckbox.Indicator
+        className={css({ display: 'flex', alignItems: 'center', justifyContent: 'center' })}
+      >
+        <Check className={css({ h: '4', w: '4' })} />
+      </ArkCheckbox.Indicator>
+    </ArkCheckbox.Control>
+    <ArkCheckbox.HiddenInput />
+  </ArkCheckbox.Root>
+)
 
 export { Checkbox }

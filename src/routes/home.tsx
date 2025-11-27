@@ -5,9 +5,10 @@ import { ArrowRight, Blocks, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
+import { formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
+import { css } from '@/styled-system/css'
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -39,65 +40,67 @@ export default function DashboardPage() {
   // Display errors if any
   if (mounted && (blocksError || txError)) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-red-600">Error Loading Data</h2>
-        {blocksError && <p className="text-red-500">Blocks error: {String(blocksError)}</p>}
-        {txError && <p className="text-red-500">Transactions error: {String(txError)}</p>}
-        <p className="text-sm text-muted-foreground">API URL: {api['baseUrl']}</p>
+      <div className={css(styles.errorContainer)}>
+        <h2 className={css(styles.errorTitle)}>Error Loading Data</h2>
+        {blocksError && <p className={css(styles.errorText)}>Blocks error: {String(blocksError)}</p>}
+        {txError && <p className={css(styles.errorText)}>Transactions error: {String(txError)}</p>}
+        <p className={css(styles.errorApiUrl)}>API URL: {api.getBaseUrl()}</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      {/* Dashboard Metrics */}
+    <div className={css(styles.container)}>
       <DashboardMetrics />
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Latest Blocks */}
+      <div className={css({
+        display: 'grid',
+        gap: '8',
+        gridTemplateColumns: { base: '1fr', lg: 'repeat(2, 1fr)' }
+      })}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className={css(styles.cardHeader)}>
             <CardTitle>Latest Blocks</CardTitle>
             <Link
               to="/blocks"
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              className={css(styles.viewAllLink)}
             >
-              View all <ArrowRight className="h-4 w-4" />
+              View all <ArrowRight className={css(styles.arrowIcon)} />
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className={css(styles.listContainer)}>
               {blocksLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className={css(styles.skeleton)} />
                 ))
               ) : (
                 blocks?.data.map((block) => (
                   <div
                     key={block.id}
-                    className="flex items-center justify-between py-3 border-b last:border-0"
+                    className={css(styles.listItem)}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Blocks className="h-5 w-5 text-primary" />
+                    <div className={css(styles.itemLeft)}>
+                      <div className={css(styles.iconCircle)}>
+                        <Blocks className={css(styles.icon)} />
                       </div>
                       <div>
                         <Link
                           to={`/blocks/${block.id}`}
-                          className="font-medium hover:text-primary"
+                          className={css(styles.itemLink)}
                         >
                           Block #{block.id}
                         </Link>
-                        <div className="text-sm text-muted-foreground">
+                        <div className={css(styles.itemSubtext)}>
                           {block.data?.block?.header?.time ? formatTimeAgo(block.data.block.header.time) : '-'}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm">
+                    <div className={css(styles.itemRight)}>
+                      <div className={css(styles.itemStat)}>
                         {block.data?.txs?.length || 0} txs
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className={css(styles.itemHash)}>
                         {formatHash(block.data?.block_id?.hash || block.data?.blockId?.hash || '', 6)}
                       </div>
                     </div>
@@ -108,22 +111,21 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Latest Transactions */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className={css(styles.cardHeader)}>
             <CardTitle>Latest Transactions</CardTitle>
             <Link
-              to="/transactions"
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              to="/tx"
+              className={css(styles.viewAllLink)}
             >
-              View all <ArrowRight className="h-4 w-4" />
+              View all <ArrowRight className={css(styles.arrowIcon)} />
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className={css(styles.listContainer)}>
               {txLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className={css(styles.skeleton)} />
                 ))
               ) : (
                 transactions?.data.map((tx) => {
@@ -131,32 +133,32 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={tx.id}
-                      className="flex items-center justify-between py-3 border-b last:border-0"
+                      className={css(styles.listItem)}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Activity className="h-5 w-5 text-primary" />
+                      <div className={css(styles.itemLeft)}>
+                        <div className={css(styles.iconCircle)}>
+                          <Activity className={css(styles.icon)} />
                         </div>
                         <div>
                           <Link
-                            to={`/transactions/${tx.id}`}
-                            className="font-medium hover:text-primary"
+                            to={`/tx/${tx.id}`}
+                            className={css(styles.itemLink)}
                           >
                             {formatHash(tx.id, 8)}
                           </Link>
-                          <div className="text-sm text-muted-foreground">
+                          <div className={css(styles.itemSubtext)}>
                             {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className={css(styles.itemRight)}>
                         <Badge
                           variant={tx.error ? 'destructive' : 'success'}
-                          className="mb-1"
+                          className={css(styles.badge)}
                         >
                           {status.label}
                         </Badge>
-                        <div className="text-xs text-muted-foreground">
+                        <div className={css(styles.itemHash)}>
                           {tx.height ? `Block #${tx.height}` : 'Block unknown'}
                         </div>
                       </div>
@@ -170,4 +172,110 @@ export default function DashboardPage() {
       </div>
     </div>
   )
+}
+
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8',
+  },
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4',
+  },
+  errorTitle: {
+    fontSize: '2xl',
+    fontWeight: 'bold',
+    color: 'red.600',
+  },
+  errorText: {
+    color: 'red.500',
+  },
+  errorApiUrl: {
+    fontSize: 'sm',
+    color: 'fg.muted',
+  },
+  cardHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewAllLink: {
+    fontSize: 'sm',
+    color: 'fg.muted',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1',
+    _hover: {
+      color: 'fg.default',
+    },
+  },
+  arrowIcon: {
+    height: '4',
+    width: '4',
+  },
+  listContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4',
+  },
+  skeleton: {
+    height: '16',
+    width: 'full',
+  },
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingY: '3',
+    borderBottomWidth: '1px',
+    _last: {
+      borderBottomWidth: '0',
+    },
+  },
+  itemLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4',
+  },
+  iconCircle: {
+    height: '10',
+    width: '10',
+    borderRadius: 'full',
+    backgroundColor: 'colorPalette.a10',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    height: '5',
+    width: '5',
+    color: 'colorPalette',
+  },
+  itemLink: {
+    fontWeight: 'medium',
+    _hover: {
+      color: 'colorPalette',
+    },
+  },
+  itemSubtext: {
+    fontSize: 'sm',
+    color: 'fg.muted',
+  },
+  itemRight: {
+    textAlign: 'right',
+  },
+  itemStat: {
+    fontSize: 'sm',
+  },
+  itemHash: {
+    fontSize: 'xs',
+    color: 'fg.muted',
+  },
+  badge: {
+    marginBottom: '1',
+  },
 }
