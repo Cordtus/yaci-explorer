@@ -1,9 +1,11 @@
-import { Activity, BarChart3, Blocks, FileCode2, Home } from 'lucide-react'
+import { Activity, BarChart3, Blocks, FileCode2, Home, Moon, Sun, Monitor } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
+import { useTheme } from '@/contexts/ThemeContext'
 import { css, cx } from '@/styled-system/css'
+import { Button } from '@/components/ui/button'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -12,6 +14,34 @@ const navigation = [
   { name: 'EVM', href: '/evm/contracts', icon: FileCode2 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
+
+function ThemeToggle() {
+  const { theme, setTheme, resolvedTheme } = useTheme()
+
+  const cycleTheme = () => {
+    if (theme === 'system') setTheme('light')
+    else if (theme === 'light') setTheme('dark')
+    else setTheme('system')
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={cycleTheme}
+      className={css({ h: '9', w: '9' })}
+      title={`Theme: ${theme} (${resolvedTheme})`}
+    >
+      {theme === 'system' ? (
+        <Monitor className={css({ h: '4', w: '4' })} />
+      ) : resolvedTheme === 'dark' ? (
+        <Moon className={css({ h: '4', w: '4' })} />
+      ) : (
+        <Sun className={css({ h: '4', w: '4' })} />
+      )}
+    </Button>
+  )
+}
 
 export function Header() {
   const location = useLocation()
@@ -54,6 +84,7 @@ export function Header() {
 
           <div className={styles.right}>
             <SearchBar />
+            <ThemeToggle />
           </div>
         </div>
       </div>

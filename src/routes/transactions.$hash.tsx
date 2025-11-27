@@ -247,9 +247,9 @@ export default function TransactionDetailPage() {
               className={css(styles.evmToggleButton)}
             >
               {evmView ? (
-                <><ToggleRight className={css(styles.toggleIcon)} /> EVM View</>
+                <><ToggleRight className={css(styles.toggleIcon)} /> EVM Details</>
               ) : (
-                <><ToggleLeft className={css(styles.toggleIcon)} /> Cosmos View</>
+                <><ToggleLeft className={css(styles.toggleIcon)} /> Overview</>
               )}
             </Button>
           </div>
@@ -275,20 +275,19 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
+      {/* EVM Details View - Full width, shows only EVM details */}
+      {evmView && transaction.evm_data ? (
+        <div className={css({ display: 'flex', flexDir: 'column', gap: '6' })}>
+          <EVMTransactionCard evmData={transaction.evm_data} />
+          {transaction.evm_logs && transaction.evm_logs.length > 0 && (
+            <EVMLogsCard logs={transaction.evm_logs} />
+          )}
+        </div>
+      ) : (
       <div className={css(styles.mainGrid)}>
         {/* Main Content Area */}
         <div className={css(styles.mainContent)}>
-          {/* EVM View Mode - Show EVM card prominently */}
-          {evmView && transaction.evm_data && (
-            <>
-              <EVMTransactionCard evmData={transaction.evm_data} />
-              {transaction.evm_logs && transaction.evm_logs.length > 0 && (
-                <EVMLogsCard logs={transaction.evm_logs} />
-              )}
-            </>
-          )}
-
-          {/* Transaction Overview - Show in both modes */}
+          {/* Transaction Overview */}
           <Card>
             <CardHeader>
               <CardTitle>Transaction Overview</CardTitle>
@@ -643,6 +642,7 @@ export default function TransactionDetailPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
@@ -1133,9 +1133,10 @@ const styles = {
   },
   summaryLinkValue: {
     fontWeight: 'medium',
-    color: 'colorPalette.fg',
+    color: 'accent.default',
     _hover: {
-      color: 'colorPalette.emphasized'
+      color: 'accent.emphasized',
+      textDecoration: 'underline'
     }
   }
 }

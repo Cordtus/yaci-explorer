@@ -138,7 +138,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className={css({ fontSize: 'lg' })}>EVM Transaction Details</CardTitle>
+          <CardTitle className={css({ fontSize: 'lg' })}>Details</CardTitle>
         </CardHeader>
         <CardContent>
           <div className={css({ color: 'fg.muted' })}>EVM data not available</div>
@@ -153,7 +153,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     <Card>
       <CardHeader>
         <div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between' })}>
-          <CardTitle className={css({ fontSize: 'lg' })}>EVM Transaction Details</CardTitle>
+          <CardTitle className={css({ fontSize: 'lg' })}>Details</CardTitle>
           <Badge variant={evmData.status === 1 ? 'success' : 'destructive'}>
             {evmData.status === 1 ? 'Success' : 'Failed'}
           </Badge>
