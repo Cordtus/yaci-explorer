@@ -74,7 +74,9 @@ jobs:
         with:
           script: |
             const previewUrl = `https://${process.env.PREVIEW_APP}.fly.dev`;
-            const body = `Preview deployment ready!\n\n${previewUrl}`;
+            const sha = context.sha.slice(0, 7);
+            const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+            const body = `**Preview deployment ready!**\n\n${previewUrl}\n\nLast deployed: \`${sha}\` at ${timestamp}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
