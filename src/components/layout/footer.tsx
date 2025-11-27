@@ -12,7 +12,6 @@ const links = {
     { label: 'Blog', href: 'https://republicai.io/blog' },
   ],
   resources: [
-    { label: 'Explorer', href: '/' },
     { label: 'Faucet', href: 'https://faucet.republicai.io' },
   ],
   legal: [
