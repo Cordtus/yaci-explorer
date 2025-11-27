@@ -1,7 +1,6 @@
 import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
-import { TxTypeBreakdown } from '@/components/analytics/TxTypeBreakdown'
 import { css } from '@/styled-system/css'
 
 export default function AnalyticsPage() {
@@ -17,9 +16,6 @@ export default function AnalyticsPage() {
         <TransactionVolumeChart />
         <BlockIntervalChart />
       </div>
-
-      {/* Transaction type breakdown */}
-      <TxTypeBreakdown />
     </div>
   )
 }
