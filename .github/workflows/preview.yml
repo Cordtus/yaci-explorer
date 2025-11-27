@@ -3,6 +3,11 @@ name: Preview Deployment
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
 
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
