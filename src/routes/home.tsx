@@ -5,6 +5,7 @@ import { ArrowRight, Blocks, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 import { formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
@@ -20,20 +21,22 @@ export default function DashboardPage() {
   const { data: blocks, isLoading: blocksLoading, error: blocksError } = useQuery({
     queryKey: ['latestBlocks'],
     queryFn: async () => {
-      const result = await api.getBlocks(5, 0)
+      const result = await api.getBlocks(appConfig.dashboard.itemCount, 0)
       return result
     },
-    refetchInterval: 2000,
+    refetchInterval: appConfig.dashboard.refetchIntervalMs,
+    staleTime: appConfig.dashboard.refetchIntervalMs / 2,
     enabled: mounted,
   })
 
   const { data: transactions, isLoading: txLoading, error: txError } = useQuery({
     queryKey: ['latestTransactions'],
     queryFn: async () => {
-      const result = await api.getTransactions(5, 0)
+      const result = await api.getTransactions(appConfig.dashboard.itemCount, 0)
       return result
     },
-    refetchInterval: 2000,
+    refetchInterval: appConfig.dashboard.refetchIntervalMs,
+    staleTime: appConfig.dashboard.refetchIntervalMs / 2,
     enabled: mounted,
   })
 

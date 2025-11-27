@@ -35,7 +35,7 @@ export interface BrandingConfig {
  */
 export function getBrandingConfig(): BrandingConfig {
   return {
-    appName: env.VITE_APP_NAME || 'Yaci Explorer',
+    appName: env.VITE_APP_NAME || 'Republic Explorer',
     appNameShort: env.VITE_APP_NAME_SHORT || 'Explorer',
     logoUrl: env.VITE_LOGO_URL,
     faviconUrl: env.VITE_FAVICON_URL,

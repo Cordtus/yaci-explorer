@@ -17,7 +17,7 @@ const defaultConfig: AppConfig = {
 	apiUrl: 'https://yaci-explorer-apis.fly.dev',
 	chainRestEndpoint: undefined,
 	evmRpcEndpoint: undefined,
-	appName: 'Yaci Explorer',
+	appName: 'Republic Explorer',
 	appNameShort: 'Explorer'
 }
 

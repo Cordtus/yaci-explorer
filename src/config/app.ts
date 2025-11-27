@@ -20,6 +20,12 @@ export const appConfig = {
     staleTimeMs: toNumber(env.VITE_QUERY_STALE_MS, 10_000),
     gcTimeMs: toNumber(env.VITE_QUERY_GC_MS, 300_000),
   },
+  dashboard: {
+    // Refresh interval for latest blocks/transactions (default 6s, was 2s)
+    refetchIntervalMs: toNumber(env.VITE_DASHBOARD_REFRESH_MS, 6_000),
+    // Number of items to show in latest blocks/transactions lists
+    itemCount: toNumber(env.VITE_DASHBOARD_ITEM_COUNT, 5),
+  },
   transactions: {
     pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 20),
   },

@@ -4,6 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import type { EvmData } from '@/lib/api'
 import { css } from '@/styled-system/css'
 
@@ -198,8 +199,16 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
           <span className={css({ color: 'fg.muted' })}>From:</span>
           <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
-            <code className={css({ fontSize: 'xs' })}>{evmData.from || 'N/A'}</code>
-            {evmData.from && <CopyButton text={evmData.from} field="from" />}
+            {evmData.from ? (
+              <>
+                <Link to={`/addr/${evmData.from}`} className={css({ fontSize: 'xs', fontFamily: 'mono', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+                  {evmData.from}
+                </Link>
+                <CopyButton text={evmData.from} field="from" />
+              </>
+            ) : (
+              <span className={css({ fontSize: 'xs' })}>N/A</span>
+            )}
           </div>
         </div>
 
@@ -208,7 +217,9 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
           <div className={css({ display: 'flex', alignItems: 'center', gap: '1' })}>
             {evmData.to ? (
               <>
-                <code className={css({ fontSize: 'xs' })}>{evmData.to}</code>
+                <Link to={`/addr/${evmData.to}`} className={css({ fontSize: 'xs', fontFamily: 'mono', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+                  {evmData.to}
+                </Link>
                 <CopyButton text={evmData.to} field="to" />
               </>
             ) : (

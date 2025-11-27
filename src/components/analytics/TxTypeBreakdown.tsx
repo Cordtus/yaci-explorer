@@ -101,7 +101,7 @@ export function TxTypeBreakdown() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ReactECharts option={option} style={{ height: '250px' }} />
+        <ReactECharts option={option} style={{ height: '250px' }} notMerge={true} lazyUpdate={true} />
       </CardContent>
     </Card>
   )

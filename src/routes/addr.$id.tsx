@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
 import { css, cx } from '@/styled-system/css'
 
 /**
@@ -353,30 +354,12 @@ export default function AddressDetailPage() {
 
               {/* Pagination */}
               {transactions.pagination.total > pageSize && (
-                <div className={styles.paginationContainer}>
-                  <div className={styles.paginationInfo}>
-                    Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, transactions.pagination.total)} of{' '}
-                    {transactions.pagination.total} transactions
-                  </div>
-                  <div className={styles.paginationButtons}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={!transactions.pagination.has_prev}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => p + 1)}
-                      disabled={!transactions.pagination.has_next}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                <Pagination
+                  currentPage={page}
+                  totalPages={Math.ceil(transactions.pagination.total / pageSize)}
+                  onPageChange={setPage}
+                  isLoading={txLoading}
+                />
               )}
             </>
           ) : (
@@ -612,20 +595,6 @@ const styles = {
   timeCell: css({
     fontSize: 'sm',
     color: 'fg.muted',
-  }),
-  paginationContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: '1rem',
-  }),
-  paginationInfo: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
-  }),
-  paginationButtons: css({
-    display: 'flex',
-    gap: '0.5rem',
   }),
   emptyState: css({
     textAlign: 'center',

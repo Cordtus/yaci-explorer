@@ -220,3 +220,46 @@ export function isEVMTransaction(messages: { type?: string }[]): boolean {
 
   return messages.some((msg) => msg.type?.includes('MsgEthereumTx') || msg.type?.includes('evm'))
 }
+
+/**
+ * Format fee for native cosmos transactions
+ * Handles micro denoms (u prefix = 6 decimals), atto denoms (a prefix = 18 decimals)
+ */
+export function formatNativeFee(amount: string, denom: string): string {
+  if (!amount || amount === '0') return '0'
+  const value = BigInt(amount)
+
+  // Detect decimals based on denom prefix
+  let decimals = 6
+  let displayDenom = denom
+
+  if (denom.startsWith('u')) {
+    decimals = 6
+    displayDenom = denom.slice(1).toUpperCase()
+  } else if (denom.startsWith('a')) {
+    decimals = 18
+    displayDenom = denom.slice(1).toUpperCase()
+  }
+
+  const divisor = BigInt(10 ** decimals)
+  const wholePart = value / divisor
+  const fractionalPart = value % divisor
+
+  if (fractionalPart === BigInt(0)) {
+    return `${wholePart.toLocaleString()} ${displayDenom}`
+  }
+
+  const fractionalStr = fractionalPart.toString().padStart(decimals, '0')
+  const trimmed = fractionalStr.replace(/0+$/, '')
+  const displayValue = trimmed ? `${wholePart}.${trimmed.slice(0, 6)}` : wholePart.toString()
+
+  return `${displayValue} ${displayDenom}`
+}
+
+/**
+ * Format fee amount in raw base units (e.g., arai)
+ */
+export function formatRawFee(amount: string, denom: string): string {
+  if (!amount || amount === '0') return `0 ${denom}`
+  return `${BigInt(amount).toLocaleString()} ${denom}`
+}

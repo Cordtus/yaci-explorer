@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { getEnv } from '@/lib/env'
-import { formatNumber, formatTimeAgo } from '@/lib/utils'
+import { formatNumber, formatTimeAgo, formatNativeFee, formatRawFee } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
@@ -324,16 +324,18 @@ export default function TransactionDetailPage() {
                 </div>
                 <div>
                   <label className={css(styles.fieldLabel)}>Fee</label>
-                  <p className={css(styles.fieldValueSmall)}>
+                  <div className={css(styles.fieldValueSmall)}>
                     {feeAmounts.length > 0
                       ? feeAmounts.map((fee: any, idx: number) => (
-                          <span key={idx}>
-                            {formatNumber(fee.amount)} {fee.denom}
-                            {idx < feeAmounts.length - 1 && ', '}
-                          </span>
+                          <div key={idx}>
+                            <span>{formatNativeFee(fee.amount, fee.denom)}</span>
+                            <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
+                              ({formatRawFee(fee.amount, fee.denom)})
+                            </span>
+                          </div>
                         ))
                       : 'N/A'}
-                  </p>
+                  </div>
                 </div>
                 <div>
                   <label className={css(styles.fieldLabel)}>Gas Limit</label>

@@ -166,7 +166,7 @@ export function BlockIntervalChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
+        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
       </CardContent>
     </Card>
   )

@@ -52,7 +52,7 @@ export function SearchBar() {
 
       switch (result.type) {
         case 'block':
-          navigate(`/blocks/${result.value.id}`)
+          navigate(`/blocks/${result.value.height || result.value.id}`)
           break
         case 'transaction':
           navigate(`/tx/${result.value.id}`)

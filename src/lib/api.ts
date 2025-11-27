@@ -1,5 +1,5 @@
 /**
- * YACI Explorer API Client
+ * Republic Explorer API Client
  * Self-contained client for PostgREST RPC endpoints
  */
 
@@ -138,8 +138,11 @@ export interface BlockRaw {
 			header: {
 				height: string
 				time: string
-				chain_id: string
-				proposer_address: string
+				// API may return either snake_case or camelCase depending on source
+				chain_id?: string
+				chainId?: string
+				proposer_address?: string
+				proposerAddress?: string
 			}
 			data: {
 				txs: string[]
