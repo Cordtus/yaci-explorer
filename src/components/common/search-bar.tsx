@@ -152,9 +152,7 @@ export function SearchBar() {
           ) : (
             <>
               <Search className={css(styles.searchIcon)} />
-              <kbd className={css(styles.kbd)}>
-                <span className={css(styles.cmdSymbol)}>⌘</span>K
-              </kbd>
+              <kbd className={css(styles.kbd)}>Ctrl+K</kbd>
             </>
           )}
         </div>
@@ -267,9 +265,6 @@ const styles = {
     fontSize: '10px',
     fontWeight: 'medium',
     color: 'muted.foreground',
-  },
-  cmdSymbol: {
-    fontSize: 'xs',
   },
   dropdown: {
     position: 'absolute',

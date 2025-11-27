@@ -9,7 +9,7 @@ import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
 import { getOverviewMetrics } from '@/lib/metrics'
 import { css } from '@/styled-system/css'
-import { ValidatorIcon, GasIcon } from '@/components/icons/chain-icons'
+import { ValidatorIcon, GasIcon } from '@/components/icons/icons'
 
 /**
  * Dashboard metrics component displaying key chain statistics

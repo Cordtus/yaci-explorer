@@ -1,5 +1,5 @@
 import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
-import { CosmosIcon } from '@/components/icons/chain-icons'
+import { CosmosIcon } from '@/components/icons/icons'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
 import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'

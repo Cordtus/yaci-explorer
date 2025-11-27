@@ -6,7 +6,7 @@ import { getBrandingConfig } from '@/config/branding'
 import { useTheme } from '@/contexts/ThemeContext'
 import { css, cx } from '@/styled-system/css'
 import { Button } from '@/components/ui/button'
-import { EthereumIcon } from '@/components/icons/chain-icons'
+import { EthereumIcon, RepublicLogo } from '@/components/icons/icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -58,7 +58,7 @@ export function Header() {
               {branding.logoUrl ? (
                 <img src={branding.logoUrl} alt={branding.appName} className={styles.logo} />
               ) : (
-                <div className={styles.logoPlaceholder} />
+                <RepublicLogo className={styles.logo} />
               )}
               <span className={styles.brandNameFull}>{branding.appName}</span>
               <span className={styles.brandNameShort}>{branding.appNameShort}</span>
