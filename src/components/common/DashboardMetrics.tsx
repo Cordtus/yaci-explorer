@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Blocks, Activity, TrendingUp, Users, Gauge, DollarSign } from 'lucide-react'
+import { Blocks, Activity, TrendingUp, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { formatNumber } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
 import { getOverviewMetrics } from '@/lib/metrics'
 import { css } from '@/styled-system/css'
+import { ValidatorIcon, GasIcon } from '@/components/icons/chain-icons'
 
 /**
  * Dashboard metrics component displaying key chain statistics
@@ -87,7 +88,7 @@ export function DashboardMetrics() {
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle className={css(styles.cardTitle)}>Active Validators</CardTitle>
-            <Users className={css(styles.icon)} />
+            <ValidatorIcon className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
             <div className={css(styles.valueText)}>
@@ -161,7 +162,7 @@ export function DashboardMetrics() {
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
             <CardTitle className={css(styles.cardTitle)}>Avg Gas Limit</CardTitle>
-            <Gauge className={css(styles.icon)} />
+            <GasIcon className={css(styles.icon)} />
           </CardHeader>
           <CardContent>
             <div className={css(styles.valueTextSmall)}>

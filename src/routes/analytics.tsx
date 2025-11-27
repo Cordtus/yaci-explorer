@@ -1,5 +1,5 @@
-import { Activity } from 'lucide-react'
 import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
+import { CosmosIcon } from '@/components/icons/chain-icons'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
 import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'
@@ -13,7 +13,7 @@ export default function AnalyticsPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Activity className={styles.icon} />
+        <CosmosIcon className={styles.icon} />
         <div>
           <h1 className={styles.title}>Network Analytics</h1>
         </div>

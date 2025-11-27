@@ -6,22 +6,7 @@ import { getBrandingConfig } from '@/config/branding'
 import { useTheme } from '@/contexts/ThemeContext'
 import { css, cx } from '@/styled-system/css'
 import { Button } from '@/components/ui/button'
-
-const EthereumIcon = ({ className = '' }: { className?: string }) => (
-  <svg
-    viewBox="0 0 256 417"
-    fill="none"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M127.961 0L125.343 9.066v283.296l2.618 2.617 127.962-75.638L127.961 0z" fill="currentColor"/>
-    <path d="M127.961 0L0 219.341l127.961 75.638V157.724L127.961 0z" fill="currentColor" fillOpacity="0.6"/>
-    <path d="M127.961 312.187L126.386 314.154v98.29l1.575 4.6L256 236.587l-128.039 75.6z" fill="currentColor"/>
-    <path d="M127.961 417.044v-104.857L0 236.587l127.961 180.457z" fill="currentColor" fillOpacity="0.6"/>
-    <path d="M127.961 295.979l127.962-76.638-127.962-58.022v134.66z" fill="currentColor" fillOpacity="0.45"/>
-    <path d="M0 219.341l127.961 76.638V161.319L0 219.341z" fill="currentColor" fillOpacity="0.45"/>
-  </svg>
-)
+import { EthereumIcon } from '@/components/icons/chain-icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
