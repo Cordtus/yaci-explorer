@@ -11,22 +11,28 @@ transform(props, { map }) {
     position: "absolute",
     insetBlockStart: map(placement, (v) => {
       const [side] = v.split("-");
-      return { top: offsetY, middle: "50%", bottom: "auto" }[side];
+      const map2 = { top: offsetY, middle: "50%", bottom: "auto" };
+      return map2[side];
     }),
     insetBlockEnd: map(placement, (v) => {
       const [side] = v.split("-");
-      return { top: "auto", middle: "50%", bottom: offsetY }[side];
+      const map2 = { top: "auto", middle: "50%", bottom: offsetY };
+      return map2[side];
     }),
     insetInlineStart: map(placement, (v) => {
       const [, align] = v.split("-");
-      return { start: offsetX, center: "50%", end: "auto" }[align];
+      const map2 = { start: offsetX, center: "50%", end: "auto" };
+      return map2[align];
     }),
     insetInlineEnd: map(placement, (v) => {
       const [, align] = v.split("-");
-      return { start: "auto", center: "50%", end: offsetX }[align];
+      const map2 = { start: "auto", center: "50%", end: offsetX };
+      return map2[align];
     }),
     translate: map(placement, (v) => {
-      const [side, align] = v.split("-"), mapX = { start: "-50%", center: "-50%", end: "50%" }, mapY = { top: "-50%", middle: "-50%", bottom: "50%" };
+      const [side, align] = v.split("-");
+      const mapX = { start: "-50%", center: "-50%", end: "50%" };
+      const mapY = { top: "-50%", middle: "-50%", bottom: "50%" };
       return `${mapX[align]} ${mapY[side]}`;
     }),
     ...rest

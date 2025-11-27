@@ -4,7 +4,7 @@ import { css } from '../css/index.mjs';
 const visuallyHiddenConfig = {
 transform(props) {
   return {
-    srOnly: !0,
+    srOnly: true,
     ...props
   };
 }}
