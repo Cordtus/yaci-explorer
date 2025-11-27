@@ -476,13 +476,22 @@ export class YaciClient {
 		bytecode_hash: string | null
 		name: string | null
 		verified: boolean
-		created_at: string
+		creation_height: number
 	}>> {
 		return this.query('evm_contracts', {
-			order: 'created_at.desc',
+			order: 'creation_height.desc',
 			limit: String(limit),
 			offset: String(offset)
 		})
+	}
+
+	async isEvmContract(address: string): Promise<boolean> {
+		const result = await this.query<Array<{ address: string }>>('evm_contracts', {
+			address: `eq.${address.toLowerCase()}`,
+			limit: '1',
+			select: 'address'
+		})
+		return result.length > 0
 	}
 
 	async getEvmTokens(limit = 50, offset = 0): Promise<Array<{
@@ -492,10 +501,10 @@ export class YaciClient {
 		decimals: number | null
 		total_supply: string | null
 		token_type: string | null
-		updated_at: string
+		first_seen_height: number | null
 	}>> {
 		return this.query('evm_tokens', {
-			order: 'updated_at.desc',
+			order: 'first_seen_height.desc.nullslast,address.asc',
 			limit: String(limit),
 			offset: String(offset)
 		})

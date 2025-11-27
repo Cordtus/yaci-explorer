@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api, type EnhancedTransaction } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, isEvmContract, getAlternateAddress } from '@/lib/utils'
-import { getConfig } from '@/lib/env'
+import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -27,7 +26,6 @@ export default function AddressDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const [page, setPage] = useState(0)
-  const [isContract, setIsContract] = useState<boolean | null>(null)
   const params = useParams()
   const pageSize = 20
 
@@ -45,19 +43,16 @@ export default function AddressDetailPage() {
     setMounted(true)
   }, [])
 
-  // Check if address is a contract (using hex address)
-  useEffect(() => {
-    if (!hexAddr) {
-      setIsContract(null)
-      return
-    }
-    const config = getConfig()
-    if (!config.evmRpcEndpoint) {
-      setIsContract(null)
-      return
-    }
-    isEvmContract(hexAddr, config.evmRpcEndpoint).then(setIsContract)
-  }, [hexAddr])
+  // Check if address is a contract by querying evm_contracts table
+  const { data: isContract } = useQuery({
+    queryKey: ['is-contract', hexAddr],
+    queryFn: async () => {
+      if (!hexAddr) return false
+      return await api.isEvmContract(hexAddr)
+    },
+    enabled: mounted && !!hexAddr,
+    staleTime: Infinity, // Contract status doesn't change
+  })
 
   // Fetch address statistics (always use bech32 format for API queries)
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -148,7 +143,7 @@ export default function AddressDetailPage() {
             {isContract ? 'Contract' : 'Account'} Details
           </h1>
           <Badge variant="outline" className={css({ ml: '2' })}>
-            {isContract === null ? (isEvmFocused ? 'EVM' : 'Cosmos') : isContract ? 'Contract' : 'EOA'}
+            {isContract === undefined ? (isEvmFocused ? 'EVM' : 'Cosmos') : isContract ? 'Contract' : 'EOA'}
           </Badge>
         </div>
         <div className={styles.addressContainer}>
@@ -243,10 +238,10 @@ export default function AddressDetailPage() {
           </CardHeader>
           <CardContent>
             <div className={styles.statValueSmall}>
-              {isContract === null ? 'Loading...' : isContract ? 'Contract' : 'EOA'}
+              {isContract === undefined ? 'Loading...' : isContract ? 'Contract' : 'EOA'}
             </div>
             <p className={styles.statDescription}>
-              {isContract === null ? 'Checking...' : isContract ? 'Smart contract' : 'Externally owned account'}
+              {isContract === undefined ? 'Checking...' : isContract ? 'Smart contract' : 'Externally owned account'}
             </p>
           </CardContent>
         </Card>
