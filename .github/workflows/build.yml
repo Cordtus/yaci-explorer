@@ -1,18 +1,6 @@
 name: build
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'tsconfig.json'
-      - 'panda.config.ts'
-      - 'eslint.config.js'
-      - '.github/workflows/build.yml'
   push:
     branches:
       - main
