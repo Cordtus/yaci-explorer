@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import { formatAddress, formatNumber, formatTimestamp, formatTimeAgo } from '@/lib/utils'
+import { formatAddress, formatNumber } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { css } from '@/styled-system/css'
 
@@ -93,7 +93,7 @@ export default function EvmTokensPage() {
 									<TableHead>Address</TableHead>
 									<TableHead>Type</TableHead>
 									<TableHead>Total Supply</TableHead>
-									<TableHead>Last Updated</TableHead>
+									<TableHead>First Seen</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -124,7 +124,7 @@ export default function EvmTokensPage() {
 										</TableCell>
 										<TableCell>
 											<Badge variant="secondary">
-												{formatTokenType(token.token_type)}
+												{formatTokenType(token.type)}
 											</Badge>
 										</TableCell>
 										<TableCell>
@@ -138,14 +138,16 @@ export default function EvmTokensPage() {
 											</div>
 										</TableCell>
 										<TableCell>
-											<div>
-												<div className={css(styles.timeAgo)}>
-													{formatTimeAgo(token.updated_at)}
-												</div>
-												<div className={css(styles.timestamp)}>
-													{formatTimestamp(token.updated_at)}
-												</div>
-											</div>
+											{token.first_seen_height ? (
+												<Link
+													to={`/blocks/${token.first_seen_height}`}
+													className={css(styles.blockLink)}
+												>
+													#{formatNumber(token.first_seen_height.toString())}
+												</Link>
+											) : (
+												<span className={css(styles.muted)}>-</span>
+											)}
 										</TableCell>
 									</TableRow>
 								))}
@@ -262,11 +264,14 @@ const styles = {
 		fontSize: 'xs',
 		color: 'fg.muted',
 	},
-	timeAgo: {
+	blockLink: {
+		fontFamily: 'mono',
 		fontSize: 'sm',
+		_hover: {
+			color: 'colorPalette',
+		},
 	},
-	timestamp: {
-		fontSize: 'xs',
+	muted: {
 		color: 'fg.muted',
 	},
 	pagination: {

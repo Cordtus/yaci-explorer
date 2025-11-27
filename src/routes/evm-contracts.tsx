@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import { formatAddress, formatTimestamp, formatTimeAgo } from '@/lib/utils'
+import { formatAddress } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { css } from '@/styled-system/css'
 
@@ -116,13 +116,8 @@ export default function EvmContractsPage() {
 											)}
 										</TableCell>
 										<TableCell>
-											<div>
-												<div className={css(styles.timeAgo)}>
-													{formatTimeAgo(contract.created_at)}
-												</div>
-												<div className={css(styles.timestamp)}>
-													{formatTimestamp(contract.created_at)}
-												</div>
+											<div className={css(styles.blockHeight)}>
+												Block #{contract.creation_height.toLocaleString()}
 											</div>
 										</TableCell>
 									</TableRow>
@@ -236,12 +231,9 @@ const styles = {
 		width: '3',
 		marginRight: '1',
 	},
-	timeAgo: {
+	blockHeight: {
 		fontSize: 'sm',
-	},
-	timestamp: {
-		fontSize: 'xs',
-		color: 'fg.muted',
+		fontFamily: 'mono',
 	},
 	pagination: {
 		display: 'flex',

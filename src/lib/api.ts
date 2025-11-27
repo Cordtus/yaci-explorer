@@ -500,7 +500,7 @@ export class YaciClient {
 		symbol: string | null
 		decimals: number | null
 		total_supply: string | null
-		token_type: string | null
+		type: string | null
 		first_seen_height: number | null
 	}>> {
 		return this.query('evm_tokens', {

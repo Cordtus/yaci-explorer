@@ -11,6 +11,7 @@ import BlocksPage from "./routes/blocks"
 import BlockDetailPage from "./routes/blocks.$id"
 import EvmContractsPage from "./routes/evm-contracts"
 import EvmTokensPage from "./routes/evm-tokens"
+import GovernancePage from "./routes/governance"
 import HomePage from "./routes/home"
 import TransactionsPage from "./routes/transactions"
 import TransactionDetailPage from "./routes/transactions.$hash"
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
 			},
 			{ path: "analytics", element: <AnalyticsPage /> },
 			{ path: "addr/:id", element: <AddressPage /> },
+			{ path: "governance", element: <GovernancePage /> },
 			{
 				path: "evm",
 				children: [
