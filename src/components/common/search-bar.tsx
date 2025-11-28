@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { Search, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Search, Loader2, Box, Hash, Wallet, FileCode } from 'lucide-react'
+import { css } from '@/styled-system/css'
 import { api } from '@/lib/api'
+import { detectSearchInputType, formatAddress, getAlternateAddress, type SearchInputType } from '@/lib/utils'
 
 /**
  * Universal search bar component for searching blocks, transactions, and addresses
@@ -16,8 +17,58 @@ export function SearchBar() {
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isContract, setIsContract] = useState<boolean | null>(null)
+  const [checkingContract, setCheckingContract] = useState(false)
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Detect input type as user types
+  const inputType = useMemo(() => detectSearchInputType(query), [query])
+
+  // Check if EVM address is a contract
+  const checkContract = useCallback(async (address: string) => {
+    setCheckingContract(true)
+    try {
+      // Get hex address for contract lookup
+      const hexAddr = address.startsWith('0x') ? address : getAlternateAddress(address)
+      if (hexAddr) {
+        const result = await api.isEvmContract(hexAddr)
+        setIsContract(result)
+      } else {
+        setIsContract(false)
+      }
+    } catch {
+      setIsContract(false)
+    } finally {
+      setCheckingContract(false)
+    }
+  }, [])
+
+  // Trigger contract check when input is an EVM address
+  useEffect(() => {
+    if (inputType === 'evm_address' && query.trim()) {
+      checkContract(query.trim())
+    } else {
+      setIsContract(null)
+    }
+  }, [inputType, query, checkContract])
+
+  // Result item config for display - dynamically update for EVM addresses
+  const getResultConfig = (): Record<SearchInputType, { icon: typeof Search; label: string; format: (q: string) => string }> => ({
+    block_height: { icon: Box, label: 'Block', format: (q) => `#${q}` },
+    tx_hash: { icon: Hash, label: 'Transaction', format: (q) => formatAddress(q, 10) },
+    evm_tx_hash: { icon: Hash, label: 'EVM Transaction', format: (q) => formatAddress(q, 10) },
+    bech32_address: { icon: Wallet, label: 'Account', format: (q) => formatAddress(q, 10) },
+    evm_address: {
+      icon: isContract ? FileCode : Wallet,
+      label: checkingContract ? 'Checking...' : (isContract ? 'Contract' : 'Account'),
+      format: (q) => formatAddress(q, 10)
+    },
+    unknown: { icon: Search, label: 'Search', format: (q) => q }
+  })
+
+  const resultConfig = getResultConfig()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,17 +85,51 @@ export function SearchBar() {
 
   /**
    * Handles search execution when user submits a query
-   * Determines query type (block, transaction, or address) and navigates to appropriate page
+   * Uses client-side detection first, then falls back to API search
    */
   const handleSearch = async () => {
-    if (!query.trim()) return
+    const trimmedQuery = query.trim()
+    if (!trimmedQuery) return
 
     setIsSearching(true)
+    setError(null)
+
     try {
-      const results = await api.search(query)
+      // Use client-side detection for direct navigation
+      switch (inputType) {
+        case 'block_height':
+          navigate(`/blocks/${trimmedQuery}`)
+          setQuery('')
+          setIsOpen(false)
+          return
+
+        case 'tx_hash':
+          navigate(`/tx/${trimmedQuery}`)
+          setQuery('')
+          setIsOpen(false)
+          return
+
+        case 'evm_tx_hash':
+          // For EVM tx hash, we need to find the cosmos tx id via API
+          break
+
+        case 'bech32_address':
+        case 'evm_address':
+          navigate(`/addr/${trimmedQuery}`)
+          setQuery('')
+          setIsOpen(false)
+          return
+
+        case 'unknown':
+          // Fall through to API search
+          break
+      }
+
+      // Fall back to API search for EVM tx hashes and unknown types
+      const results = await api.search(trimmedQuery)
 
       if (results.length === 0) {
-        console.log('No results found')
+        setError('No results found')
         return
       }
 
@@ -52,34 +137,36 @@ export function SearchBar() {
 
       switch (result.type) {
         case 'block':
-          navigate(`/blocks/${result.value.id}`)
+          navigate(`/blocks/${result.value.height || result.value.id}`)
           break
         case 'transaction':
-          navigate(`/transactions/${result.value.id}`)
+          navigate(`/tx/${result.value.id}`)
           break
         case 'evm_transaction':
-          // EVM hash search - navigate to tx with EVM view enabled
-          navigate(`/transactions/${result.value.tx_id}?evm=true`)
+          navigate(`/tx/${result.value.tx_id}?evm=true`)
           break
         case 'address':
+        case 'evm_address':
           navigate(`/addr/${result.value.address}`)
           break
         default:
-          console.error('Unknown result type')
+          setError('Unknown result type')
+          return
       }
 
       setQuery('')
       setIsOpen(false)
-    } catch (error) {
-      console.error('Search failed:', error)
+    } catch (err) {
+      console.error('Search failed:', err)
+      setError('Search failed')
     } finally {
       setIsSearching(false)
     }
   }
 
   return (
-    <div className="relative">
-      <div className="relative">
+    <div className={css(styles.container)}>
+      <div className={css(styles.inputWrapper)}>
         <input
           ref={inputRef}
           type="text"
@@ -93,35 +180,176 @@ export function SearchBar() {
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder="Search by block, tx, address..."
-          className={cn(
-            'h-9 w-[200px] lg:w-[300px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors',
-            'placeholder:text-muted-foreground',
-            'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            'pr-20'
-          )}
+          className={css(styles.input)}
         />
-        <div className="absolute right-0 top-0 flex h-9 items-center pr-3">
+        <div className={css(styles.iconContainer)}>
           {isSearching ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className={css(styles.spinner)} />
           ) : (
             <>
-              <Search className="h-4 w-4 text-muted-foreground mr-2" />
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                <span className="text-xs">⌘</span>K
-              </kbd>
+              <Search className={css(styles.searchIcon)} />
+              <kbd className={css(styles.kbd)}>Ctrl+K</kbd>
             </>
           )}
         </div>
       </div>
 
       {isOpen && query && (
-        <div className="absolute top-10 w-full rounded-md border bg-popover p-2 shadow-md">
-          <div className="text-xs text-muted-foreground">
-            Press Enter to search
-          </div>
+        <div className={css(styles.dropdown)}>
+          {error ? (
+            <div className={css(styles.errorText)}>{error}</div>
+          ) : inputType !== 'unknown' ? (
+            <button
+              type="button"
+              className={css(styles.resultItem)}
+              onClick={handleSearch}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {(() => {
+                const config = resultConfig[inputType]
+                const Icon = config.icon
+                return (
+                  <>
+                    <Icon className={css(styles.resultIcon)} />
+                    <span className={css(styles.resultLabel)}>{config.label}</span>
+                    <span className={css(styles.resultValue)}>{config.format(query.trim())}</span>
+                  </>
+                )
+              })()}
+            </button>
+          ) : (
+            <div className={css(styles.dropdownText)}>
+              No match - try a block height, tx hash, or address
+            </div>
+          )}
         </div>
       )}
     </div>
   )
+}
+
+const styles = {
+  container: {
+    position: 'relative',
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  input: {
+    height: '2.25rem',
+    width: '200px',
+    lg: { width: '300px' },
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'input',
+    backgroundColor: 'background',
+    paddingLeft: '0.75rem',
+    paddingRight: '5rem',
+    paddingTop: '0.25rem',
+    paddingBottom: '0.25rem',
+    fontSize: 'sm',
+    boxShadow: 'sm',
+    transitionProperty: 'colors',
+    transitionDuration: 'normal',
+    _placeholder: {
+      color: 'muted.foreground',
+    },
+    _focusVisible: {
+      outline: 'none',
+      ring: '1px',
+      ringColor: 'ring',
+    },
+    _disabled: {
+      cursor: 'not-allowed',
+      opacity: 0.5,
+    },
+  },
+  iconContainer: {
+    position: 'absolute',
+    right: '0',
+    top: '0',
+    display: 'flex',
+    height: '2.25rem',
+    alignItems: 'center',
+    paddingRight: '0.75rem',
+  },
+  spinner: {
+    height: '1rem',
+    width: '1rem',
+    animation: 'spin',
+    color: 'muted.foreground',
+  },
+  searchIcon: {
+    height: '1rem',
+    width: '1rem',
+    color: 'muted.foreground',
+    marginRight: '0.5rem',
+  },
+  kbd: {
+    pointerEvents: 'none',
+    display: 'inline-flex',
+    height: '1.25rem',
+    userSelect: 'none',
+    alignItems: 'center',
+    gap: '0.25rem',
+    borderRadius: 'sm',
+    border: '1px solid',
+    backgroundColor: 'muted',
+    paddingLeft: '0.375rem',
+    paddingRight: '0.375rem',
+    fontFamily: 'mono',
+    fontSize: '10px',
+    fontWeight: 'medium',
+    color: 'muted.foreground',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '2.5rem',
+    width: '100%',
+    borderRadius: 'md',
+    border: '1px solid',
+    backgroundColor: 'popover',
+    padding: '0.5rem',
+    boxShadow: 'md',
+  },
+  dropdownText: {
+    fontSize: 'xs',
+    color: 'muted.foreground',
+  },
+  errorText: {
+    fontSize: 'xs',
+    color: 'red.500',
+  },
+  resultItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    width: '100%',
+    padding: '0.375rem',
+    borderRadius: 'sm',
+    cursor: 'pointer',
+    backgroundColor: 'transparent',
+    border: 'none',
+    textAlign: 'left',
+    _hover: {
+      backgroundColor: 'muted',
+    },
+  },
+  resultIcon: {
+    height: '0.875rem',
+    width: '0.875rem',
+    color: 'muted.foreground',
+    flexShrink: 0,
+  },
+  resultLabel: {
+    fontSize: 'xs',
+    fontWeight: 'medium',
+    color: 'foreground',
+  },
+  resultValue: {
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'muted.foreground',
+    marginLeft: 'auto',
+  },
 }

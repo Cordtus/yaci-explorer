@@ -225,6 +225,7 @@ export interface PaginatedResponse<T> {
 /**
  * Chain-wide statistics and metrics
  * Used for dashboard overview and network health monitoring
+ * Fields match api.chain_stats view in yaci-explorer-apis
  */
 export interface ChainStats {
   latest_block: number

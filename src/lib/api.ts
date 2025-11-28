@@ -135,8 +135,11 @@ export interface BlockRaw {
 			header: {
 				height: string
 				time: string
-				chain_id: string
-				proposer_address: string
+				// API may return either snake_case or camelCase depending on source
+				chain_id?: string
+				chainId?: string
+				proposer_address?: string
+				proposerAddress?: string
 			}
 			data: {
 				txs: string[]
@@ -192,6 +195,8 @@ export interface YaciClientConfig {
 
 export class YaciClient {
 	private baseUrl: string
+	private maxRetries = 3
+	private retryDelay = 500
 
 	constructor(config: YaciClientConfig) {
 		this.baseUrl = config.baseUrl.replace(/\/$/, '')
@@ -199,6 +204,24 @@ export class YaciClient {
 
 	getBaseUrl(): string {
 		return this.baseUrl
+	}
+
+	private async fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+		let lastError: Error | null = null
+		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+			const res = await fetch(url, init)
+			// HTTP 300 can occur during PostgREST schema cache reload with function overloads
+			// Retry on 300, 502, 503, 504 (transient errors)
+			if (res.ok) return res
+			if (![300, 502, 503, 504].includes(res.status)) {
+				throw new Error(`Request failed: ${res.status} ${res.statusText}`)
+			}
+			lastError = new Error(`Request failed: ${res.status} ${res.statusText}`)
+			if (attempt < this.maxRetries - 1) {
+				await new Promise(r => setTimeout(r, this.retryDelay * (attempt + 1)))
+			}
+		}
+		throw lastError || new Error('Request failed after retries')
 	}
 
 	private async rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
@@ -211,13 +234,9 @@ export class YaciClient {
 			})
 		}
 
-		const res = await fetch(url.toString(), {
+		const res = await this.fetchWithRetry(url.toString(), {
 			headers: { 'Accept': 'application/json' }
 		})
-
-		if (!res.ok) {
-			throw new Error(`RPC ${fn} failed: ${res.status} ${res.statusText}`)
-		}
 
 		return res.json()
 	}
@@ -229,7 +248,6 @@ export class YaciClient {
 				if (typeof value === 'string' || typeof value === 'number') {
 					url.searchParams.set(key, String(value))
 				} else if (value && typeof value === 'object') {
-					// Handle nested objects like filters
 					Object.entries(value).forEach(([k, v]) => {
 						url.searchParams.set(k, v)
 					})
@@ -237,13 +255,9 @@ export class YaciClient {
 			})
 		}
 
-		const res = await fetch(url.toString(), {
+		const res = await this.fetchWithRetry(url.toString(), {
 			headers: { 'Accept': 'application/json' }
 		})
-
-		if (!res.ok) {
-			throw new Error(`Query ${table} failed: ${res.status} ${res.statusText}`)
-		}
 
 		return res.json()
 	}
@@ -477,7 +491,7 @@ export class YaciClient {
 	}
 
 	async getProposalDetail(proposalId: number): Promise<GovernanceProposal | undefined> {
-		// Query returns flat columns, need to transform to nested tally object
+		// Query returns flat columns, transform to nested tally object
 		const result = await this.query<Array<{
 			proposal_id: number
 			title: string | null
@@ -531,6 +545,141 @@ export class YaciClient {
 	async getProposalTally(proposalId: number): Promise<{ yes: number; no: number; abstain: number; no_with_veto: number }> {
 		return this.rpc('compute_proposal_tally', { _proposal_id: proposalId })
 	}
+
+	// Denomination endpoints
+
+	async getDenomMetadata(denom?: string): Promise<Array<{
+		denom: string
+		symbol: string
+		name: string | null
+		decimals: number
+		description: string | null
+		logo_uri: string | null
+		coingecko_id: string | null
+		is_native: boolean
+		ibc_source_chain: string | null
+		ibc_source_denom: string | null
+		evm_contract: string | null
+		updated_at: string
+	}>> {
+		const params: Record<string, string> = {}
+		if (denom) params.denom = `eq.${denom}`
+		return this.query('denom_metadata', params)
+	}
+
+	// EVM endpoints
+
+	async requestEvmDecode(txHash: string): Promise<{ success: boolean }> {
+		return this.rpc('request_evm_decode', { _tx_hash: txHash })
+	}
+
+	async getEvmContracts(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		creator: string | null
+		creation_tx: string | null
+		bytecode_hash: string | null
+		name: string | null
+		verified: boolean
+		creation_height: number
+	}>> {
+		return this.query('evm_contracts', {
+			order: 'creation_height.desc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async isEvmContract(address: string): Promise<boolean> {
+		const result = await this.query<Array<{ address: string }>>('evm_contracts', {
+			address: `eq.${address.toLowerCase()}`,
+			limit: '1',
+			select: 'address'
+		})
+		return result.length > 0
+	}
+
+	async getEvmTokens(limit = 50, offset = 0): Promise<Array<{
+		address: string
+		name: string | null
+		symbol: string | null
+		decimals: number | null
+		total_supply: string | null
+		type: string | null
+		first_seen_height: number | null
+	}>> {
+		return this.query('evm_tokens', {
+			order: 'first_seen_height.desc.nullslast,address.asc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	async getEvmTokenTransfers(
+		limit = 50,
+		offset = 0,
+		filters?: { tokenAddress?: string; fromAddress?: string; toAddress?: string }
+	): Promise<Array<{
+		tx_id: string
+		log_index: number
+		token_address: string
+		from_address: string
+		to_address: string
+		value: string
+	}>> {
+		const params: Record<string, string> = {
+			order: 'tx_id.desc',
+			limit: String(limit),
+			offset: String(offset)
+		}
+		if (filters?.tokenAddress) params.token_address = `eq.${filters.tokenAddress}`
+		if (filters?.fromAddress) params.from_address = `eq.${filters.fromAddress}`
+		if (filters?.toAddress) params.to_address = `eq.${filters.toAddress}`
+		return this.query('evm_token_transfers', params)
+	}
+
+	// Validator endpoints
+
+	async getValidators(limit = 100, offset = 0): Promise<Array<{
+		operator_address: string
+		consensus_pubkey: string | null
+		moniker: string | null
+		identity: string | null
+		website: string | null
+		details: string | null
+		commission_rate: string | null
+		tokens: string | null
+		delegator_shares: string | null
+		jailed: boolean
+		status: string | null
+		updated_at: string
+	}>> {
+		return this.query('validators', {
+			order: 'tokens.desc.nullslast',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
+	// IBC endpoints
+
+	async getIbcChannels(limit = 50, offset = 0): Promise<Array<{
+		channel_id: string
+		port_id: string
+		counterparty_channel_id: string | null
+		counterparty_port_id: string | null
+		connection_id: string | null
+		state: string | null
+		ordering: string | null
+		version: string | null
+		updated_at: string
+	}>> {
+		return this.query('ibc_channels', {
+			order: 'channel_id.asc',
+			limit: String(limit),
+			offset: String(offset)
+		})
+	}
+
 }
 
 // Factory function to create API client
@@ -538,15 +687,7 @@ export function createApiClient(baseUrl: string): YaciClient {
 	return new YaciClient({ baseUrl })
 }
 
-// Default instance for backward compatibility (uses /api as default)
-let _defaultClient: YaciClient | null = null
-
-export function getDefaultApiClient(): YaciClient {
-	if (!_defaultClient) {
-		_defaultClient = new YaciClient({ baseUrl: '/api' })
-	}
-	return _defaultClient
-}
-
-// Legacy export for backward compatibility
-export const api = getDefaultApiClient()
+// Default instance for backward compatibility
+import { getEnv } from './env'
+const defaultBaseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
+export const api = new YaciClient({ baseUrl: defaultBaseUrl })

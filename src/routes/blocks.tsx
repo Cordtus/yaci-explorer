@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 import { formatNumber, formatTimestamp, formatHash, formatTimeAgo } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
+import { css } from '@/styled-system/css'
 
 export default function BlocksPage() {
   const [page, setPage] = useState(0)
@@ -19,7 +21,7 @@ export default function BlocksPage() {
   const [minTxCount, setMinTxCount] = useState<string>('')
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
-  const limit = 20
+  const limit = appConfig.blocks.pageSize
 
   const hasActiveFilters = minTxCount || fromDate || toDate
 
@@ -28,7 +30,7 @@ export default function BlocksPage() {
     queryFn: () =>
       hasActiveFilters
         ? api.getBlocksPaginated(limit, page * limit, {
-            minTxCount: minTxCount ? parseInt(minTxCount) : undefined,
+            minTxCount: minTxCount ? parseInt(minTxCount, 10) : undefined,
             fromDate: fromDate || undefined,
             toDate: toDate || undefined,
           })
@@ -43,38 +45,38 @@ export default function BlocksPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={css(styles.container)}>
+      <div className={css(styles.header)}>
         <div>
-          <h1 className="text-3xl font-bold">Blocks</h1>
+          <h1 className={css(styles.title)}>Blocks</h1>
         </div>
         <Button
           variant={showFilters ? 'default' : 'outline'}
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
         >
-          <Filter className="h-4 w-4 mr-2" />
+          <Filter className={css(styles.filterIcon)} />
           Filters
-          {hasActiveFilters && <Badge variant="secondary" className="ml-2">Active</Badge>}
+          {hasActiveFilters && <Badge variant="secondary" className={css(styles.activeBadge)}>Active</Badge>}
         </Button>
       </div>
 
       {showFilters && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className={css(styles.filterCardHeader)}>
               <CardTitle>Filter Blocks</CardTitle>
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X className="h-4 w-4 mr-1" />
+                  <X className={css(styles.clearIcon)} />
                   Clear
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+            <div className={css(styles.filterGrid)}>
+              <div className={css(styles.filterField)}>
                 <Label htmlFor="minTxCount">Minimum Transactions</Label>
                 <Input
                   id="minTxCount"
@@ -88,7 +90,7 @@ export default function BlocksPage() {
                   }}
                 />
               </div>
-              <div className="space-y-2">
+              <div className={css(styles.filterField)}>
                 <Label htmlFor="fromDate">From Date</Label>
                 <Input
                   id="fromDate"
@@ -100,7 +102,7 @@ export default function BlocksPage() {
                   }}
                 />
               </div>
-              <div className="space-y-2">
+              <div className={css(styles.filterField)}>
                 <Label htmlFor="toDate">To Date</Label>
                 <Input
                   id="toDate"
@@ -139,19 +141,19 @@ export default function BlocksPage() {
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell colSpan={4}>
-                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className={css(styles.skeleton)} />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className={css(styles.emptyState)}>
                     Error loading blocks
                   </TableCell>
                 </TableRow>
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className={css(styles.emptyState)}>
                     No blocks found
                   </TableCell>
                 </TableRow>
@@ -161,21 +163,21 @@ export default function BlocksPage() {
                     <TableCell>
                       <Link
                         to={`/blocks/${block.id}`}
-                        className="flex items-center gap-2 font-medium hover:text-primary"
+                        className={css(styles.blockLink)}
                       >
-                        <Blocks className="h-4 w-4" />
+                        <Blocks className={css(styles.blockIcon)} />
                         {formatNumber(block.id)}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs">
+                      <code className={css(styles.hashCode)}>
                         {formatHash(block.data?.block_id?.hash || block.data?.blockId?.hash || '', 12)}
                       </code>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="text-sm">{formatTimeAgo(block.data.block.header.time)}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className={css(styles.timeAgo)}>{formatTimeAgo(block.data.block.header.time)}</div>
+                        <div className={css(styles.timestamp)}>
                           {formatTimestamp(block.data.block.header.time)}
                         </div>
                       </div>
@@ -203,4 +205,80 @@ export default function BlocksPage() {
       </Card>
     </div>
   )
+}
+
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: '3xl',
+    fontWeight: 'bold',
+  },
+  filterIcon: {
+    height: '4',
+    width: '4',
+    marginRight: '2',
+  },
+  activeBadge: {
+    marginLeft: '2',
+  },
+  filterCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  clearIcon: {
+    height: '4',
+    width: '4',
+    marginRight: '1',
+  },
+  filterGrid: {
+    display: 'grid',
+    gridTemplateColumns: { base: '1fr', md: 'repeat(3, 1fr)' },
+    gap: '4',
+  },
+  filterField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2',
+  },
+  skeleton: {
+    height: '12',
+    width: 'full',
+  },
+  emptyState: {
+    textAlign: 'center',
+    color: 'fg.muted',
+  },
+  blockLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+    fontWeight: 'medium',
+    _hover: {
+      color: 'colorPalette',
+    },
+  },
+  blockIcon: {
+    height: '4',
+    width: '4',
+  },
+  hashCode: {
+    fontSize: 'xs',
+  },
+  timeAgo: {
+    fontSize: 'sm',
+  },
+  timestamp: {
+    fontSize: 'xs',
+    color: 'fg.muted',
+  },
 }

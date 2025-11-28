@@ -321,6 +321,7 @@ find /backups -name "backup_*.dump" -mtime +7 -delete
 
 ## Support
 
-- Yaci Indexer: https://github.com/manifest-network/yaci/issues
+- Yaci Indexer: https://github.com/Cordtus/yaci/issues
+- Middleware: https://github.com/Cordtus/yaci-explorer-apis/issues
 - Explorer: https://github.com/Cordtus/yaci-explorer/issues
 - PostgREST: https://postgrest.org/

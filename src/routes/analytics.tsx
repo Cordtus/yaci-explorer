@@ -1,44 +1,49 @@
-import { Activity } from 'lucide-react'
 import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
-import { TopMessageTypesCard } from '@/components/analytics/TopMessageTypesCard'
-import { TopEventTypesCard } from '@/components/analytics/TopEventTypesCard'
-import { GasUsageChart } from '@/components/analytics/GasUsageChart'
-import { TxTypeBreakdown } from '@/components/analytics/TxTypeBreakdown'
-import { ActiveAddressesChart } from '@/components/analytics/ActiveAddressesChart'
+import { FeeRevenueChart } from '@/components/analytics/FeeRevenueChart'
+import { GasEfficiencyChart } from '@/components/analytics/GasEfficiencyChart'
+import { css } from '@/styled-system/css'
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Activity className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Network Analytics</h1>
-        </div>
-      </div>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Network Analytics</h1>
 
       {/* Primary metrics card */}
       <NetworkMetricsCard />
 
       {/* Time series charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={styles.gridTwo}>
         <TransactionVolumeChart />
         <BlockIntervalChart />
       </div>
 
-      {/* Distribution charts */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <TxTypeBreakdown />
-        <GasUsageChart />
-        <ActiveAddressesChart />
-      </div>
-
-      {/* Breakdown tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TopMessageTypesCard />
-        <TopEventTypesCard />
+      {/* Additional charts */}
+      <div className={styles.gridTwo}>
+        <GasEfficiencyChart />
+        <FeeRevenueChart />
       </div>
     </div>
   )
+}
+
+const styles = {
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6',
+  }),
+  title: css({
+    fontSize: '3xl',
+    fontWeight: 'bold',
+  }),
+  gridTwo: css({
+    display: 'grid',
+    gap: '6',
+    gridTemplateColumns: {
+      base: '1fr',
+      lg: 'repeat(2, 1fr)',
+    },
+  }),
 }

@@ -1,3 +1,5 @@
+import { env } from '@/lib/env'
+
 const toNumber = (value: string | undefined, fallback: number): number => {
   if (value === undefined || value === null || value === '') {
     return fallback
@@ -13,15 +15,22 @@ const toBoolean = (value: string | undefined, fallback: boolean): boolean => {
   return ['true', '1', 'yes', 'on'].includes(value.toLowerCase())
 }
 
-const env = import.meta.env
-
 export const appConfig = {
   queries: {
     staleTimeMs: toNumber(env.VITE_QUERY_STALE_MS, 10_000),
     gcTimeMs: toNumber(env.VITE_QUERY_GC_MS, 300_000),
   },
+  dashboard: {
+    // Refresh interval for latest blocks/transactions (default 6s, was 2s)
+    refetchIntervalMs: toNumber(env.VITE_DASHBOARD_REFRESH_MS, 6_000),
+    // Number of items to show in latest blocks/transactions lists
+    itemCount: toNumber(env.VITE_DASHBOARD_ITEM_COUNT, 5),
+  },
   transactions: {
-    pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 20),
+    pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 10),
+  },
+  blocks: {
+    pageSize: toNumber(env.VITE_BLOCKS_PAGE_SIZE, 10),
   },
   search: {
     addressResultLimit: toNumber(env.VITE_SEARCH_ADDRESS_LIMIT, 20),

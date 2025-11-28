@@ -1,12 +1,22 @@
 name: build
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tsconfig.json'
+      - 'panda.config.ts'
+      - 'eslint.config.js'
+      - 'Dockerfile'
+      - 'fly.toml'
+      - 'nginx.conf'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build:
@@ -15,19 +25,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Type check
-        run: yarn typecheck
+        run: bun run typecheck
 
       - name: Build
-        run: yarn build
+        run: bun run build
         env:
-          VITE_POSTGREST_URL: https://yaci-postgrest.fly.dev
+          VITE_POSTGREST_URL: https://yaci-explorer-apis.fly.dev
+          VITE_CHAIN_REST_ENDPOINT: https://api.republicai.io

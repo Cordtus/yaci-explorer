@@ -1,3 +1,5 @@
+import { env } from '@/lib/env'
+
 /**
  * Branding and visual identity configuration
  * Override these via environment variables for chain-specific deployments
@@ -28,7 +30,27 @@ export interface BrandingConfig {
   }
 }
 
-// Note: getBrandingConfig is now accessed via useConfig().branding from ConfigContext
+/**
+ * Get branding configuration from environment variables or defaults
+ */
+export function getBrandingConfig(): BrandingConfig {
+  return {
+    appName: env.VITE_APP_NAME || 'Republic Explorer',
+    appNameShort: env.VITE_APP_NAME_SHORT || 'Explorer',
+    logoUrl: env.VITE_LOGO_URL,
+    faviconUrl: env.VITE_FAVICON_URL,
+    primaryColor: env.VITE_PRIMARY_COLOR,
+    accentColor: env.VITE_ACCENT_COLOR,
+    footerText: env.VITE_FOOTER_TEXT,
+    links: {
+      website: env.VITE_LINK_WEBSITE,
+      docs: env.VITE_LINK_DOCS,
+      github: env.VITE_LINK_GITHUB,
+      discord: env.VITE_LINK_DISCORD,
+      twitter: env.VITE_LINK_TWITTER,
+    },
+  }
+}
 
 /**
  * Apply branding theme colors to CSS variables

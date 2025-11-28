@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { getDenomMetadata } from '@/lib/denom'
-import { useConfig } from '@/contexts/ConfigContext'
+import { getEnv } from '@/lib/env'
 
 interface DenomContextType {
   getDenomDisplay: (denom: string) => string
@@ -19,16 +19,17 @@ interface DenomMetadataRow {
  * Loads from database at app startup and caches all denom mappings
  */
 export function DenomProvider({ children }: { children: ReactNode }) {
-  const config = useConfig()
   const [denomCache, setDenomCache] = useState<Map<string, string>>(new Map())
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadDenomMetadata = async () => {
       try {
-        const postgrestUrl = config.postgrestUrl
+        const postgrestUrl = getEnv('VITE_POSTGREST_URL')
         if (!postgrestUrl) {
-          throw new Error('POSTGREST_URL environment variable is not set')
+          console.warn('VITE_POSTGREST_URL environment variable is not set')
+          setIsLoading(false)
+          return
         }
         const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol`)
 
@@ -55,7 +56,7 @@ export function DenomProvider({ children }: { children: ReactNode }) {
     }
 
     loadDenomMetadata()
-  }, [config.postgrestUrl])
+  }, [])
 
   const getDenomDisplay = (denom: string): string => {
     // Check cache first

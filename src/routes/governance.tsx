@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { api, type GovernanceProposal } from '@/lib/api'
 import { formatTimeAgo, formatAddress } from '@/lib/utils'
+import { css } from '@/styled-system/css'
 
 const STATUSES = [
 	'PROPOSAL_STATUS_DEPOSIT_PERIOD',
@@ -43,13 +44,13 @@ export default function GovernancePage() {
 	})
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+		<div className={css(styles.container)}>
+			<div className={css(styles.header)}>
 				<div>
-					<h1 className="text-3xl font-bold">Governance Proposals</h1>
+					<h1 className={css(styles.title)}>Governance Proposals</h1>
 				</div>
 				<Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(0) }}>
-					<SelectTrigger className="w-[250px]">
+					<SelectTrigger className={css(styles.selectTrigger)}>
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
 					<SelectContent>
@@ -87,19 +88,19 @@ export default function GovernancePage() {
 								Array.from({ length: 10 }).map((_, i) => (
 									<TableRow key={i}>
 										<TableCell colSpan={6}>
-											<Skeleton className="h-12 w-full" />
+											<Skeleton className={css(styles.skeletonRow)} />
 										</TableCell>
 									</TableRow>
 								))
 							) : error ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center text-muted-foreground">
+									<TableCell colSpan={6} className={css(styles.emptyCell)}>
 										Error loading proposals
 									</TableCell>
 								</TableRow>
 							) : data?.data.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+									<TableCell colSpan={6} className={css(styles.emptyCellWithPadding)}>
 										No proposals found
 									</TableCell>
 								</TableRow>
@@ -109,14 +110,14 @@ export default function GovernancePage() {
 										<TableCell>
 											<Link
 												to={`/governance/${proposal.proposal_id}`}
-												className="flex items-center gap-2 font-medium hover:text-primary"
+												className={css(styles.proposalLink)}
 											>
-												<Vote className="h-4 w-4" />
+												<Vote className={css(styles.voteIcon)} />
 												<span>#{proposal.proposal_id}</span>
 											</Link>
 										</TableCell>
 										<TableCell>
-											<div className="max-w-md truncate">
+											<div className={css(styles.titleCell)}>
 												{proposal.title || 'Untitled Proposal'}
 											</div>
 										</TableCell>
@@ -127,24 +128,24 @@ export default function GovernancePage() {
 										</TableCell>
 										<TableCell>
 											{proposal.proposer ? (
-												<code className="text-xs">{formatAddress(proposal.proposer)}</code>
+												<code className={css(styles.proposerCode)}>{formatAddress(proposal.proposer)}</code>
 											) : (
-												<span className="text-sm text-muted-foreground">-</span>
+												<span className={css(styles.mutedText)}>-</span>
 											)}
 										</TableCell>
 										<TableCell>
-											<div className="text-sm">
+											<div className={css(styles.timeText)}>
 												{formatTimeAgo(proposal.submit_time)}
 											</div>
 										</TableCell>
 										<TableCell>
-											<div className="text-sm">
+											<div className={css(styles.timeText)}>
 												{proposal.voting_start_time && proposal.voting_end_time ? (
 													<>
 														{formatTimeAgo(proposal.voting_start_time)} - {formatTimeAgo(proposal.voting_end_time)}
 													</>
 												) : (
-													<span className="text-muted-foreground">N/A</span>
+													<span className={css(styles.mutedText)}>N/A</span>
 												)}
 											</div>
 										</TableCell>
@@ -166,4 +167,67 @@ export default function GovernancePage() {
 			</Card>
 		</div>
 	)
+}
+
+const styles = {
+	container: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1.5rem'
+	},
+	header: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'space-between'
+	},
+	title: {
+		fontSize: '1.875rem',
+		fontWeight: 'bold'
+	},
+	selectTrigger: {
+		width: '250px'
+	},
+	skeletonRow: {
+		height: '3rem',
+		width: '100%'
+	},
+	emptyCell: {
+		textAlign: 'center',
+		color: 'fg.muted'
+	},
+	emptyCellWithPadding: {
+		textAlign: 'center',
+		color: 'fg.muted',
+		paddingTop: '2rem',
+		paddingBottom: '2rem'
+	},
+	proposalLink: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+		fontWeight: 'medium',
+		_hover: {
+			color: 'colorPalette.fg'
+		}
+	},
+	voteIcon: {
+		height: '1rem',
+		width: '1rem'
+	},
+	titleCell: {
+		maxWidth: '20rem',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
+	},
+	proposerCode: {
+		fontSize: '0.75rem'
+	},
+	mutedText: {
+		fontSize: '0.875rem',
+		color: 'fg.muted'
+	},
+	timeText: {
+		fontSize: '0.875rem'
+	}
 }

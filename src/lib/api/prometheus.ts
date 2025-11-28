@@ -85,7 +85,7 @@ function parsePrometheusText(text: string): ParsedMetrics {
 
       // Parse value
       const value = parseFloat(valueStr)
-      const timestamp = timestampStr ? parseInt(timestampStr) : undefined
+      const timestamp = timestampStr ? parseInt(timestampStr, 10) : undefined
 
       if (!currentMetric.values) {
         currentMetric.values = []

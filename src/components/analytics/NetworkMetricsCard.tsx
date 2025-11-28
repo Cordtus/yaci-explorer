@@ -1,7 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
+import { Activity, TrendingUp, Clock, Database, Users, Zap, DollarSign } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useConfig } from '@/contexts/ConfigContext'
+import { appConfig } from '@/config/app'
+import { css } from '@/styled-system/css'
+import { getEnv } from '@/lib/env'
+import { api } from '@/lib/api'
+import { formatDenomAmount } from '@/lib/denom'
+import { DenomDisplay } from '@/components/common/DenomDisplay'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -16,31 +21,32 @@ interface NetworkMetrics {
   uniqueAddresses: number
 }
 
-async function getNetworkMetrics(baseUrl: string, config: { networkBlocksWindow: number; networkTxWindow: number; networkMessageWindow: number }): Promise<NetworkMetrics> {
+async function getNetworkMetrics(): Promise<NetworkMetrics> {
+  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
   if (!baseUrl) {
-    throw new Error('POSTGREST_URL environment variable is not set')
+    throw new Error('VITE_POSTGREST_URL is not set')
   }
 
   // Fetch multiple data points in parallel
   const [blocksResponse, txResponse, messagesResponse] = await Promise.all([
     fetch(
-      `${baseUrl}/blocks_raw?order=id.desc&limit=${config.networkBlocksWindow}`,
+      `${baseUrl}/blocks_raw?order=id.desc&limit=${appConfig.analytics.networkBlocksWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/transactions_main?order=height.desc&limit=${config.networkTxWindow}`,
+      `${baseUrl}/transactions_main?order=height.desc&limit=${appConfig.analytics.networkTxWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=${config.networkMessageWindow}`,
+      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=${appConfig.analytics.networkMessageWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     )
   ])
 
   const blocks = await blocksResponse.json()
   const transactions = await txResponse.json()
-  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0')
-  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0')
+  const totalBlocks = parseInt(blocksResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
+  const totalTxs = parseInt(txResponse.headers.get('content-range')?.split('/')[1] || '0', 10)
 
   // Calculate average block time
   let avgBlockTime = 6.0
@@ -122,13 +128,16 @@ async function getNetworkMetrics(baseUrl: string, config: { networkBlocksWindow:
 }
 
 export function NetworkMetricsCard() {
-  const config = useConfig()
-  const { analytics, postgrestUrl } = config
-
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['network-metrics', analytics.networkBlocksWindow, analytics.networkTxWindow, analytics.networkMessageWindow],
-    queryFn: () => getNetworkMetrics(postgrestUrl, analytics),
-    refetchInterval: analytics.networkRefetchMs,
+    queryKey: ['network-metrics', appConfig.analytics.networkBlocksWindow, appConfig.analytics.networkTxWindow, appConfig.analytics.networkMessageWindow],
+    queryFn: getNetworkMetrics,
+    refetchInterval: appConfig.analytics.networkRefetchMs,
+  })
+
+  const { data: feeRevenue } = useQuery({
+    queryKey: ['feeRevenue'],
+    queryFn: () => api.getTotalFeeRevenue(),
+    refetchInterval: 30000,
   })
 
   if (isLoading || !metrics) {
@@ -139,12 +148,12 @@ export function NetworkMetricsCard() {
           <CardDescription>Loading metrics...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={styles.animatePulse}>
+            <div className={styles.skeletonGrid}>
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-8 bg-muted rounded"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                <div key={i} className={styles.skeletonItem}>
+                  <div className={styles.skeletonBar}></div>
+                  <div className={styles.skeletonText}></div>
                 </div>
               ))}
             </div>
@@ -166,88 +175,116 @@ export function NetworkMetricsCard() {
     return num.toString()
   }
 
+  // Format fee revenue for display
+  const feeRevenueDisplay = feeRevenue
+    ? Object.entries(feeRevenue).slice(0, 2).map(([denom, amount]) => ({
+        denom,
+        formatted: formatDenomAmount(amount, denom, { maxDecimals: 2 })
+      }))
+    : []
+
   const metricsData = [
     {
       icon: Activity,
       label: 'Latest Block',
       value: metrics.latestHeight.toLocaleString(),
       subtext: `${timeSinceLastBlock}s ago`,
-      color: 'text-blue-500'
+      color: 'blue.500'
     },
     {
       icon: Database,
       label: 'Total Transactions',
       value: formatNumber(metrics.totalTransactions),
       subtext: `${metrics.txPerBlock} per block`,
-      color: 'text-green-500'
+      color: 'green.500'
     },
     {
       icon: Clock,
       label: 'Block Time',
       value: `${metrics.avgBlockTime.toFixed(2)}s`,
       subtext: 'average',
-      color: 'text-purple-500'
+      color: 'purple.500'
     },
     {
       icon: Users,
       label: 'Active Validators',
       value: metrics.activeValidators.toString(),
       subtext: 'participating',
-      color: 'text-orange-500'
+      color: 'orange.500'
     },
     {
       icon: TrendingUp,
       label: 'Success Rate',
       value: `${metrics.successRate.toFixed(1)}%`,
       subtext: 'transactions',
-      color: 'text-emerald-500'
+      color: 'emerald.500'
     },
     {
       icon: Zap,
       label: 'Avg Gas Used',
       value: formatNumber(metrics.avgGasUsed),
       subtext: 'per transaction',
-      color: 'text-yellow-500'
+      color: 'yellow.500'
     },
     {
       icon: Database,
       label: 'Total Blocks',
       value: formatNumber(metrics.totalBlocks),
       subtext: 'indexed',
-      color: 'text-indigo-500'
+      color: 'indigo.500'
     },
     {
       icon: Users,
       label: 'Active Addresses',
       value: metrics.uniqueAddresses.toString(),
       subtext: 'recent activity',
-      color: 'text-pink-500'
+      color: 'pink.500'
+    },
+    {
+      icon: DollarSign,
+      label: 'Fee Revenue',
+      value: feeRevenueDisplay.length > 0 ? feeRevenueDisplay[0].formatted : '-',
+      subtext: feeRevenueDisplay.length > 0 ? 'total collected' : 'loading...',
+      color: 'cyan.500',
+      customRender: feeRevenueDisplay.length > 0 ? (
+        <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
+          {feeRevenueDisplay.map(({ denom, formatted }) => (
+            <span key={denom} className={css({ display: 'inline-flex', alignItems: 'center', gap: '1', fontSize: 'sm' })}>
+              {formatted} <DenomDisplay denom={denom} />
+            </span>
+          ))}
+        </div>
+      ) : null
     }
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Network Overview</CardTitle>
+        <CardTitle className={styles.title}>Network Overview</CardTitle>
         <CardDescription>
           Real-time metrics and statistics for the blockchain network
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className={styles.metricsGrid}>
           {metricsData.map((metric, index) => {
             const Icon = metric.icon
             return (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Icon className={`h-5 w-5 ${metric.color}`} />
-                  <span className="text-sm font-medium text-muted-foreground">
+              <div key={index} className={styles.metricItem}>
+                <div className={styles.metricHeader}>
+                  <Icon className={css({ h: '5', w: '5', color: metric.color })} />
+                  <span className={styles.metricLabel}>
                     {metric.label}
                   </span>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  <div className="text-xs text-muted-foreground">{metric.subtext}</div>
+                <div className={styles.metricValues}>
+                  {'customRender' in metric && metric.customRender ? (
+                    metric.customRender
+                  ) : (
+                    <div className={styles.metricValue}>{metric.value}</div>
+                  )}
+                  <div className={styles.metricSubtext}>{metric.subtext}</div>
                 </div>
               </div>
             )
@@ -256,4 +293,20 @@ export function NetworkMetricsCard() {
       </CardContent>
     </Card>
   )
+}
+
+const styles = {
+  title: css({ fontSize: '2xl' }),
+  animatePulse: css({ animation: 'pulse', display: 'flex', flexDirection: 'column', gap: '4' }),
+  skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '4' }),
+  skeletonItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
+  skeletonText: css({ h: '4', bg: 'muted', rounded: 'md', w: '2/3' }),
+  metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '6' }),
+  metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
+  metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
+  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),
+  metricValues: css({ display: 'flex', flexDirection: 'column', gap: '1' }),
+  metricValue: css({ fontSize: '2xl', fontWeight: 'bold' }),
+  metricSubtext: css({ fontSize: 'xs', color: 'fg.muted' }),
 }

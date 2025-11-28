@@ -1,0 +1,21 @@
+# VCS
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+*.env
+
+# Node/Bun artifacts
+node_modules
+dist
+styled-system
+*.log
+
+# Dev tools and cache
+.DS_Store
+.react-router
+.playwright-mcp
+test-results
+coverage

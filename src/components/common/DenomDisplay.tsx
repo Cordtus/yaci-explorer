@@ -1,5 +1,6 @@
 import { useDenomResolver } from '@/hooks/useDenomResolver'
 import { Truncate } from '@/components/ui/truncate'
+import { css, cx } from '@/styled-system/css'
 
 interface DenomDisplayProps {
   denom: string
@@ -18,7 +19,7 @@ export function DenomDisplay({ denom, maxLength = 15, className }: DenomDisplayP
   // If it resolved to something different (IBC denom), show resolved name with original in tooltip
   if (resolvedDenom !== originalDenom && resolvedDenom.length <= maxLength) {
     return (
-      <span className={className} title={originalDenom}>
+      <span className={cx(styles.base, className)} title={originalDenom}>
         {resolvedDenom}
       </span>
     )
@@ -34,5 +35,9 @@ export function DenomDisplay({ denom, maxLength = 15, className }: DenomDisplayP
   }
 
   // Short enough to display as-is
-  return <span className={className}>{resolvedDenom}</span>
+  return <span className={cx(styles.base, className)}>{resolvedDenom}</span>
+}
+
+const styles = {
+  base: css({})
 }

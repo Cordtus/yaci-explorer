@@ -1,20 +1,25 @@
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Cache bust on every build
+ARG CACHEBUST=1
 
 COPY . .
 
 ARG VITE_POSTGREST_URL
+ARG VITE_CHAIN_REST_ENDPOINT
 ENV VITE_POSTGREST_URL=$VITE_POSTGREST_URL
+ENV VITE_CHAIN_REST_ENDPOINT=$VITE_CHAIN_REST_ENDPOINT
 
-RUN yarn build
+RUN bun run build
 
 FROM nginx:alpine
 
-COPY --from=builder /app/build/client /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
