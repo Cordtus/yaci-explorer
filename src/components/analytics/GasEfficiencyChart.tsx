@@ -58,7 +58,7 @@ export function GasEfficiencyChart() {
     },
     xAxis: {
       type: 'category',
-      data: distribution.map((d) => d.gas_range),
+      data: distribution.map((d) => d.range),
       axisLabel: {
         rotate: 45,
       },

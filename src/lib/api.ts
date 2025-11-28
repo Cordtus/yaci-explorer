@@ -1,5 +1,5 @@
 /**
- * Republic Explorer API Client
+ * YACI Explorer API Client
  * Self-contained client for PostgREST RPC endpoints
  */
 
@@ -20,11 +20,12 @@ export interface PaginatedResponse<T> {
 
 export interface Transaction {
 	id: string
-	fee: TransactionFee
+	fee: TransactionFee | null
 	memo: string | null
 	error: string | null
 	height: number
 	timestamp: string
+	proposal_ids: number[] | null
 	messages: Message[]
 	events: Event[]
 	ingest_error: IngestError | null
@@ -151,6 +152,36 @@ export interface BlockRaw {
 			}
 		}
 	}
+}
+
+export interface GovernanceProposal {
+	proposal_id: number
+	title: string | null
+	summary: string | null
+	status: string
+	submit_time: string
+	deposit_end_time: string | null
+	voting_start_time: string | null
+	voting_end_time: string | null
+	proposer: string | null
+	tally: {
+		yes: string | null
+		no: string | null
+		abstain: string | null
+		no_with_veto: string | null
+	}
+	last_updated: string
+	last_snapshot_time: string | null
+}
+
+export interface ProposalSnapshot {
+	proposal_id: number
+	status: string
+	yes_count: string
+	no_count: string
+	abstain_count: string
+	no_with_veto_count: string
+	snapshot_time: string
 }
 
 // Legacy type aliases for compatibility
@@ -369,7 +400,7 @@ export class YaciClient {
 		return this.query('message_type_stats')
 	}
 
-	async getGasUsageDistribution(): Promise<Array<{ gas_range: string; count: number }>> {
+	async getGasUsageDistribution(): Promise<Array<{ range: string; count: number }>> {
 		return this.query('gas_usage_distribution')
 	}
 
@@ -377,9 +408,9 @@ export class YaciClient {
 		avgGasLimit: number
 		totalGasLimit: number
 		transactionCount: number
-		data: Array<{ gas_range: string; count: number }>
+		data: Array<{ range: string; count: number }>
 	}> {
-		const data = await this.query<Array<{ gas_range: string; count: number }>>('gas_usage_distribution')
+		const data = await this.query<Array<{ range: string; count: number }>>('gas_usage_distribution')
 		const transactionCount = data.reduce((sum, d) => sum + d.count, 0)
 		// Estimate average based on distribution midpoints
 		const midpoints: Record<string, number> = {
@@ -391,7 +422,7 @@ export class YaciClient {
 		}
 		let totalGasLimit = 0
 		for (const d of data) {
-			totalGasLimit += (midpoints[d.gas_range] || 500000) * d.count
+			totalGasLimit += (midpoints[d.range] || 500000) * d.count
 		}
 		return {
 			avgGasLimit: transactionCount > 0 ? Math.round(totalGasLimit / transactionCount) : 0,
@@ -439,6 +470,80 @@ export class YaciClient {
 
 	async getBlockTimeAnalysis(limit = 100): Promise<{ avg: number; min: number; max: number }> {
 		return this.rpc('get_block_time_analysis', { _limit: limit })
+	}
+
+	async getActiveAddressesDaily(days = 30): Promise<Array<{ date: string; count: number }>> {
+		return this.rpc('get_active_addresses_daily', { _days: days })
+	}
+
+	// Governance endpoints
+
+	async getGovernanceProposals(
+		limit = 20,
+		offset = 0,
+		status?: string
+	): Promise<PaginatedResponse<GovernanceProposal>> {
+		return this.rpc('get_governance_proposals', {
+			_limit: limit,
+			_offset: offset,
+			_status: status
+		})
+	}
+
+	async getProposalDetail(proposalId: number): Promise<GovernanceProposal | undefined> {
+		// Query returns flat columns, transform to nested tally object
+		const result = await this.query<Array<{
+			proposal_id: number
+			title: string | null
+			summary: string | null
+			status: string
+			submit_time: string
+			deposit_end_time: string | null
+			voting_start_time: string | null
+			voting_end_time: string | null
+			proposer: string | null
+			yes_count: string | null
+			no_count: string | null
+			abstain_count: string | null
+			no_with_veto_count: string | null
+			last_updated: string
+			last_snapshot_time: string | null
+		}>>('governance_proposals', {
+			proposal_id: `eq.${proposalId}`,
+			limit: '1'
+		})
+		if (!result[0]) return undefined
+		const row = result[0]
+		return {
+			proposal_id: row.proposal_id,
+			title: row.title,
+			summary: row.summary,
+			status: row.status,
+			submit_time: row.submit_time,
+			deposit_end_time: row.deposit_end_time,
+			voting_start_time: row.voting_start_time,
+			voting_end_time: row.voting_end_time,
+			proposer: row.proposer,
+			tally: {
+				yes: row.yes_count,
+				no: row.no_count,
+				abstain: row.abstain_count,
+				no_with_veto: row.no_with_veto_count
+			},
+			last_updated: row.last_updated,
+			last_snapshot_time: row.last_snapshot_time
+		}
+	}
+
+	async getProposalSnapshots(proposalId: number): Promise<ProposalSnapshot[]> {
+		return this.query('governance_snapshots', {
+			proposal_id: `eq.${proposalId}`,
+			order: 'snapshot_time.desc'
+		})
+	}
+
+	async getProposalTally(proposalId: number): Promise<{ yes: number; no: number; abstain: number; no_with_veto: number }> {
+		return this.rpc('compute_proposal_tally', { _proposal_id: proposalId })
 	}
 
 	// Denomination endpoints
@@ -577,8 +682,12 @@ export class YaciClient {
 
 }
 
-import { getEnv } from './env'
+// Factory function to create API client
+export function createApiClient(baseUrl: string): YaciClient {
+	return new YaciClient({ baseUrl })
+}
 
-// Singleton instance
-const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
-export const api = new YaciClient({ baseUrl })
+// Default instance for backward compatibility
+import { getEnv } from './env'
+const defaultBaseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
+export const api = new YaciClient({ baseUrl: defaultBaseUrl })
