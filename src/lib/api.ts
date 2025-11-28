@@ -104,17 +104,13 @@ export interface AddressStats {
 	transaction_count: number
 	first_seen: string | null
 	last_seen: string | null
-	total_sent?: number
-	total_received?: number
 }
 
 export interface ChainStats {
 	latest_block: number
 	total_transactions: number
 	unique_addresses: number
-	avg_block_time: number
-	min_block_time: number
-	max_block_time: number
+	evm_transactions: number
 	active_validators: number
 }
 

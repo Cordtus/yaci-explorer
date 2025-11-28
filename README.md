@@ -1,6 +1,6 @@
 # Yaci Block Explorer
 
-Explorer UI for Cosmos SDK chains (with EVM support) backed by the [Yaci indexer](https://github.com/manifest-network/yaci).
+Explorer UI for Cosmos SDK chains (with EVM support) backed by the [Yaci indexer](https://github.com/Cordtus/yaci).
 
 ## Features
 - Auto-detects chain ID, denoms, and message types
