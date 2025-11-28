@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
-import { appConfig } from '@/config/app'
+import { useConfig } from '@/contexts/ConfigContext'
 
 interface BlockTimeData {
   height: number
@@ -10,10 +9,9 @@ interface BlockTimeData {
   timestamp: string
 }
 
-async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+async function getBlockIntervalData(baseUrl: string, limit: number, maxSeconds: number): Promise<BlockTimeData[]> {
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    throw new Error('POSTGREST_URL environment variable is not set')
   }
   const response = await fetch(
     `${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`
@@ -26,7 +24,7 @@ async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
     const previousTime = new Date(blocks[i + 1].data?.block?.header?.time).getTime()
     const diff = (currentTime - previousTime) / 1000
 
-    if (diff > 0 && diff < appConfig.analytics.blockIntervalMaxSeconds) {
+    if (diff > 0 && diff < maxSeconds) {
       data.push({
         height: blocks[i].id,
         time: diff,
@@ -39,12 +37,15 @@ async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
 }
 
 export function BlockIntervalChart() {
+  const config = useConfig()
+  const { analytics, postgrestUrl } = config
+
   const { data, isLoading } = useQuery({
-    queryKey: ['block-intervals', appConfig.analytics.blockIntervalLookback],
-    queryFn: () => getBlockIntervalData(appConfig.analytics.blockIntervalLookback),
-    refetchInterval: appConfig.analytics.blockIntervalRefetchMs,
+    queryKey: ['block-intervals', analytics.blockIntervalLookback],
+    queryFn: () => getBlockIntervalData(postgrestUrl, analytics.blockIntervalLookback, analytics.blockIntervalMaxSeconds),
+    refetchInterval: analytics.blockIntervalRefetchMs,
   })
-  const lookbackLabel = appConfig.analytics.blockIntervalLookback.toLocaleString()
+  const lookbackLabel = analytics.blockIntervalLookback.toLocaleString()
 
   if (isLoading || !data || data.length === 0) {
     return (

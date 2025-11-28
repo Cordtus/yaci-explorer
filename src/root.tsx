@@ -4,20 +4,28 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "react-router";
-import type { LinksFunction } from "react-router";
+import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
 
 import { Header } from '@/components/layout/header'
 import { DenomProvider } from '@/contexts/DenomContext'
-import { appConfig } from '@/config/app'
+import { ConfigProvider, type AppConfig } from '@/contexts/ConfigContext'
+import { BrandingApplicator } from '@/components/BrandingApplicator'
+import { getServerConfig } from '@/config/env.server'
 import stylesheet from "./styles/globals.css?url";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
+
+export async function loader(_args: LoaderFunctionArgs) {
+  const config = getServerConfig()
+  return { config }
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,11 +57,13 @@ export function HydrateFallback() {
 }
 
 export default function Root() {
+  const { config } = useLoaderData<typeof loader>()
+
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: appConfig.queries.staleTimeMs,
-        gcTime: appConfig.queries.gcTimeMs,
+        staleTime: config.queries.staleTimeMs,
+        gcTime: config.queries.gcTimeMs,
         refetchOnWindowFocus: false,
       },
     },
@@ -61,15 +71,18 @@ export default function Root() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DenomProvider>
-        <div className="min-h-screen bg-background">
-          <Header />
-          <main className="container mx-auto px-4 py-6">
-            <Outlet />
-          </main>
-        </div>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </DenomProvider>
+      <ConfigProvider config={config as AppConfig}>
+        <BrandingApplicator />
+        <DenomProvider>
+          <div className="min-h-screen bg-background">
+            <Header />
+            <main className="container mx-auto px-4 py-6">
+              <Outlet />
+            </main>
+          </div>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </DenomProvider>
+      </ConfigProvider>
     </QueryClientProvider>
   );
 }

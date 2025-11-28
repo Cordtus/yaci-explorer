@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, TrendingUp, Clock, Database, Users, Zap } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
-import { appConfig } from '@/config/app'
+import { useConfig } from '@/contexts/ConfigContext'
 
 interface NetworkMetrics {
   latestHeight: number
@@ -17,24 +16,23 @@ interface NetworkMetrics {
   uniqueAddresses: number
 }
 
-async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+async function getNetworkMetrics(baseUrl: string, config: { networkBlocksWindow: number; networkTxWindow: number; networkMessageWindow: number }): Promise<NetworkMetrics> {
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    throw new Error('POSTGREST_URL environment variable is not set')
   }
 
   // Fetch multiple data points in parallel
   const [blocksResponse, txResponse, messagesResponse] = await Promise.all([
     fetch(
-      `${baseUrl}/blocks_raw?order=id.desc&limit=${appConfig.analytics.networkBlocksWindow}`,
+      `${baseUrl}/blocks_raw?order=id.desc&limit=${config.networkBlocksWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/transactions_main?order=height.desc&limit=${appConfig.analytics.networkTxWindow}`,
+      `${baseUrl}/transactions_main?order=height.desc&limit=${config.networkTxWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     ),
     fetch(
-      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=${appConfig.analytics.networkMessageWindow}`,
+      `${baseUrl}/messages_main?select=sender,mentions,metadata&order=id.desc&limit=${config.networkMessageWindow}`,
       { headers: { 'Prefer': 'count=exact' } }
     )
   ])
@@ -124,10 +122,13 @@ async function getNetworkMetrics(): Promise<NetworkMetrics> {
 }
 
 export function NetworkMetricsCard() {
+  const config = useConfig()
+  const { analytics, postgrestUrl } = config
+
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['network-metrics', appConfig.analytics.networkBlocksWindow, appConfig.analytics.networkTxWindow, appConfig.analytics.networkMessageWindow],
-    queryFn: getNetworkMetrics,
-    refetchInterval: appConfig.analytics.networkRefetchMs,
+    queryKey: ['network-metrics', analytics.networkBlocksWindow, analytics.networkTxWindow, analytics.networkMessageWindow],
+    queryFn: () => getNetworkMetrics(postgrestUrl, analytics),
+    refetchInterval: analytics.networkRefetchMs,
   })
 
   if (isLoading || !metrics) {

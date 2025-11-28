@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Minus, TrendingDown, TrendingUp } from 'lucide-react'
-import { appConfig } from '@/config/app'
+import { useConfig } from '@/contexts/ConfigContext'
 
 interface EventTypeStats {
   type: string
@@ -10,14 +10,13 @@ interface EventTypeStats {
   trend?: 'up' | 'down' | 'stable'
 }
 
-async function getTopEventTypes(): Promise<EventTypeStats[]> {
-  const baseUrl = import.meta.env.VITE_POSTGREST_URL
+async function getTopEventTypes(baseUrl: string, config: { eventSampleLimit: number; eventTopN: number }): Promise<EventTypeStats[]> {
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL environment variable is not set')
+    throw new Error('POSTGREST_URL environment variable is not set')
   }
 
   const response = await fetch(
-    `${baseUrl}/events_main?select=event_type&attr_index=eq.0&order=id.desc&limit=${appConfig.analytics.eventSampleLimit}`
+    `${baseUrl}/events_main?select=event_type&attr_index=eq.0&order=id.desc&limit=${config.eventSampleLimit}`
   )
 
   if (!response.ok) {
@@ -44,7 +43,7 @@ async function getTopEventTypes(): Promise<EventTypeStats[]> {
       trend: 'stable' as const,
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, appConfig.analytics.eventTopN)
+    .slice(0, config.eventTopN)
 
   return stats
 }
@@ -77,17 +76,20 @@ function getTrendIcon(trend?: string) {
 }
 
 export function TopEventTypesCard() {
+  const config = useConfig()
+  const { analytics, postgrestUrl } = config
+
   const { data, isLoading } = useQuery({
     queryKey: [
       'top-event-types',
-      appConfig.analytics.eventSampleLimit,
-      appConfig.analytics.eventTopN,
+      analytics.eventSampleLimit,
+      analytics.eventTopN,
     ],
-    queryFn: getTopEventTypes,
-    refetchInterval: appConfig.analytics.eventRefetchMs,
+    queryFn: () => getTopEventTypes(postgrestUrl, analytics),
+    refetchInterval: analytics.eventRefetchMs,
   })
 
-  const sampleLimitLabel = appConfig.analytics.eventSampleLimit.toLocaleString()
+  const sampleLimitLabel = analytics.eventSampleLimit.toLocaleString()
 
   if (isLoading || !data) {
     return (

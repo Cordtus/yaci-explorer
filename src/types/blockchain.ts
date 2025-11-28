@@ -229,12 +229,9 @@ export interface PaginatedResponse<T> {
 export interface ChainStats {
   latest_block: number
   total_transactions: number
-  avg_block_time: number
-  tps: number
+  unique_addresses: number
+  evm_transactions: number
   active_validators: number
-  total_supply: string
-  market_cap?: string
-  price?: number
 }
 
 /**
