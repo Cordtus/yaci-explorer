@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Blocks, Home } from 'lucide-react'
+import { Activity, BarChart3, Blocks, Home, Vote } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
+  { name: 'Governance', href: '/governance', icon: Vote },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 
