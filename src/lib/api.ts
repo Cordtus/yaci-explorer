@@ -20,7 +20,7 @@ export interface PaginatedResponse<T> {
 
 export interface Transaction {
 	id: string
-	fee: TransactionFee
+	fee: TransactionFee | null
 	memo: string | null
 	error: string | null
 	height: number
@@ -105,17 +105,13 @@ export interface AddressStats {
 	transaction_count: number
 	first_seen: string | null
 	last_seen: string | null
-	total_sent: number
-	total_received: number
 }
 
 export interface ChainStats {
 	latest_block: number
 	total_transactions: number
 	unique_addresses: number
-	avg_block_time: number
-	min_block_time: number
-	max_block_time: number
+	evm_transactions: number
 	active_validators: number
 }
 
@@ -172,6 +168,7 @@ export interface GovernanceProposal {
 		no_with_veto: string | null
 	}
 	last_updated: string
+	last_snapshot_time: string | null
 }
 
 export interface ProposalSnapshot {
@@ -496,6 +493,7 @@ export class YaciClient {
 			abstain_count: string | null
 			no_with_veto_count: string | null
 			last_updated: string
+			last_snapshot_time: string | null
 		}>>('governance_proposals', {
 			proposal_id: `eq.${proposalId}`,
 			limit: '1'
@@ -518,7 +516,8 @@ export class YaciClient {
 				abstain: row.abstain_count,
 				no_with_veto: row.no_with_veto_count
 			},
-			last_updated: row.last_updated
+			last_updated: row.last_updated,
+			last_snapshot_time: row.last_snapshot_time
 		}
 	}
 
@@ -534,6 +533,20 @@ export class YaciClient {
 	}
 }
 
-// Singleton instance
-const baseUrl = import.meta.env.VITE_POSTGREST_URL || 'http://localhost:3000'
-export const api = new YaciClient({ baseUrl })
+// Factory function to create API client
+export function createApiClient(baseUrl: string): YaciClient {
+	return new YaciClient({ baseUrl })
+}
+
+// Default instance for backward compatibility (uses /api as default)
+let _defaultClient: YaciClient | null = null
+
+export function getDefaultApiClient(): YaciClient {
+	if (!_defaultClient) {
+		_defaultClient = new YaciClient({ baseUrl: '/api' })
+	}
+	return _defaultClient
+}
+
+// Legacy export for backward compatibility
+export const api = getDefaultApiClient()

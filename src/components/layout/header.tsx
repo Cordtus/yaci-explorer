@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router'
-import { Search, Blocks, Activity, Home, BarChart3, Vote } from 'lucide-react'
+import { Blocks, Activity, Home, BarChart3, Vote } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SearchBar } from '@/components/common/search-bar'
-import { getBrandingConfig } from '@/config/branding'
+import { useConfig } from '@/contexts/ConfigContext'
 import { ResetNotice } from '@/components/common/reset-notice'
 
 const navigation = [
@@ -16,7 +16,7 @@ const navigation = [
 export function Header() {
   const location = useLocation()
   const pathname = location.pathname
-  const branding = getBrandingConfig()
+  const { branding } = useConfig()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

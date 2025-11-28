@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { useConfig } from '@/contexts/ConfigContext'
 import { formatNumber, formatTimeAgo, formatHash } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -77,6 +78,7 @@ function isJsonString(str: string): boolean {
 }
 
 export default function TransactionDetailPage() {
+  const config = useConfig()
   const [mounted, setMounted] = useState(false)
   const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
   const [copied, setCopied] = useState(false)
@@ -118,9 +120,7 @@ export default function TransactionDetailPage() {
       setIsDecodingEVM(true)
       setDecodeAttempted(true)
 
-      const apiURL = import.meta.env.VITE_POSTGREST_URL || '/api'
-
-      fetch(`${apiURL}/rpc/request_evm_decode`, {
+      fetch(`${config.postgrestUrl}/rpc/request_evm_decode`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export default function TransactionDetailPage() {
           setIsDecodingEVM(false)
         })
     }
-  }, [transaction, decodeAttempted, refetch])
+  }, [transaction, decodeAttempted, refetch, config.postgrestUrl])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)

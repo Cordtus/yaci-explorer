@@ -28,27 +28,7 @@ export interface BrandingConfig {
   }
 }
 
-/**
- * Get branding configuration from environment variables or defaults
- */
-export function getBrandingConfig(): BrandingConfig {
-  return {
-    appName: import.meta.env.VITE_APP_NAME || 'Yaci Explorer',
-    appNameShort: import.meta.env.VITE_APP_NAME_SHORT || 'Explorer',
-    logoUrl: import.meta.env.VITE_LOGO_URL,
-    faviconUrl: import.meta.env.VITE_FAVICON_URL,
-    primaryColor: import.meta.env.VITE_PRIMARY_COLOR,
-    accentColor: import.meta.env.VITE_ACCENT_COLOR,
-    footerText: import.meta.env.VITE_FOOTER_TEXT,
-    links: {
-      website: import.meta.env.VITE_LINK_WEBSITE,
-      docs: import.meta.env.VITE_LINK_DOCS,
-      github: import.meta.env.VITE_LINK_GITHUB,
-      discord: import.meta.env.VITE_LINK_DISCORD,
-      twitter: import.meta.env.VITE_LINK_TWITTER,
-    },
-  }
-}
+// Note: getBrandingConfig is now accessed via useConfig().branding from ConfigContext
 
 /**
  * Apply branding theme colors to CSS variables
