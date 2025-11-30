@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Blocks, Activity } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
+import { appConfig } from '@/config/app'
 import { formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
@@ -20,20 +21,22 @@ export default function DashboardPage() {
   const { data: blocks, isLoading: blocksLoading, error: blocksError } = useQuery({
     queryKey: ['latestBlocks'],
     queryFn: async () => {
-      const result = await api.getBlocks(5, 0)
+      const result = await api.getBlocks(appConfig.dashboard.itemCount, 0)
       return result
     },
-    refetchInterval: 2000,
+    refetchInterval: appConfig.dashboard.refetchIntervalMs,
+    staleTime: appConfig.dashboard.refetchIntervalMs / 2,
     enabled: mounted,
   })
 
   const { data: transactions, isLoading: txLoading, error: txError } = useQuery({
     queryKey: ['latestTransactions'],
     queryFn: async () => {
-      const result = await api.getTransactions(5, 0)
+      const result = await api.getTransactions(appConfig.dashboard.itemCount, 0)
       return result
     },
-    refetchInterval: 2000,
+    refetchInterval: appConfig.dashboard.refetchIntervalMs,
+    staleTime: appConfig.dashboard.refetchIntervalMs / 2,
     enabled: mounted,
   })
 
@@ -60,7 +63,7 @@ export default function DashboardPage() {
       })}>
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle>Latest Blocks</CardTitle>
+            <CardTitle>Recent Blocks</CardTitle>
             <Link
               to="/blocks"
               className={css(styles.viewAllLink)}
@@ -81,9 +84,6 @@ export default function DashboardPage() {
                     className={css(styles.listItem)}
                   >
                     <div className={css(styles.itemLeft)}>
-                      <div className={css(styles.iconCircle)}>
-                        <Blocks className={css(styles.icon)} />
-                      </div>
                       <div>
                         <Link
                           to={`/blocks/${block.id}`}
@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle>Latest Transactions</CardTitle>
+            <CardTitle>Recent Transactions</CardTitle>
             <Link
               to="/tx"
               className={css(styles.viewAllLink)}
@@ -136,9 +136,6 @@ export default function DashboardPage() {
                       className={css(styles.listItem)}
                     >
                       <div className={css(styles.itemLeft)}>
-                        <div className={css(styles.iconCircle)}>
-                          <Activity className={css(styles.icon)} />
-                        </div>
                         <div>
                           <Link
                             to={`/tx/${tx.id}`}
@@ -240,20 +237,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '4',
-  },
-  iconCircle: {
-    height: '10',
-    width: '10',
-    borderRadius: 'full',
-    backgroundColor: 'colorPalette.a10',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    height: '5',
-    width: '5',
-    color: 'colorPalette',
   },
   itemLink: {
     fontWeight: 'medium',

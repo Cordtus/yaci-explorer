@@ -225,16 +225,14 @@ export interface PaginatedResponse<T> {
 /**
  * Chain-wide statistics and metrics
  * Used for dashboard overview and network health monitoring
+ * Fields match api.chain_stats view in yaci-explorer-apis
  */
 export interface ChainStats {
   latest_block: number
   total_transactions: number
-  avg_block_time: number
-  tps: number
+  unique_addresses: number
+  evm_transactions: number
   active_validators: number
-  total_supply: string
-  market_cap?: string
-  price?: number
 }
 
 /**

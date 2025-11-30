@@ -9,26 +9,26 @@ import { css } from '@/styled-system/css'
 interface VolumeData {
   time: string
   count: number
-  gasUsed: number
 }
 
 async function getTransactionVolume(hours: number = 24): Promise<VolumeData[]> {
-  // Get hourly volume from api
   const hourlyVolume = await api.getHourlyTransactionVolume(hours)
 
-  // Convert to VolumeData format with empty hours filled in
-  const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000)
-  const volumeMap = new Map(hourlyVolume.map(d => [d.hour, d.count]))
+  // Build map using ISO hour prefix for matching (e.g., "2025-11-27T04")
+  const volumeMap = new Map(
+    hourlyVolume.map(d => [d.hour.substring(0, 13), d.count])
+  )
 
   const result: VolumeData[] = []
-  const endTime = new Date()
+  const now = new Date()
+  const startTime = new Date(now.getTime() - hours * 60 * 60 * 1000)
 
-  for (let time = new Date(hoursAgo); time <= endTime; time.setHours(time.getHours() + 1)) {
-    const hourStr = `${time.toISOString().split('T')[0]} ${time.getHours().toString().padStart(2, '0')}:00`
+  // Fill in all hours, including those with 0 transactions
+  for (let time = new Date(startTime); time <= now; time.setHours(time.getHours() + 1)) {
+    const hourKey = time.toISOString().substring(0, 13)
     result.push({
-      time: `${time.toISOString().substring(0, 13)}:00:00`,
-      count: volumeMap.get(hourStr) || 0,
-      gasUsed: 0 // Gas data not available from hourly aggregation
+      time: time.toISOString(),
+      count: volumeMap.get(hourKey) || 0
     })
   }
 
@@ -70,33 +70,28 @@ export function TransactionVolumeChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      borderColor: 'rgba(6, 182, 212, 0.5)',
+      textStyle: { color: '#f1f5f9' },
       axisPointer: {
-        type: 'cross',
-        label: {
-          backgroundColor: '#6a7985'
-        }
+        type: 'line',
+        lineStyle: { color: '#06b6d4', width: 1 }
       },
       formatter: (params: any) => {
         const date = new Date(params[0].axisValue)
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        return `
-          <div style="font-size: 12px;">
-            <strong>${timeStr}</strong><br/>
-            Transactions: ${params[0].value}<br/>
-            Gas Used: ${(params[1].value / 1000000).toFixed(2)}M
-          </div>
-        `
+        const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        return `<div style="font-size: 13px;">
+          <strong>${dateStr} ${timeStr}</strong><br/>
+          Transactions: <span style="color: #22d3ee; font-weight: 600;">${params[0].value}</span>
+        </div>`
       }
-    },
-    legend: {
-      data: ['Transactions', 'Gas Used'],
-      bottom: 0
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
-      top: '10%',
+      bottom: '8%',
+      top: '8%',
       containLabel: true
     },
     xAxis: {
@@ -104,87 +99,48 @@ export function TransactionVolumeChart() {
       boundaryGap: false,
       data: data.map(d => d.time),
       axisLabel: {
+        color: '#cbd5e1',
+        fontSize: 11,
         formatter: (value: string) => {
           const date = new Date(value)
           return date.toLocaleTimeString([], { hour: '2-digit' })
         },
-        interval: Math.floor(data.length / 8) // Show ~8 labels
-      }
+        interval: Math.floor(data.length / 8)
+      },
+      axisLine: { lineStyle: { color: '#475569' } },
+      splitLine: { show: false }
     },
-    yAxis: [
-      {
-        type: 'value',
-        name: 'Transactions',
-        position: 'left',
-        axisLabel: {
-          formatter: '{value}'
-        },
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: '#3b82f6'
-          }
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#cbd5e1',
+        fontSize: 11,
+        formatter: '{value}'
+      },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#334155', type: 'dashed' } }
+    },
+    series: [{
+      name: 'Transactions',
+      type: 'line',
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 6,
+      sampling: 'average',
+      itemStyle: { color: '#06b6d4' },
+      lineStyle: { width: 3, color: '#06b6d4' },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(6, 182, 212, 0.4)' },
+            { offset: 1, color: 'rgba(6, 182, 212, 0.05)' }
+          ]
         }
       },
-      {
-        type: 'value',
-        name: 'Gas (M)',
-        position: 'right',
-        axisLabel: {
-          formatter: (value: number) => (value / 1000000).toFixed(1)
-        },
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: '#10b981'
-          }
-        }
-      }
-    ],
-    series: [
-      {
-        name: 'Transactions',
-        type: 'line',
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 4,
-        sampling: 'average',
-        itemStyle: {
-          color: '#3b82f6'
-        },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [{
-              offset: 0, color: 'rgba(59, 130, 246, 0.2)'
-            }, {
-              offset: 1, color: 'rgba(59, 130, 246, 0.05)'
-            }]
-          }
-        },
-        data: data.map(d => d.count)
-      },
-      {
-        name: 'Gas Used',
-        type: 'line',
-        smooth: true,
-        yAxisIndex: 1,
-        symbol: 'none',
-        sampling: 'average',
-        itemStyle: {
-          color: '#10b981'
-        },
-        lineStyle: {
-          width: 2,
-          type: 'dashed'
-        },
-        data: data.map(d => d.gasUsed)
-      }
-    ]
+      data: data.map(d => d.count)
+    }]
   }
 
   return (
@@ -199,7 +155,7 @@ export function TransactionVolumeChart() {
         </CardDescription>
       </CardHeader>
       <CardContent className={styles.content}>
-        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
+        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
       </CardContent>
     </Card>
   )

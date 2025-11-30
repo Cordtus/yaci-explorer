@@ -3,6 +3,7 @@
 import { useDenom } from '@/contexts/DenomContext'
 import { formatNumber } from '@/lib/utils'
 import { Copy, ArrowRight, Coins, Users, Vote, Lock } from 'lucide-react'
+import { Link } from 'react-router'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { css } from '@/styled-system/css'
@@ -196,13 +197,22 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
     const inputs = metadata.inputs || []
     const outputs = metadata.outputs || []
 
+    // Calculate total amounts
+    const totalInputAmount = inputs.reduce((sum, input) => {
+      return sum + input.coins.reduce((coinSum, coin) => coinSum + BigInt(coin.amount), BigInt(0))
+    }, BigInt(0))
+
     return (
       <div className={css({ display: 'flex', flexDir: 'column', gap: '2' })}>
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '3' })}>
+        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '3', flexWrap: 'wrap' })}>
           <Coins className={css({ h: '4', w: '4', color: 'colorPalette.default' })} />
           <span className={css({ fontSize: 'sm', fontWeight: 'semibold' })}>Multi-Send Transfer</span>
-          <Badge variant="outline" className={css({ ml: 'auto' })}>
-            {inputs.length} input{inputs.length !== 1 ? 's' : ''} / {outputs.length} output{outputs.length !== 1 ? 's' : ''}
+          <Badge variant="outline">
+            {inputs.length} input{inputs.length !== 1 ? 's' : ''}
+          </Badge>
+          <ArrowRight className={css({ h: '3', w: '3', color: 'fg.muted' })} />
+          <Badge variant="outline">
+            {outputs.length} output{outputs.length !== 1 ? 's' : ''}
           </Badge>
         </div>
 
@@ -210,11 +220,23 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
         {inputs.length > 0 && (
           <div className={css({ p: '3', bg: 'bg.muted/30', rounded: 'lg' })}>
             <label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'fg.muted', textTransform: 'uppercase', letterSpacing: 'wider', display: 'block', mb: '2' })}>
-              From ({inputs.length})
+              From ({inputs.length} {inputs.length === 1 ? 'address' : 'addresses'})
             </label>
             {inputs.map((input, idx) => (
-              <div key={idx} className={css({ mb: idx < inputs.length - 1 ? '2' : '0' })}>
-                <p className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all' })}>{input.address}</p>
+              <div key={idx} className={css({ mb: idx < inputs.length - 1 ? '3' : '0', pb: idx < inputs.length - 1 ? '3' : '0', borderBottom: idx < inputs.length - 1 ? '1px solid' : 'none', borderColor: 'border.default' })}>
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                  <Link to={`/addr/${input.address}`} className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+                    {input.address}
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={css({ h: '5', w: '5', flexShrink: '0' })}
+                    onClick={() => navigator.clipboard.writeText(input.address)}
+                  >
+                    <Copy className={css({ h: '3', w: '3' })} />
+                  </Button>
+                </div>
                 <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mt: '1' })}>
                   {input.coins.map((coin, coinIdx) => (
                     <Badge key={coinIdx} variant="outline" className={css({ fontSize: 'xs' })}>
@@ -235,11 +257,23 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
         {outputs.length > 0 && (
           <div className={css({ p: '3', bg: 'colorPalette.a2', rounded: 'lg', borderWidth: '1px', borderColor: 'colorPalette.a5' })}>
             <label className={css({ fontSize: 'xs', fontWeight: 'medium', color: 'colorPalette.default', textTransform: 'uppercase', letterSpacing: 'wider', display: 'block', mb: '2' })}>
-              To ({outputs.length})
+              To ({outputs.length} {outputs.length === 1 ? 'recipient' : 'recipients'})
             </label>
             {outputs.map((output, idx) => (
               <div key={idx} className={css({ mb: idx < outputs.length - 1 ? '3' : '0', pb: idx < outputs.length - 1 ? '3' : '0', borderBottom: idx < outputs.length - 1 ? '1px solid' : 'none', borderColor: 'colorPalette.a5' })}>
-                <p className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all' })}>{output.address}</p>
+                <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+                  <Link to={`/addr/${output.address}`} className={css({ fontSize: 'sm', fontFamily: 'mono', wordBreak: 'break-all', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+                    {output.address}
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={css({ h: '5', w: '5', flexShrink: '0' })}
+                    onClick={() => navigator.clipboard.writeText(output.address)}
+                  >
+                    <Copy className={css({ h: '3', w: '3' })} />
+                  </Button>
+                </div>
                 <div className={css({ display: 'flex', gap: '2', flexWrap: 'wrap', mt: '1' })}>
                   {output.coins.map((coin, coinIdx) => (
                     <span key={coinIdx} className={css({ fontSize: 'sm', fontWeight: 'bold', color: 'colorPalette.default' })}>

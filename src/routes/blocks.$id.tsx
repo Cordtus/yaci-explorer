@@ -82,8 +82,8 @@ export default function BlockDetailPage() {
   }
 
   const blockHash = block.data?.block_id?.hash || block.data?.blockId?.hash || ''
-  const chainId = block.data?.block?.header?.chain_id || 'N/A'
-  const proposerAddress = block.data?.block?.header?.proposer_address || 'N/A'
+  const chainId = block.data?.block?.header?.chainId || block.data?.block?.header?.chain_id || 'N/A'
+  const proposerAddress = block.data?.block?.header?.proposerAddress || block.data?.block?.header?.proposer_address || 'N/A'
   const timestamp = block.data?.block?.header?.time || null
   const txCount = block.data?.txs?.length || 0
   const ingestedTxCount = transactions?.data.length || 0

@@ -1,24 +1,16 @@
 name: Preview Deployment
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'tsconfig.json'
-      - 'panda.config.ts'
-      - 'Dockerfile'
-      - 'fly.toml'
-      - 'nginx.conf'
-      - '.github/workflows/preview.yml'
   pull_request_target:
-    types: [closed]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
 
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
   cancel-in-progress: true
 
 permissions:
@@ -27,14 +19,15 @@ permissions:
 
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  PREVIEW_APP: yaci-explorer-pr-${{ github.event.pull_request.number }}
+  PREVIEW_APP: yaci-explorer-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
 
 jobs:
   preview:
-    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
@@ -52,6 +45,7 @@ jobs:
           [build]
             [build.args]
               VITE_POSTGREST_URL = "https://yaci-explorer-apis.fly.dev"
+              VITE_CHAIN_REST_ENDPOINT = "https://api.republicai.io"
 
           [http_service]
             internal_port = 80
@@ -67,14 +61,14 @@ jobs:
             cpus = 1
           EOF
 
-          flyctl deploy --config fly.preview.toml --remote-only
+          flyctl deploy --config fly.preview.toml --remote-only --no-cache
 
       - name: Post preview URL
         uses: actions/github-script@v7
         with:
           script: |
             const previewUrl = `https://${process.env.PREVIEW_APP}.fly.dev`;
-            const sha = context.sha.slice(0, 7);
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
             const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
             const body = `**Preview deployment ready!**\n\n${previewUrl}\n\nLast deployed: \`${sha}\` at ${timestamp}`;
 
@@ -103,16 +97,3 @@ jobs:
                 body: body
               });
             }
-
-  cleanup:
-    if: github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Delete preview app
-        run: |
-          if flyctl apps list | grep -q "$PREVIEW_APP"; then
-            echo "Deleting preview app: $PREVIEW_APP"
-            flyctl apps destroy "$PREVIEW_APP" --yes
-          fi
