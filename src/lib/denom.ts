@@ -64,7 +64,7 @@ const KNOWN_DENOMS: Record<string, { name: string; symbol: string; decimals: num
   axl: { name: 'Axelar', symbol: 'AXL', decimals: 6 },
   umfx: { name: 'Manifest', symbol: 'MFX', decimals: 6 },
   upoa: { name: 'POA', symbol: 'POA', decimals: 6 },
-  // Add more as needed
+  uom: { name: 'MANTRA', symbol: 'OM', decimals: 6 },
 }
 
 /**

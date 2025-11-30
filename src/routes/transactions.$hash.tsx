@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { getEnv } from '@/lib/env'
 import { formatNumber, formatTimeAgo, formatNativeFee, formatRawFee } from '@/lib/utils'
+import { useDenom } from '@/contexts/DenomContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { MessageDetails } from '@/components/MessageDetails'
@@ -90,6 +91,7 @@ export default function TransactionDetailPage() {
   const [decodeAttempted, setDecodeAttempted] = useState(false)
   const params = useParams()
   const [searchParams] = useSearchParams()
+  const { getDenomDisplay } = useDenom()
 
   useEffect(() => {
     setMounted(true)
@@ -204,6 +206,9 @@ export default function TransactionDetailPage() {
   const isSuccess = !transaction.error
   const feeAmounts = transaction.fee?.amount ?? []
   const groupedEvents = groupEvents(transaction.events || [])
+  // Get native symbol from fee denom (for EVM display)
+  const nativeDenom = feeAmounts[0]?.denom || 'unknown'
+  const nativeSymbol = getDenomDisplay(nativeDenom)
 
   return (
     <div className={css(styles.pageContainerLarge)}>
@@ -278,7 +283,7 @@ export default function TransactionDetailPage() {
       {/* EVM Details View - Full width, shows only EVM details */}
       {evmView && transaction.evm_data ? (
         <div className={css({ display: 'flex', flexDir: 'column', gap: '6' })}>
-          <EVMTransactionCard evmData={transaction.evm_data} />
+          <EVMTransactionCard evmData={transaction.evm_data} nativeSymbol={nativeSymbol} />
           {transaction.evm_logs && transaction.evm_logs.length > 0 && (
             <EVMLogsCard logs={transaction.evm_logs} />
           )}
@@ -640,7 +645,7 @@ export default function TransactionDetailPage() {
 
           {/* EVM Data in sidebar when in Cosmos view */}
           {!evmView && transaction.evm_data && (
-            <EVMTransactionCard evmData={transaction.evm_data} />
+            <EVMTransactionCard evmData={transaction.evm_data} nativeSymbol={nativeSymbol} />
           )}
         </div>
       </div>

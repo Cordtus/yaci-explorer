@@ -10,6 +10,7 @@ import { css } from '@/styled-system/css'
 
 interface EVMTransactionCardProps {
   evmData: EvmData
+  nativeSymbol?: string
 }
 
 // Format wei to ether with appropriate decimals
@@ -54,12 +55,12 @@ function getTxTypeLabel(type: number): string {
 }
 
 // Determine transaction action based on input data and decoded info
-function getTransactionAction(evmData: EvmData): { label: string; description: string } {
+function getTransactionAction(evmData: EvmData, symbol: string): { label: string; description: string } {
   // No input data = native transfer
   if (!evmData.data || evmData.data === '0x') {
     return {
       label: 'Native Transfer',
-      description: `Transfer ${formatWei(evmData.value)} RAI`
+      description: `Transfer ${formatWei(evmData.value)} ${symbol}`
     }
   }
 
@@ -98,7 +99,8 @@ function getTransactionAction(evmData: EvmData): { label: string; description: s
   }
 }
 
-export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
+export function EVMTransactionCard({ evmData, nativeSymbol = 'ETH' }: EVMTransactionCardProps) {
+  const symbol = nativeSymbol
   const [copied, setCopied] = useState<string | null>(null)
   const [inputExpanded, setInputExpanded] = useState(false)
 
@@ -148,7 +150,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     )
   }
 
-  const action = getTransactionAction(evmData)
+  const action = getTransactionAction(evmData, symbol)
 
   return (
     <Card>
@@ -170,10 +172,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
             </div>
             <div className={css({ textAlign: 'right' })}>
               <div className={css({ fontFamily: 'mono', fontWeight: 'medium' })}>
-                {formatWei(evmData.value)} RAI
+                {formatWei(evmData.value)} {symbol}
               </div>
               <div className={css({ fontSize: 'xs', color: 'fg.muted' })}>
-                Fee: {formatWei(transactionFee)} RAI
+                Fee: {formatWei(transactionFee)} {symbol}
               </div>
             </div>
           </div>
@@ -232,10 +234,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
           <span className={css({ color: 'fg.muted' })}>Value:</span>
           <span className={css({ fontWeight: 'medium' })}>
-            {formatWei(evmData.value)} RAI
+            {formatWei(evmData.value)} {symbol}
             {evmData.value !== '0' && (
               <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
-                ({evmData.value} arai)
+                ({evmData.value} wei)
               </span>
             )}
           </span>
@@ -245,7 +247,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
           <span className={css({ color: 'fg.muted' })}>Tx Fee:</span>
           <span className={css({ fontWeight: 'medium' })}>
-            {formatWei(transactionFee)} RAI
+            {formatWei(transactionFee)} {symbol}
           </span>
         </div>
 

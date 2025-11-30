@@ -12,7 +12,7 @@ interface BlockTimeData {
 }
 
 async function getBlockIntervalData(limit: number): Promise<BlockTimeData[]> {
-  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
+  const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')
   if (!baseUrl) {
     return []
   }

@@ -4,13 +4,14 @@ import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
 import { css, cx } from '@/styled-system/css'
-import { EthereumIcon, RepublicLogo } from '@/components/icons/icons'
+import { EthereumIcon, IBCIcon } from '@/components/icons/icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
+  { name: 'IBC', href: '/ibc', icon: IBCIcon },
   { name: 'Governance', href: '/governance', icon: Vote },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
@@ -29,7 +30,7 @@ export function Header() {
               {branding.logoUrl ? (
                 <img src={branding.logoUrl} alt={branding.appName} className={styles.logo} />
               ) : (
-                <RepublicLogo className={styles.logo} />
+                <Blocks className={styles.logo} />
               )}
               <span className={styles.brandNameFull}>{branding.appName}</span>
               <span className={styles.brandNameShort}>{branding.appNameShort}</span>
@@ -39,7 +40,9 @@ export function Header() {
               {navigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href ||
-                  (item.href.startsWith('/evm') && pathname.startsWith('/evm'))
+                  (item.href.startsWith('/evm') && pathname.startsWith('/evm')) ||
+                  (item.href.startsWith('/governance') && pathname.startsWith('/governance')) ||
+                  (item.href.startsWith('/ibc') && pathname.startsWith('/ibc'))
                 return (
                   <Link
                     key={item.name}

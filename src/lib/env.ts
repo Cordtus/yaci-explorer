@@ -53,12 +53,13 @@ export interface AppConfig {
 	resetNoticeHashCheckHeight?: number
 }
 
-// Default configuration
+// Default configuration - used when config.json is not available
+// For Docker deployments, nginx proxies /api to PostgREST
 const defaultConfig: AppConfig = {
-	apiUrl: 'https://yaci-explorer-apis.fly.dev',
+	apiUrl: '/api',
 	chainRestEndpoint: undefined,
 	evmRpcEndpoint: undefined,
-	appName: 'Republic Explorer',
+	appName: 'Block Explorer',
 	appNameShort: 'Explorer',
 	// Query defaults
 	queryStaleMs: 10_000,
@@ -138,7 +139,6 @@ export function getConfig(): AppConfig {
 export function getEnv(key: string, fallback?: string): string | undefined {
 	const config = getConfig()
 
-	// Map old VITE_ keys to new config properties
 	const mapping: Record<string, string | number | boolean | undefined> = {
 		// Core
 		'VITE_POSTGREST_URL': config.apiUrl,

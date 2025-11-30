@@ -133,29 +133,18 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     rpcEndpoint: 'https://rpc.neutron.strange.love',
     restEndpoint: 'https://api.neutron.strange.love',
   },
-  'republic_9001-1': {
-    name: 'Republic Devnet',
+  'mantra-1': {
+    name: 'MANTRA',
     features: {
-      evm: true,
+      evm: false,
       ibc: true,
-      wasm: false,
+      wasm: true,
     },
-    nativeDenom: 'atest',
-    nativeSymbol: 'TEST',
-    decimals: 18,
-  },
-  'republic_77701-1': {
-    name: 'Republic AI',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'arai',
-    nativeSymbol: 'RAI',
-    decimals: 18,
-    rpcEndpoint: 'https://rpc.republicai.io',
-    restEndpoint: 'https://api.republicai.io',
+    nativeDenom: 'uom',
+    nativeSymbol: 'OM',
+    decimals: 6,
+    rpcEndpoint: 'https://rpc.mantrachain.io',
+    restEndpoint: 'https://api.mantrachain.io',
   },
 }
 

@@ -10,6 +10,7 @@
 # Node/Bun artifacts
 node_modules
 dist
+build
 styled-system
 *.log
 
