@@ -4,13 +4,14 @@ import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
 import { css, cx } from '@/styled-system/css'
-import { EthereumIcon } from '@/components/icons/icons'
+import { EthereumIcon, IBCIcon } from '@/components/icons/icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
+  { name: 'IBC', href: '/ibc', icon: IBCIcon },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 

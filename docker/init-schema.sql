@@ -11,24 +11,6 @@ BEGIN;
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- =============================================================================
--- SCHEMA AND ROLES
--- =============================================================================
-
-CREATE SCHEMA IF NOT EXISTS api;
-
--- Create web_anon role for PostgREST (read-only)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'web_anon') THEN
-    CREATE ROLE web_anon NOLOGIN;
-  END IF;
-END
-$$;
-
-GRANT USAGE ON SCHEMA api TO web_anon;
 
 -- =============================================================================
 -- CORE TABLES (populated by Yaci indexer)
@@ -265,7 +247,51 @@ CREATE TABLE IF NOT EXISTS api.proposal_votes (
 
 CREATE INDEX IF NOT EXISTS idx_vote_voter ON api.proposal_votes(voter);
 
--- IBC channels
+-- Chain parameters (populated by chain-params-daemon)
+CREATE TABLE IF NOT EXISTS api.chain_params (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- IBC connections (comprehensive info from gRPC queries)
+CREATE TABLE IF NOT EXISTS api.ibc_connections (
+  channel_id TEXT NOT NULL,
+  port_id TEXT NOT NULL,
+  connection_id TEXT,
+  client_id TEXT,
+  counterparty_chain_id TEXT,
+  counterparty_channel_id TEXT,
+  counterparty_port_id TEXT,
+  counterparty_client_id TEXT,
+  counterparty_connection_id TEXT,
+  state TEXT,
+  ordering TEXT,
+  version TEXT,
+  client_status TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (channel_id, port_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ibc_connections_chain ON api.ibc_connections(counterparty_chain_id);
+CREATE INDEX IF NOT EXISTS idx_ibc_connections_state ON api.ibc_connections(state);
+
+-- IBC denom traces (resolved from ibc/HASH to base denom)
+CREATE TABLE IF NOT EXISTS api.ibc_denom_traces (
+  ibc_denom TEXT PRIMARY KEY,
+  base_denom TEXT NOT NULL,
+  path TEXT NOT NULL,
+  source_channel TEXT,
+  source_chain_id TEXT,
+  symbol TEXT,
+  decimals INT DEFAULT 6,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ibc_denom_base ON api.ibc_denom_traces(base_denom);
+CREATE INDEX IF NOT EXISTS idx_ibc_denom_channel ON api.ibc_denom_traces(source_channel);
+
+-- Legacy IBC channels table (for backward compatibility)
 CREATE TABLE IF NOT EXISTS api.ibc_channels (
   channel_id TEXT NOT NULL,
   port_id TEXT NOT NULL,
@@ -283,15 +309,17 @@ CREATE TABLE IF NOT EXISTS api.ibc_channels (
 CREATE TABLE IF NOT EXISTS api.denom_metadata (
   denom TEXT PRIMARY KEY,
   symbol TEXT NOT NULL,
-  decimals INT NOT NULL DEFAULT 18,
+  decimals INT NOT NULL DEFAULT 6,
   ibc_hash TEXT,
-  description TEXT
+  description TEXT,
+  logo_uri TEXT,
+  coingecko_id TEXT,
+  is_native BOOLEAN DEFAULT false,
+  ibc_source_chain TEXT,
+  ibc_source_denom TEXT,
+  evm_contract TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Seed with native denomination
-INSERT INTO api.denom_metadata (denom, symbol, decimals, description)
-VALUES ('arai', 'RAI', 18, 'Native token of Republic chain')
-ON CONFLICT (denom) DO NOTHING;
 
 -- =============================================================================
 -- GOVERNANCE TABLES (trigger-populated from indexed data)
@@ -641,18 +669,7 @@ AS $$
 DECLARE
   error_text TEXT;
   proposal_ids TEXT[];
-  tx_height BIGINT;
-  tx_timestamp TIMESTAMPTZ;
 BEGIN
-  -- Extract height - may be null for failed tx fetches
-  tx_height := (NEW.data->'txResponse'->>'height')::BIGINT;
-  tx_timestamp := (NEW.data->'txResponse'->>'timestamp')::TIMESTAMPTZ;
-
-  -- Skip if we don't have basic required data
-  IF tx_height IS NULL THEN
-    RETURN NEW;
-  END IF;
-
   error_text := NEW.data->'txResponse'->>'rawLog';
 
   IF error_text IS NULL THEN
@@ -667,8 +684,8 @@ BEGIN
             NEW.data->'tx'->'authInfo'->'fee',
             NEW.data->'tx'->'body'->>'memo',
             error_text,
-            tx_height,
-            tx_timestamp,
+            (NEW.data->'txResponse'->>'height')::BIGINT,
+            (NEW.data->'txResponse'->>'timestamp')::TIMESTAMPTZ,
             proposal_ids
          )
   ON CONFLICT (id) DO UPDATE
@@ -1618,6 +1635,334 @@ AS $$
 $$;
 
 -- =============================================================================
+-- IBC AND CHAIN PARAMS RPC FUNCTIONS
+-- =============================================================================
+
+-- Get chain parameters
+CREATE OR REPLACE FUNCTION api.get_chain_params()
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  SELECT jsonb_object_agg(key, value)
+  FROM api.chain_params;
+$$;
+
+-- Get IBC connections with full route info
+CREATE OR REPLACE FUNCTION api.get_ibc_connections(
+  _limit INT DEFAULT 50,
+  _offset INT DEFAULT 0,
+  _chain_id TEXT DEFAULT NULL,
+  _state TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  WITH filtered AS (
+    SELECT *
+    FROM api.ibc_connections
+    WHERE (_chain_id IS NULL OR counterparty_chain_id = _chain_id)
+      AND (_state IS NULL OR state = _state)
+    ORDER BY counterparty_chain_id, channel_id
+    LIMIT _limit OFFSET _offset
+  ),
+  total AS (
+    SELECT COUNT(*) AS count
+    FROM api.ibc_connections
+    WHERE (_chain_id IS NULL OR counterparty_chain_id = _chain_id)
+      AND (_state IS NULL OR state = _state)
+  )
+  SELECT jsonb_build_object(
+    'data', COALESCE(jsonb_agg(
+      jsonb_build_object(
+        'channel_id', f.channel_id,
+        'port_id', f.port_id,
+        'connection_id', f.connection_id,
+        'client_id', f.client_id,
+        'counterparty_chain_id', f.counterparty_chain_id,
+        'counterparty_channel_id', f.counterparty_channel_id,
+        'counterparty_port_id', f.counterparty_port_id,
+        'counterparty_client_id', f.counterparty_client_id,
+        'counterparty_connection_id', f.counterparty_connection_id,
+        'state', f.state,
+        'ordering', f.ordering,
+        'client_status', f.client_status,
+        'is_active', f.state = 'STATE_OPEN' AND f.client_status = 'Active',
+        'updated_at', f.updated_at
+      )
+      ORDER BY f.counterparty_chain_id, f.channel_id
+    ), '[]'::jsonb),
+    'pagination', jsonb_build_object(
+      'total', (SELECT count FROM total),
+      'limit', _limit,
+      'offset', _offset,
+      'has_next', _offset + _limit < (SELECT count FROM total),
+      'has_prev', _offset > 0
+    )
+  )
+  FROM filtered f;
+$$;
+
+-- Get IBC connection by channel
+CREATE OR REPLACE FUNCTION api.get_ibc_connection(_channel_id TEXT, _port_id TEXT DEFAULT 'transfer')
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  SELECT jsonb_build_object(
+    'channel_id', channel_id,
+    'port_id', port_id,
+    'connection_id', connection_id,
+    'client_id', client_id,
+    'counterparty_chain_id', counterparty_chain_id,
+    'counterparty_channel_id', counterparty_channel_id,
+    'counterparty_port_id', counterparty_port_id,
+    'counterparty_client_id', counterparty_client_id,
+    'counterparty_connection_id', counterparty_connection_id,
+    'state', state,
+    'ordering', ordering,
+    'client_status', client_status,
+    'is_active', state = 'STATE_OPEN' AND client_status = 'Active',
+    'updated_at', updated_at
+  )
+  FROM api.ibc_connections
+  WHERE channel_id = _channel_id AND port_id = _port_id;
+$$;
+
+-- Get IBC denom traces
+CREATE OR REPLACE FUNCTION api.get_ibc_denom_traces(
+  _limit INT DEFAULT 50,
+  _offset INT DEFAULT 0,
+  _base_denom TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  WITH filtered AS (
+    SELECT t.*, c.counterparty_chain_id
+    FROM api.ibc_denom_traces t
+    LEFT JOIN api.ibc_connections c ON t.source_channel = c.channel_id AND c.port_id = 'transfer'
+    WHERE (_base_denom IS NULL OR t.base_denom ILIKE '%' || _base_denom || '%')
+    ORDER BY t.base_denom, t.ibc_denom
+    LIMIT _limit OFFSET _offset
+  ),
+  total AS (
+    SELECT COUNT(*) AS count
+    FROM api.ibc_denom_traces
+    WHERE (_base_denom IS NULL OR base_denom ILIKE '%' || _base_denom || '%')
+  )
+  SELECT jsonb_build_object(
+    'data', COALESCE(jsonb_agg(
+      jsonb_build_object(
+        'ibc_denom', f.ibc_denom,
+        'base_denom', f.base_denom,
+        'path', f.path,
+        'source_channel', f.source_channel,
+        'source_chain_id', COALESCE(f.source_chain_id, f.counterparty_chain_id),
+        'symbol', f.symbol,
+        'decimals', f.decimals,
+        'updated_at', f.updated_at
+      )
+      ORDER BY f.base_denom, f.ibc_denom
+    ), '[]'::jsonb),
+    'pagination', jsonb_build_object(
+      'total', (SELECT count FROM total),
+      'limit', _limit,
+      'offset', _offset,
+      'has_next', _offset + _limit < (SELECT count FROM total),
+      'has_prev', _offset > 0
+    )
+  )
+  FROM filtered f;
+$$;
+
+-- Resolve IBC denom to base denom and source info
+CREATE OR REPLACE FUNCTION api.resolve_ibc_denom(_ibc_denom TEXT)
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  SELECT jsonb_build_object(
+    'ibc_denom', t.ibc_denom,
+    'base_denom', t.base_denom,
+    'path', t.path,
+    'source_channel', t.source_channel,
+    'source_chain_id', COALESCE(t.source_chain_id, c.counterparty_chain_id),
+    'symbol', t.symbol,
+    'decimals', t.decimals,
+    'route', jsonb_build_object(
+      'channel_id', c.channel_id,
+      'connection_id', c.connection_id,
+      'client_id', c.client_id,
+      'counterparty_channel_id', c.counterparty_channel_id,
+      'counterparty_connection_id', c.counterparty_connection_id,
+      'counterparty_client_id', c.counterparty_client_id
+    )
+  )
+  FROM api.ibc_denom_traces t
+  LEFT JOIN api.ibc_connections c ON t.source_channel = c.channel_id AND c.port_id = 'transfer'
+  WHERE t.ibc_denom = _ibc_denom;
+$$;
+
+-- Get unique counterparty chains
+CREATE OR REPLACE FUNCTION api.get_ibc_chains()
+RETURNS JSONB
+LANGUAGE SQL STABLE
+AS $$
+  SELECT COALESCE(jsonb_agg(
+    jsonb_build_object(
+      'chain_id', counterparty_chain_id,
+      'channel_count', channel_count,
+      'open_channels', open_channels,
+      'active_channels', active_channels
+    )
+    ORDER BY counterparty_chain_id
+  ), '[]'::jsonb)
+  FROM (
+    SELECT
+      counterparty_chain_id,
+      COUNT(*) AS channel_count,
+      COUNT(*) FILTER (WHERE state = 'STATE_OPEN') AS open_channels,
+      COUNT(*) FILTER (WHERE state = 'STATE_OPEN' AND client_status = 'Active') AS active_channels
+    FROM api.ibc_connections
+    WHERE counterparty_chain_id IS NOT NULL
+    GROUP BY counterparty_chain_id
+  ) chains;
+$$;
+
+-- =============================================================================
+-- IBC DENOM PENDING TABLE AND TRIGGER
+-- =============================================================================
+
+-- Table to track pending IBC denoms that need resolution
+CREATE TABLE IF NOT EXISTS api.ibc_denom_pending (
+  ibc_denom TEXT PRIMARY KEY,
+  first_seen_tx TEXT,
+  first_seen_height BIGINT,
+  attempts INT DEFAULT 0,
+  last_attempt TIMESTAMP WITH TIME ZONE,
+  error TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ibc_pending_attempts ON api.ibc_denom_pending(attempts) WHERE attempts < 3;
+
+-- Function to detect IBC denoms in transfer messages (v3 - focuses on MsgRecvPacket)
+CREATE OR REPLACE FUNCTION api.detect_ibc_denoms()
+RETURNS TRIGGER AS $$
+DECLARE
+  msg_record RECORD;
+  amount_str TEXT;
+  ibc_match TEXT;
+BEGIN
+  -- Look for MsgRecvPacket messages - these indicate inbound IBC transfers
+  FOR msg_record IN
+    SELECT m.id, m.message_index, m.type, m.metadata
+    FROM api.messages_main m
+    WHERE m.id = NEW.id
+    AND m.type = '/ibc.core.channel.v1.MsgRecvPacket'
+  LOOP
+    -- For MsgRecvPacket, the IBC denom will appear in associated transfer events
+    -- Check the events for this transaction for amount attributes containing ibc/
+    FOR amount_str IN
+      SELECT DISTINCT e.attr_value
+      FROM api.events_main e
+      WHERE e.id = NEW.id
+      AND e.attr_key = 'amount'
+      AND e.attr_value LIKE '%ibc/%'
+    LOOP
+      -- Extract the ibc/... portion using regex
+      -- Match pattern: ibc/ followed by hex characters (uppercase)
+      ibc_match := substring(amount_str FROM 'ibc/[A-F0-9]+');
+      IF ibc_match IS NOT NULL THEN
+        INSERT INTO api.ibc_denom_pending (ibc_denom, first_seen_tx, first_seen_height)
+        VALUES (ibc_match, NEW.id, NEW.height)
+        ON CONFLICT (ibc_denom) DO NOTHING;
+        PERFORM pg_notify('ibc_denom_pending', ibc_match);
+      END IF;
+    END LOOP;
+
+    -- Also check for standalone denom attributes in fungible_token_packet events
+    FOR ibc_match IN
+      SELECT DISTINCT e.attr_value
+      FROM api.events_main e
+      WHERE e.id = NEW.id
+      AND e.event_type = 'fungible_token_packet'
+      AND e.attr_key = 'denom'
+      AND e.attr_value LIKE 'ibc/%'
+    LOOP
+      INSERT INTO api.ibc_denom_pending (ibc_denom, first_seen_tx, first_seen_height)
+      VALUES (ibc_match, NEW.id, NEW.height)
+      ON CONFLICT (ibc_denom) DO NOTHING;
+      PERFORM pg_notify('ibc_denom_pending', ibc_match);
+    END LOOP;
+  END LOOP;
+
+  -- Also check for outbound transfers (MsgTransfer) with IBC denoms
+  FOR msg_record IN
+    SELECT m.id, m.message_index, m.type, m.metadata
+    FROM api.messages_main m
+    WHERE m.id = NEW.id
+    AND m.type LIKE '%MsgTransfer%'
+  LOOP
+    -- Check token.denom in metadata
+    IF msg_record.metadata ? 'token' AND msg_record.metadata->'token' ? 'denom' THEN
+      ibc_match := msg_record.metadata->'token'->>'denom';
+      IF ibc_match LIKE 'ibc/%' THEN
+        INSERT INTO api.ibc_denom_pending (ibc_denom, first_seen_tx, first_seen_height)
+        VALUES (ibc_match, NEW.id, NEW.height)
+        ON CONFLICT (ibc_denom) DO NOTHING;
+        PERFORM pg_notify('ibc_denom_pending', ibc_match);
+      END IF;
+    END IF;
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the IBC denom detection trigger
+DROP TRIGGER IF EXISTS trigger_detect_ibc_denoms ON api.transactions_main;
+CREATE TRIGGER trigger_detect_ibc_denoms
+AFTER INSERT ON api.transactions_main
+FOR EACH ROW
+EXECUTE FUNCTION api.detect_ibc_denoms();
+
+-- Function to mark a denom as resolved (called by daemon after successful resolution)
+CREATE OR REPLACE FUNCTION api.mark_ibc_denom_resolved(_ibc_denom TEXT)
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+  DELETE FROM api.ibc_denom_pending WHERE ibc_denom = _ibc_denom;
+$$;
+
+-- Function to mark a denom resolution attempt failed
+CREATE OR REPLACE FUNCTION api.mark_ibc_denom_failed(_ibc_denom TEXT, _error TEXT)
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+  UPDATE api.ibc_denom_pending
+  SET attempts = attempts + 1,
+      last_attempt = NOW(),
+      error = _error
+  WHERE ibc_denom = _ibc_denom;
+$$;
+
+-- Function to get pending IBC denoms for resolution
+CREATE OR REPLACE FUNCTION api.get_pending_ibc_denoms(_limit INT DEFAULT 50)
+RETURNS TABLE (
+  ibc_denom TEXT,
+  first_seen_tx TEXT,
+  attempts INT
+)
+LANGUAGE SQL STABLE
+AS $$
+  SELECT ibc_denom, first_seen_tx, attempts
+  FROM api.ibc_denom_pending
+  WHERE attempts < 5
+  AND (last_attempt IS NULL OR last_attempt < NOW() - INTERVAL '5 minutes')
+  ORDER BY created_at
+  LIMIT _limit;
+$$;
+
+-- =============================================================================
 -- ROLES AND PERMISSIONS
 -- =============================================================================
 
@@ -1647,5 +1992,19 @@ GRANT EXECUTE ON FUNCTION api.compute_proposal_tally(bigint) TO web_anon;
 
 -- Restrict refresh_analytics_views to admin only (prevents DoS)
 GRANT EXECUTE ON FUNCTION api.refresh_analytics_views() TO analytics_admin;
+
+-- IBC and chain params functions
+GRANT EXECUTE ON FUNCTION api.get_chain_params() TO web_anon;
+GRANT EXECUTE ON FUNCTION api.get_ibc_connections(int, int, text, text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.get_ibc_connection(text, text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.get_ibc_denom_traces(int, int, text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.resolve_ibc_denom(text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.get_ibc_chains() TO web_anon;
+
+-- IBC denom pending functions
+GRANT SELECT, INSERT, UPDATE, DELETE ON api.ibc_denom_pending TO web_anon;
+GRANT EXECUTE ON FUNCTION api.mark_ibc_denom_resolved(text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.mark_ibc_denom_failed(text, text) TO web_anon;
+GRANT EXECUTE ON FUNCTION api.get_pending_ibc_denoms(int) TO web_anon;
 
 COMMIT;

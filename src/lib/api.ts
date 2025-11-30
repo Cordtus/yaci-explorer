@@ -120,6 +120,59 @@ export interface SearchResult {
 	score: number
 }
 
+export interface IbcConnection {
+	channel_id: string
+	port_id: string
+	connection_id: string | null
+	client_id: string | null
+	counterparty_chain_id: string | null
+	counterparty_channel_id: string | null
+	counterparty_port_id: string | null
+	counterparty_client_id: string | null
+	counterparty_connection_id: string | null
+	state: string | null
+	ordering: string | null
+	client_status: string | null
+	is_active: boolean
+	updated_at: string
+}
+
+export interface IbcDenomTrace {
+	ibc_denom: string
+	base_denom: string
+	path: string
+	source_channel: string | null
+	source_chain_id: string | null
+	symbol: string | null
+	decimals: number
+	updated_at: string
+}
+
+export interface IbcDenomResolution {
+	ibc_denom: string
+	base_denom: string
+	path: string
+	source_channel: string | null
+	source_chain_id: string | null
+	symbol: string | null
+	decimals: number
+	route: {
+		channel_id: string | null
+		connection_id: string | null
+		client_id: string | null
+		counterparty_channel_id: string | null
+		counterparty_connection_id: string | null
+		counterparty_client_id: string | null
+	}
+}
+
+export interface IbcChainSummary {
+	chain_id: string
+	channel_count: number
+	open_channels: number
+	active_channels: number
+}
+
 export interface BlockRaw {
 	id: number
 	data: {
@@ -582,6 +635,51 @@ export class YaciClient {
 			limit: String(limit),
 			offset: String(offset)
 		})
+	}
+
+	async getChainParams(): Promise<Record<string, string>> {
+		return this.rpc('get_chain_params', {})
+	}
+
+	async getIbcConnections(
+		limit = 50,
+		offset = 0,
+		chainId?: string,
+		state?: string
+	): Promise<PaginatedResponse<IbcConnection>> {
+		return this.rpc('get_ibc_connections', {
+			_limit: limit,
+			_offset: offset,
+			_chain_id: chainId,
+			_state: state
+		})
+	}
+
+	async getIbcConnection(channelId: string, portId = 'transfer'): Promise<IbcConnection | null> {
+		return this.rpc('get_ibc_connection', {
+			_channel_id: channelId,
+			_port_id: portId
+		})
+	}
+
+	async getIbcDenomTraces(
+		limit = 50,
+		offset = 0,
+		baseDenom?: string
+	): Promise<PaginatedResponse<IbcDenomTrace>> {
+		return this.rpc('get_ibc_denom_traces', {
+			_limit: limit,
+			_offset: offset,
+			_base_denom: baseDenom
+		})
+	}
+
+	async resolveIbcDenom(ibcDenom: string): Promise<IbcDenomResolution | null> {
+		return this.rpc('resolve_ibc_denom', { _ibc_denom: ibcDenom })
+	}
+
+	async getIbcChains(): Promise<IbcChainSummary[]> {
+		return this.rpc('get_ibc_chains', {})
 	}
 
 }
