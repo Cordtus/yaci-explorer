@@ -18,6 +18,7 @@ import { EVMTransactionCard } from '@/components/EVMTransactionCard'
 import { EVMLogsCard } from '@/components/EVMLogsCard'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { css } from '@/styled-system/css'
 
 // Helper to group events by event_index, then by attributes
@@ -469,28 +470,43 @@ export default function TransactionDetailPage() {
                                       Events ({groupedEvents.length})
                                     </p>
                                     {groupedEvents.length > 3 && (
-                                      <div className={css(styles.filterContainer)}>
-                                        <Filter className={css(styles.filterIcon)} />
-                                        <Input
-                                          placeholder="Filter events..."
-                                          value={eventFilter}
-                                          onChange={(e) => setEventFilter(e.target.value)}
-                                          className={css(styles.filterInput)}
-                                        />
-                                      </div>
+                                      <TooltipProvider>
+                                        <Tooltip openDelay={300}>
+                                          <TooltipTrigger asChild>
+                                            <div className={css(styles.filterContainer)}>
+                                              <Filter className={css(styles.filterIcon)} />
+                                              <Input
+                                                placeholder="Filter by type or key..."
+                                                value={eventFilter}
+                                                onChange={(e) => setEventFilter(e.target.value)}
+                                                className={css(styles.filterInput)}
+                                              />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p className={css({ color: 'fg.default', maxW: 'xs' })}>
+                                              Filter events by event type (e.g. "transfer", "wasm") or attribute key (e.g. "sender", "amount")
+                                            </p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     )}
                                   </div>
 
                                   {eventsByType.map(({ type, events: typeEvents }) => {
                                     const typeKey = `${msgIdx}-${type}`
                                     const isTypeExpanded = expandedEventTypes[typeKey]
+                                    // Filter matches event type or attribute keys
+                                    const filterLower = eventFilter.toLowerCase()
+                                    const typeMatches = type.toLowerCase().includes(filterLower)
                                     const filteredEvents = eventFilter
-                                      ? typeEvents.filter(e =>
-                                          e.attributes.some((a: { key: string; value: string }) =>
-                                            a.key.toLowerCase().includes(eventFilter.toLowerCase()) ||
-                                            a.value.toLowerCase().includes(eventFilter.toLowerCase())
+                                      ? typeMatches
+                                        ? typeEvents // Show all events if type matches
+                                        : typeEvents.filter(e =>
+                                            e.attributes.some((a: { key: string; value: string }) =>
+                                              a.key.toLowerCase().includes(filterLower)
+                                            )
                                           )
-                                        )
                                       : typeEvents
 
                                     if (filteredEvents.length === 0) return null
