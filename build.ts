@@ -49,4 +49,5 @@ const favicon = await Bun.file('./public/favicon.svg').text()
 await Bun.write('./dist/favicon.svg', favicon)
 console.log('Copied favicon.svg')
 
+
 console.log('Build complete')

@@ -14,6 +14,8 @@ import EvmTokensPage from "./routes/evm-tokens"
 import HomePage from "./routes/home"
 import TransactionsPage from "./routes/transactions"
 import TransactionDetailPage from "./routes/transactions.$hash"
+import GovernancePage from "./routes/governance"
+import GovernanceDetailPage from "./routes/governance.$id"
 
 const router = createBrowserRouter([
 	{
@@ -43,6 +45,13 @@ const router = createBrowserRouter([
 				children: [
 					{ path: "contracts", element: <EvmContractsPage /> },
 					{ path: "tokens", element: <EvmTokensPage /> }
+				]
+			},
+			{
+				path: "governance",
+				children: [
+					{ index: true, element: <GovernancePage /> },
+					{ path: ":id", element: <GovernanceDetailPage /> }
 				]
 			}
 		]

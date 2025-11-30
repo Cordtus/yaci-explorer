@@ -20,7 +20,7 @@ export interface PaginatedResponse<T> {
 
 export interface Transaction {
 	id: string
-	fee: TransactionFee
+	fee: TransactionFee | null
 	memo: string | null
 	error: string | null
 	height: number
@@ -211,6 +211,36 @@ export interface BlockRaw {
 			}
 		}
 	}
+}
+
+export interface GovernanceProposal {
+	proposal_id: number
+	title: string | null
+	summary: string | null
+	status: string
+	submit_time: string
+	deposit_end_time: string | null
+	voting_start_time: string | null
+	voting_end_time: string | null
+	proposer: string | null
+	tally: {
+		yes: string | null
+		no: string | null
+		abstain: string | null
+		no_with_veto: string | null
+	}
+	last_updated: string
+	last_snapshot_time: string | null
+}
+
+export interface ProposalSnapshot {
+	proposal_id: number
+	status: string
+	yes_count: string
+	no_count: string
+	abstain_count: string
+	no_with_veto_count: string
+	snapshot_time: string
 }
 
 // Legacy type aliases for compatibility
@@ -655,10 +685,75 @@ export class YaciClient {
 		})
 	}
 
-	async getIbcConnection(channelId: string, portId = 'transfer'): Promise<IbcConnection | null> {
+async getIbcConnection(channelId: string, portId = 'transfer'): Promise<IbcConnection | null> {
 		return this.rpc('get_ibc_connection', {
 			_channel_id: channelId,
 			_port_id: portId
+		})
+	}
+
+	// Governance endpoints
+
+	async getGovernanceProposals(
+		limit = 20,
+		offset = 0,
+		status?: string
+	): Promise<PaginatedResponse<GovernanceProposal>> {
+		return this.rpc('get_governance_proposals', {
+			_limit: limit,
+			_offset: offset,
+			_status: status
+		})
+	}
+
+	async getProposalDetail(proposalId: number): Promise<GovernanceProposal | undefined> {
+		const result = await this.query<Array<{
+			proposal_id: number
+			title: string | null
+			summary: string | null
+			status: string
+			submit_time: string
+			deposit_end_time: string | null
+			voting_start_time: string | null
+			voting_end_time: string | null
+			proposer: string | null
+			yes_count: string | null
+			no_count: string | null
+			abstain_count: string | null
+			no_with_veto_count: string | null
+			last_updated: string
+			last_snapshot_time: string | null
+		}>>('governance_proposals', {
+			proposal_id: `eq.${proposalId}`,
+			limit: '1'
+		})
+		if (!result[0]) return undefined
+		const row = result[0]
+		return {
+			proposal_id: row.proposal_id,
+			title: row.title,
+			summary: row.summary,
+			status: row.status,
+			submit_time: row.submit_time,
+			deposit_end_time: row.deposit_end_time,
+			voting_start_time: row.voting_start_time,
+			voting_end_time: row.voting_end_time,
+			proposer: row.proposer,
+			tally: {
+				yes: row.yes_count,
+				no: row.no_count,
+				abstain: row.abstain_count,
+				no_with_veto: row.no_with_veto_count
+			},
+			last_updated: row.last_updated,
+			last_snapshot_time: row.last_snapshot_time
+		}
+	}
+
+	async getProposalSnapshots(proposalId: number): Promise<ProposalSnapshot[]> {
+		return this.query('governance_snapshots', {
+			proposal_id: `eq.${proposalId}`,
+			order: 'snapshot_time.desc'
 		})
 	}
 
@@ -674,7 +769,7 @@ export class YaciClient {
 		})
 	}
 
-	async resolveIbcDenom(ibcDenom: string): Promise<IbcDenomResolution | null> {
+async resolveIbcDenom(ibcDenom: string): Promise<IbcDenomResolution | null> {
 		return this.rpc('resolve_ibc_denom', { _ibc_denom: ibcDenom })
 	}
 
@@ -684,8 +779,11 @@ export class YaciClient {
 
 }
 
-import { getEnv } from './env'
+// Factory function to create API client
+export function createApiClient(baseUrl: string): YaciClient {
+	return new YaciClient({ baseUrl })
+}
 
-// Singleton instance
+import { getEnv } from './env'
 const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')!
 export const api = new YaciClient({ baseUrl })

@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Blocks, Home } from 'lucide-react'
+import { Activity, BarChart3, Blocks, Home, Vote } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Transactions', href: '/tx', icon: Activity },
   { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
   { name: 'IBC', href: '/ibc', icon: IBCIcon },
+  { name: 'Governance', href: '/governance', icon: Vote },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 
@@ -39,7 +40,9 @@ export function Header() {
               {navigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href ||
-                  (item.href.startsWith('/evm') && pathname.startsWith('/evm'))
+                  (item.href.startsWith('/evm') && pathname.startsWith('/evm')) ||
+                  (item.href.startsWith('/governance') && pathname.startsWith('/governance')) ||
+                  (item.href.startsWith('/ibc') && pathname.startsWith('/ibc'))
                 return (
                   <Link
                     key={item.name}
