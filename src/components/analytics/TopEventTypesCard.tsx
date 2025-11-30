@@ -13,7 +13,7 @@ interface EventTypeStats {
 }
 
 async function getTopEventTypes(): Promise<EventTypeStats[]> {
-  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
+  const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')
   if (!baseUrl) {
     return []
   }

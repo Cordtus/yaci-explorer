@@ -19,7 +19,7 @@ interface NetworkMetrics {
 }
 
 async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
+  const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')
   if (!baseUrl) {
     throw new Error('VITE_POSTGREST_URL is not set')
   }

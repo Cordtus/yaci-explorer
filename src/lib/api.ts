@@ -581,5 +581,5 @@ export class YaciClient {
 import { getEnv } from './env'
 
 // Singleton instance
-const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
+const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')!
 export const api = new YaciClient({ baseUrl })

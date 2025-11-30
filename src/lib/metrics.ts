@@ -57,7 +57,7 @@ export interface BlockInterval {
 
 // Configuration
 const REST_ENDPOINT = getEnv('VITE_CHAIN_REST_ENDPOINT')
-const BASE_URL = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
+const BASE_URL = getEnv('VITE_POSTGREST_URL', '/api')!
 
 // Time utilities
 function getStartDate(range: TimeRange): Date {
