@@ -196,7 +196,7 @@ function bech32Encode(prefix: string, bytes: Uint8Array): string {
 }
 
 /** Convert hex address to bech32 */
-export function hexToBech32(hexAddr: string, prefix = 'republic'): string | null {
+export function hexToBech32(hexAddr: string, prefix = 'cosmos'): string | null {
   if (!hexAddr.match(/^0x[a-fA-F0-9]{40}$/)) return null
   const bytes = new Uint8Array(20)
   for (let i = 0; i < 20; i++) {
@@ -213,7 +213,7 @@ export function bech32ToHex(bech32Addr: string): string | null {
 }
 
 /** Get the alternate address format (hex<->bech32) */
-export function getAlternateAddress(address: string, bech32Prefix = 'republic'): string | null {
+export function getAlternateAddress(address: string, bech32Prefix = 'cosmos'): string | null {
   const type = getAddressType(address)
   if (type === 'cosmos') return bech32ToHex(address)
   if (type === 'evm') return hexToBech32(address, bech32Prefix)

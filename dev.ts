@@ -72,19 +72,7 @@ async function processCSS() {
 
 // Generate index.html with correct script paths
 async function generateHTML() {
-	const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Republic AI Block Explorer</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/main.js"></script>
-  </body>
-</html>`
+	const html = await Bun.file('./index.html').text()
 	await Bun.write('./dist/index.html', html)
 }
 

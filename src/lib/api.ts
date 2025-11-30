@@ -1,5 +1,5 @@
 /**
- * Republic Explorer API Client
+ * Block Explorer API Client
  * Self-contained client for PostgREST RPC endpoints
  */
 
@@ -149,6 +149,13 @@ export interface BlockRaw {
 					signature: string
 				}>
 			}
+			lastCommit?: {
+				signatures: Array<{
+					validatorAddress?: string
+					validator_address?: string
+					signature: string
+				}>
+			}
 		}
 	}
 }
@@ -194,7 +201,8 @@ export class YaciClient {
 	}
 
 	private async rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
-		const url = new URL(`${this.baseUrl}/rpc/${fn}`)
+		const urlStr = `${this.baseUrl}/rpc/${fn}`
+		const url = new URL(urlStr, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
 		if (params) {
 			Object.entries(params).forEach(([key, value]) => {
 				if (value !== undefined && value !== null) {
@@ -211,7 +219,8 @@ export class YaciClient {
 	}
 
 	async query<T>(table: string, params?: Record<string, string | number | Record<string, string>>): Promise<T> {
-		const url = new URL(`${this.baseUrl}/${table}`)
+		const urlStr = `${this.baseUrl}/${table}`
+		const url = new URL(urlStr, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
 		if (params) {
 			Object.entries(params).forEach(([key, value]) => {
 				if (typeof value === 'string' || typeof value === 'number') {

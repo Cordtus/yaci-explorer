@@ -39,21 +39,14 @@ const cssResult = await postcss(plugins).process(css, { ...options, from: './src
 await Bun.write('./dist/styles.css', cssResult.css)
 console.log('Built styles.css')
 
-// Copy index.html
-const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Republic AI Block Explorer</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/main.js"></script>
-  </body>
-</html>`
+// Copy index.html from source
+const html = await Bun.file('./index.html').text()
 await Bun.write('./dist/index.html', html)
 console.log('Built index.html')
+
+// Copy public assets
+const favicon = await Bun.file('./public/favicon.svg').text()
+await Bun.write('./dist/favicon.svg', favicon)
+console.log('Copied favicon.svg')
 
 console.log('Build complete')

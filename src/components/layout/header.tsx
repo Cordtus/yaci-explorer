@@ -4,7 +4,7 @@ import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
 import { css, cx } from '@/styled-system/css'
-import { EthereumIcon, RepublicLogo } from '@/components/icons/icons'
+import { EthereumIcon } from '@/components/icons/icons'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -28,7 +28,7 @@ export function Header() {
               {branding.logoUrl ? (
                 <img src={branding.logoUrl} alt={branding.appName} className={styles.logo} />
               ) : (
-                <RepublicLogo className={styles.logo} />
+                <Blocks className={styles.logo} />
               )}
               <span className={styles.brandNameFull}>{branding.appName}</span>
               <span className={styles.brandNameShort}>{branding.appNameShort}</span>

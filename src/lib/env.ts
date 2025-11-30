@@ -12,12 +12,12 @@ export interface AppConfig {
 }
 
 // Default configuration - used when config.json is not available
-// For production, set apiUrl to your PostgREST endpoint
+// For Docker deployments, nginx proxies /api to PostgREST
 const defaultConfig: AppConfig = {
-	apiUrl: 'https://yaci-explorer-apis.fly.dev',
+	apiUrl: '/api',
 	chainRestEndpoint: undefined,
 	evmRpcEndpoint: undefined,
-	appName: 'Republic Explorer',
+	appName: 'Block Explorer',
 	appNameShort: 'Explorer'
 }
 

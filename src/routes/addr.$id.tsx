@@ -124,7 +124,7 @@ export default function AddressDetailPage() {
                 "{params.id}" is not a valid address format.
               </p>
               <p className={styles.invalidHint}>
-                Valid formats: bech32 (e.g. republic1...) or hex (0x...)
+                Valid formats: bech32 (e.g. cosmos1...) or hex (0x...)
               </p>
             </div>
           </CardContent>
