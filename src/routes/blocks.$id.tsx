@@ -14,7 +14,7 @@ export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const params = useParams()
-  const blockHeight = parseInt(params.id!, 10)
+  const blockHeight = parseInt(params.id ?? '0', 10)
 
   useEffect(() => {
     setMounted(true)
@@ -26,7 +26,7 @@ export default function BlockDetailPage() {
       const result = await api.getBlock(blockHeight)
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const { data: transactions, isLoading: txLoading } = useQuery({
@@ -35,7 +35,7 @@ export default function BlockDetailPage() {
       const result = await api.getTransactions(100, 0, { block_height: blockHeight })
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const copyToClipboard = (text: string) => {

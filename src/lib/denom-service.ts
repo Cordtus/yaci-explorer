@@ -17,7 +17,7 @@ export interface ResolvedDenom {
 }
 
 // Database cache - populated on init
-let dbCache: Map<string, { symbol: string; decimals?: number }> = new Map()
+const dbCache: Map<string, { symbol: string; decimals?: number }> = new Map()
 let initialized = false
 let initPromise: Promise<void> | null = null
 

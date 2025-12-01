@@ -119,7 +119,7 @@ export async function loadConfig(): Promise<AppConfig> {
 			console.warn('Failed to load config.json, using defaults')
 			loadedConfig = defaultConfig
 		}
-		return loadedConfig!
+		return loadedConfig as AppConfig
 	})()
 
 	return configPromise
