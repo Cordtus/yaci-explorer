@@ -32,7 +32,7 @@ function formatStatusLabel(status: string): string {
 export default function GovernanceProposalDetailPage() {
 	const [mounted, setMounted] = useState(false)
 	const params = useParams()
-	const proposalId = parseInt(params.id!)
+	const proposalId = parseInt(params.id ?? '0', 10)
 
 	useEffect(() => {
 		setMounted(true)
@@ -44,7 +44,7 @@ export default function GovernanceProposalDetailPage() {
 			const result = await api.getProposalDetail(proposalId)
 			return result
 		},
-		enabled: mounted && !isNaN(proposalId),
+		enabled: mounted && !Number.isNaN(proposalId),
 	})
 
 	const { data: snapshots, isLoading: snapshotsLoading } = useQuery({
@@ -53,7 +53,7 @@ export default function GovernanceProposalDetailPage() {
 			const result = await api.getProposalSnapshots(proposalId)
 			return result
 		},
-		enabled: mounted && !isNaN(proposalId),
+		enabled: mounted && !Number.isNaN(proposalId),
 	})
 
 	if (mounted && error) {

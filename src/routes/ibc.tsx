@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { api, IbcConnection, IbcDenomTrace } from '@/lib/api'
+import { api, type IbcConnection, type IbcDenomTrace } from '@/lib/api'
 import { css } from '@/styled-system/css'
 import { IBCIcon } from '@/components/icons/icons'
 

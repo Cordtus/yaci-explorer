@@ -124,7 +124,7 @@ export default function TransactionDetailPage() {
       setIsDecodingEVM(true)
       setDecodeAttempted(true)
 
-      const apiURL = getEnv('VITE_POSTGREST_URL', '/api')!
+      const apiURL = getEnv('VITE_POSTGREST_URL', '/api') ?? '/api'
 
       fetch(`${apiURL}/rpc/request_evm_decode`, {
         method: 'POST',

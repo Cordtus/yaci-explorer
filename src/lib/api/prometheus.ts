@@ -20,8 +20,9 @@ export interface ParsedMetrics {
 
 /**
  * Parse Prometheus text format into structured data
+ * Unused - kept for future when HTTPS endpoint is available
  */
-function parsePrometheusText(text: string): ParsedMetrics {
+function _parsePrometheusText(text: string): ParsedMetrics {
   const lines = text.split('\n')
   const metrics: ParsedMetrics = {}
   let currentMetric: Partial<PrometheusMetric> = {}
@@ -108,7 +109,7 @@ function parsePrometheusText(text: string): ParsedMetrics {
  * For now, we disable browser-based Prometheus fetching to avoid mixed content errors
  */
 export async function fetchPrometheusMetrics(
-  endpoint?: string
+  _endpoint?: string
 ): Promise<ParsedMetrics> {
   // Disable Prometheus fetching from browser to avoid mixed content errors
   // Metrics should be fetched server-side or through a proper HTTPS proxy
@@ -223,29 +224,29 @@ export async function getNetworkHealth(endpoint?: string) {
 
   return {
     // Consensus metrics
-    validators: metrics['cometbft_consensus_validators']?.values[0]?.value ?? 0,
+    validators: metrics.cometbft_consensus_validators?.values[0]?.value ?? 0,
     byzantineValidators:
-      metrics['cometbft_consensus_byzantine_validators']?.values[0]?.value ?? 0,
+      metrics.cometbft_consensus_byzantine_validators?.values[0]?.value ?? 0,
     missingValidators:
-      metrics['cometbft_consensus_missing_validators']?.values[0]?.value ?? 0,
-    rounds: metrics['cometbft_consensus_rounds']?.values[0]?.value ?? 0,
-    height: metrics['cometbft_consensus_height']?.values[0]?.value ?? 0,
+      metrics.cometbft_consensus_missing_validators?.values[0]?.value ?? 0,
+    rounds: metrics.cometbft_consensus_rounds?.values[0]?.value ?? 0,
+    height: metrics.cometbft_consensus_height?.values[0]?.value ?? 0,
 
     // Block metrics
-    blockSize: metrics['cometbft_consensus_block_size_bytes']?.values[0]?.value ?? 0,
-    numTxs: metrics['cometbft_consensus_num_txs']?.values[0]?.value ?? 0,
-    totalTxs: metrics['cometbft_consensus_total_txs']?.values[0]?.value ?? 0,
+    blockSize: metrics.cometbft_consensus_block_size_bytes?.values[0]?.value ?? 0,
+    numTxs: metrics.cometbft_consensus_num_txs?.values[0]?.value ?? 0,
+    totalTxs: metrics.cometbft_consensus_total_txs?.values[0]?.value ?? 0,
     blockInterval:
-      metrics['cometbft_consensus_block_interval_seconds']?.values[0]?.value ?? 0,
+      metrics.cometbft_consensus_block_interval_seconds?.values[0]?.value ?? 0,
 
     // Mempool metrics
-    mempoolSize: metrics['cometbft_mempool_size']?.values[0]?.value ?? 0,
-    mempoolBytes: metrics['cometbft_mempool_size_bytes']?.values[0]?.value ?? 0,
-    failedTxs: metrics['cometbft_mempool_failed_txs']?.values[0]?.value ?? 0,
-    evictedTxs: metrics['cometbft_mempool_evicted_txs']?.values[0]?.value ?? 0,
+    mempoolSize: metrics.cometbft_mempool_size?.values[0]?.value ?? 0,
+    mempoolBytes: metrics.cometbft_mempool_size_bytes?.values[0]?.value ?? 0,
+    failedTxs: metrics.cometbft_mempool_failed_txs?.values[0]?.value ?? 0,
+    evictedTxs: metrics.cometbft_mempool_evicted_txs?.values[0]?.value ?? 0,
 
     // P2P metrics
-    peers: metrics['cometbft_p2p_peers']?.values[0]?.value ?? 0,
+    peers: metrics.cometbft_p2p_peers?.values[0]?.value ?? 0,
   }
 }
 
@@ -254,7 +255,7 @@ export async function getNetworkHealth(endpoint?: string) {
  */
 export async function getABCITiming(endpoint?: string) {
   const metrics = await fetchPrometheusMetrics(endpoint)
-  const timingMetric = metrics['cometbft_abci_connection_method_timing_bucket']
+  const timingMetric = metrics.cometbft_abci_connection_method_timing_bucket
 
   if (!timingMetric) return {}
 

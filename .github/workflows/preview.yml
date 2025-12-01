@@ -1,3 +1,6 @@
+# Disabled - requires FLY_API_TOKEN secret to be configured
+# To re-enable: remove 'if: false' from the preview job
+
 name: Preview Deployment
 
 on:
@@ -23,6 +26,7 @@ env:
 
 jobs:
   preview:
+    if: false  # Disabled until FLY_API_TOKEN is configured
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

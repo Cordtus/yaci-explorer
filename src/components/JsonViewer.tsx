@@ -71,15 +71,18 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
 
   return (
     <div>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         className={css({
           display: 'flex',
           gap: '2',
           py: '0.5',
           cursor: 'pointer',
           rounded: 'md',
+          bg: 'transparent',
+          border: 'none',
+          w: 'full',
+          textAlign: 'left',
           _hover: { bg: 'bg.muted/50' }
         })}
         style={{ paddingLeft: `${indent}px` }}
@@ -96,7 +99,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
           {isArray ? '[' : '{'}
           {!isExpanded && <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>{preview}</span>}
         </span>
-      </div>
+      </button>
 
       {isExpanded && (
         <>
