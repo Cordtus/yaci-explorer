@@ -1,23 +1,7 @@
 import { api } from '@/lib/api'
 import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
 import { subMinutes, subHours, subDays } from 'date-fns'
-import { getEnv } from '@/lib/env'
-
-// Simple cache implementation
-const cacheStore = new Map<string, { value: any; expires: number }>()
-const cache = {
-  get<T>(key: string): T | null {
-    const entry = cacheStore.get(key)
-    if (!entry || Date.now() > entry.expires) {
-      cacheStore.delete(key)
-      return null
-    }
-    return entry.value as T
-  },
-  set(key: string, value: any, ttl = 30000) {
-    cacheStore.set(key, { value, expires: Date.now() + ttl })
-  }
-}
+import { getConfig } from '@/lib/env'
 
 // Types
 export type TimeUnit = 'minutes' | 'hours' | 'days'
@@ -55,9 +39,14 @@ export interface BlockInterval {
   timestamp: string
 }
 
-// Configuration
-const REST_ENDPOINT = getEnv('VITE_CHAIN_REST_ENDPOINT')
-const BASE_URL = getEnv('VITE_POSTGREST_URL', '/api')!
+// Configuration - lazy getters to ensure config is loaded
+function getRestEndpoint(): string | undefined {
+  return getConfig().chainRestEndpoint
+}
+
+function getBaseUrl(): string {
+  return getConfig().apiUrl
+}
 
 // Time utilities
 function getStartDate(range: TimeRange): Date {
@@ -92,7 +81,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 // Core data fetchers
 async function getTotalTransactions(): Promise<number> {
-  const response = await fetch(`${BASE_URL}/transactions_main?select=id&limit=1`, {
+  const response = await fetch(`${getBaseUrl()}/transactions_main?select=id&limit=1`, {
     headers: { Prefer: 'count=exact' },
   })
   if (!response.ok) return 0
@@ -106,22 +95,15 @@ async function getTotalTransactions(): Promise<number> {
  * @returns Number of transactions in the specified time range
  */
 export async function getTransactionsInTimeRange(range: TimeRange): Promise<number> {
-  const cacheKey = `tx-count-${range.value}-${range.unit}`
-  const cached = cache.get<number>(cacheKey)
-  if (cached !== null) return cached
-
   const startDate = getStartDate(range)
   const response = await fetch(
-    `${BASE_URL}/transactions_main?timestamp=gte.${startDate.toISOString()}&select=id&limit=1`,
+    `${getBaseUrl()}/transactions_main?timestamp=gte.${startDate.toISOString()}&select=id&limit=1`,
     { headers: { Prefer: 'count=exact' } }
   )
 
   if (!response.ok) return 0
   const totalHeader = response.headers.get('Content-Range')
-  const count = totalHeader ? parseInt(totalHeader.split('/')[1], 10) : 0
-
-  cache.set(cacheKey, count)
-  return count
+  return totalHeader ? parseInt(totalHeader.split('/')[1], 10) : 0
 }
 
 /**
@@ -136,10 +118,11 @@ export async function getTPS(range: TimeRange = { value: 1, unit: 'minutes' }): 
 
 async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
   // Prefer staking REST if provided
-  if (REST_ENDPOINT) {
+  const restEndpoint = getRestEndpoint()
+  if (restEndpoint) {
     try {
       const data = await fetchJson<{ validators: unknown[] }>(
-        `${REST_ENDPOINT}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED`
+        `${restEndpoint}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED`
       )
       return Array.isArray(data.validators) ? data.validators.length : 0
     } catch {
@@ -161,10 +144,11 @@ function getValidatorCountFromBlock(block: any): number {
 }
 
 async function getTotalSupply(chainInfo: ChainInfo): Promise<string | null> {
-  if (!REST_ENDPOINT) return null
+  const restEndpoint = getRestEndpoint()
+  if (!restEndpoint) return null
   try {
     const data = await fetchJson<{ amount: { amount: string } }>(
-      `${REST_ENDPOINT}/cosmos/bank/v1beta1/supply/by_denom?denom=${chainInfo.baseDenom}`
+      `${restEndpoint}/cosmos/bank/v1beta1/supply/by_denom?denom=${chainInfo.baseDenom}`
     )
     const raw = data.amount?.amount ? parseFloat(data.amount.amount) : NaN
     if (Number.isNaN(raw)) return null
@@ -177,7 +161,7 @@ async function getTotalSupply(chainInfo: ChainInfo): Promise<string | null> {
 
 async function getUniqueAddresses(): Promise<number | null> {
   const response = await fetch(
-    `${BASE_URL}/messages_main?select=sender&distinct=sender&sender=not.is.null&limit=1`,
+    `${getBaseUrl()}/messages_main?select=sender&distinct=sender&sender=not.is.null&limit=1`,
     { headers: { Prefer: 'count=exact' } }
   )
   if (!response.ok) return null
@@ -216,11 +200,9 @@ function calculateAvgGasLimit(transactions: any[]): number {
 }
 
 // Public API
+// Note: Caching is handled by React Query at the component level
 
 export async function getOverviewMetrics(): Promise<OverviewMetrics> {
-  const cached = cache.get<OverviewMetrics>('overview')
-  if (cached) return cached
-
   const chainInfo = await getChainInfo(api)
   const [latestBlock, blockTimeAnalysis, totalTx, tps, activeValidators, totalSupply] =
     await Promise.all([
@@ -232,7 +214,7 @@ export async function getOverviewMetrics(): Promise<OverviewMetrics> {
       getTotalSupply(chainInfo),
     ])
 
-  const overview: OverviewMetrics = {
+  return {
     latestBlock: latestBlock?.id || 0,
     totalTransactions: totalTx,
     avgBlockTime: blockTimeAnalysis.avg > 0 ? blockTimeAnalysis.avg : 0,
@@ -240,18 +222,13 @@ export async function getOverviewMetrics(): Promise<OverviewMetrics> {
     activeValidators,
     totalSupply,
   }
-
-  cache.set('overview', overview)
-  return overview
 }
 
 export async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const cached = cache.get<NetworkMetrics>('network-metrics')
-  if (cached) return cached
-
+  const baseUrl = getBaseUrl()
   const [blocksResponse, txResponse] = await Promise.all([
-    fetch(`${BASE_URL}/blocks_raw?order=id.desc&limit=100`, { headers: { Prefer: 'count=exact' } }),
-    fetch(`${BASE_URL}/transactions_main?order=height.desc&limit=1000`, { headers: { Prefer: 'count=exact' } }),
+    fetch(`${baseUrl}/blocks_raw?order=id.desc&limit=100`, { headers: { Prefer: 'count=exact' } }),
+    fetch(`${baseUrl}/transactions_main?order=height.desc&limit=1000`, { headers: { Prefer: 'count=exact' } }),
   ])
 
   const blocks = await blocksResponse.json()
@@ -270,7 +247,7 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
   const latestBlock = blocks[0]
   const activeValidators = getValidatorCountFromBlock(latestBlock)
 
-  const metrics: NetworkMetrics = {
+  return {
     latestHeight: latestBlock?.id || 0,
     totalTransactions: totalTxs,
     avgBlockTime,
@@ -282,17 +259,10 @@ export async function getNetworkMetrics(): Promise<NetworkMetrics> {
     avgGasLimit,
     uniqueAddresses,
   }
-
-  cache.set('network-metrics', metrics)
-  return metrics
 }
 
 export async function getBlockIntervals(limit = 100): Promise<BlockInterval[]> {
-  const cacheKey = `block-intervals-${limit}`
-  const cached = cache.get<BlockInterval[]>(cacheKey)
-  if (cached) return cached
-
-  const response = await fetch(`${BASE_URL}/blocks_raw?order=id.desc&limit=${limit}`)
+  const response = await fetch(`${getBaseUrl()}/blocks_raw?order=id.desc&limit=${limit}`)
   if (!response.ok) return []
 
   const blocks = await response.json()
@@ -311,9 +281,7 @@ export async function getBlockIntervals(limit = 100): Promise<BlockInterval[]> {
     }
   }
 
-  const series = intervals.reverse()
-  cache.set(cacheKey, series)
-  return series
+  return intervals.reverse()
 }
 
 // Convenience functions for common time ranges
