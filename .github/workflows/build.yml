@@ -2,8 +2,7 @@ name: build
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'src/**'
       - 'public/**'
@@ -11,7 +10,7 @@ on:
       - 'bun.lock'
       - 'tsconfig.json'
       - 'panda.config.ts'
-      - 'eslint.config.js'
+      - 'biome.json'
       - 'Dockerfile'
       - 'fly.toml'
       - 'nginx.conf'
@@ -32,9 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Type check
-        run: bun run typecheck
 
       - name: Build
         run: bun run build

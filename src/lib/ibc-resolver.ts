@@ -197,7 +197,7 @@ function guessDecimals(baseDenom: string): number {
  * Get enhanced base denom info (optional)
  * This could query an external registry or local config
  */
-async function getBaseDenomInfo(baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
+async function getBaseDenomInfo(_baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
 	// Could query chain registry or other source
 	// For now, return null to use defaults
 	return null

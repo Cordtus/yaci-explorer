@@ -116,7 +116,7 @@ export async function getTPS(range: TimeRange = { value: 1, unit: 'minutes' }): 
   return count / seconds
 }
 
-async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
+async function getActiveValidators(_chainInfo: ChainInfo): Promise<number> {
   // Prefer staking REST if provided
   const restEndpoint = getRestEndpoint()
   if (restEndpoint) {
