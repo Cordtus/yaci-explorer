@@ -457,10 +457,6 @@ export class YaciClient {
 		return this.query('message_type_stats')
 	}
 
-	async getTransactionTypeDistribution(): Promise<Array<{ type: string; count: number }>> {
-		return this.query('message_type_stats')
-	}
-
 	async getGasUsageDistribution(): Promise<Array<{ gas_range: string; count: number }>> {
 		return this.query('gas_usage_distribution')
 	}
@@ -508,12 +504,17 @@ export class YaciClient {
 		return result[0]
 	}
 
-	async getFeeRevenueOverTime(): Promise<Array<{ denom: string; total_amount: string }>> {
+	async getFeeRevenue(): Promise<Array<{ denom: string; total_amount: string }>> {
 		return this.query('fee_revenue')
 	}
 
+	// Alias for backward compatibility
+	async getFeeRevenueOverTime(): Promise<Array<{ denom: string; total_amount: string }>> {
+		return this.getFeeRevenue()
+	}
+
 	async getTotalFeeRevenue(): Promise<Record<string, string | number>> {
-		const result = await this.query<Array<{ denom: string; total_amount: string }>>('fee_revenue')
+		const result = await this.getFeeRevenue()
 		const revenue: Record<string, string | number> = {}
 		for (const item of result) {
 			revenue[item.denom] = item.total_amount
@@ -784,6 +785,22 @@ export function createApiClient(baseUrl: string): YaciClient {
 	return new YaciClient({ baseUrl })
 }
 
-import { getEnv } from './env'
-const baseUrl = getEnv('VITE_POSTGREST_URL', '/api')!
-export const api = new YaciClient({ baseUrl })
+import { getConfig } from './env'
+
+// Lazy-initialized singleton - deferred until first access to ensure config is loaded
+let _apiInstance: YaciClient | null = null
+
+function getApiInstance(): YaciClient {
+	if (!_apiInstance) {
+		const baseUrl = getConfig().apiUrl
+		_apiInstance = new YaciClient({ baseUrl })
+	}
+	return _apiInstance
+}
+
+// Proxy that defers to lazy instance - allows import-time reference without immediate instantiation
+export const api = new Proxy({} as YaciClient, {
+	get(_, prop: keyof YaciClient) {
+		return Reflect.get(getApiInstance(), prop)
+	}
+})
