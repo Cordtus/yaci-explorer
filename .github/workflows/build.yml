@@ -1,27 +1,39 @@
-name: build
+name: Build and Push
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'tsconfig.json'
-      - 'panda.config.ts'
-      - 'eslint.config.js'
-      - 'Dockerfile'
-      - 'fly.toml'
-      - 'nginx.conf'
-      - '.github/workflows/build.yml'
-      - '.github/workflows/deploy.yml'
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "panda.config.ts"
+      - "biome.json"
+      - "Dockerfile"
+      - "fly.toml"
+      - "nginx.conf"
+      - ".github/workflows/build.yml"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
-    name: Build
+    name: Build and Push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,11 +45,55 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint
+        run: bun run lint
+
       - name: Type check
         run: bun run typecheck
 
-      - name: Build
-        run: bun run build
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev
+            VITE_CHAIN_REST_ENDPOINT=https://api.republicai.io
+
+  deploy:
+    name: Deploy to Fly.io
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        run: flyctl deploy --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}
         env:
-          VITE_POSTGREST_URL: https://yaci-explorer-apis.fly.dev
-          VITE_CHAIN_REST_ENDPOINT: https://api.republicai.io
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
