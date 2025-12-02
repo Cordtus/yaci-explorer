@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to deploy'
+        description: "PR number to deploy"
         required: true
 
 concurrency:
@@ -16,18 +16,68 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  packages: write
 
 env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
   PREVIEW_APP: yaci-explorer-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  PR_SHA: ${{ github.event.pull_request.head.sha }}
 
 jobs:
-  preview:
+  build:
+    name: Build Preview Image
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ env.PR_SHA }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev
+            VITE_CHAIN_REST_ENDPOINT=https://api.republicai.io
+
+  deploy:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
@@ -41,11 +91,6 @@ jobs:
           cat > fly.preview.toml << EOF
           app = "$PREVIEW_APP"
           primary_region = "sjc"
-
-          [build]
-            [build.args]
-              VITE_POSTGREST_URL = "https://yaci-explorer-apis.fly.dev"
-              VITE_CHAIN_REST_ENDPOINT = "https://api.republicai.io"
 
           [http_service]
             internal_port = 80
@@ -61,14 +106,16 @@ jobs:
             cpus = 1
           EOF
 
-          flyctl deploy --config fly.preview.toml --remote-only --no-cache
+          flyctl deploy --config fly.preview.toml --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Post preview URL
         uses: actions/github-script@v7
         with:
           script: |
             const previewUrl = `https://${process.env.PREVIEW_APP}.fly.dev`;
-            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+            const sha = process.env.PR_SHA.slice(0, 7);
             const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
             const body = `**Preview deployment ready!**\n\n${previewUrl}\n\nLast deployed: \`${sha}\` at ${timestamp}`;
 
