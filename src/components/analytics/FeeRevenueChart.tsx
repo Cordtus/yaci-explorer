@@ -46,6 +46,9 @@ export function FeeRevenueChart() {
   const option = {
     tooltip: {
       trigger: 'item',
+      backgroundColor: '#0D0F0F',
+      borderColor: 'rgba(48, 255, 110, 0.25)',
+      textStyle: { color: '#FFFFFF' },
       formatter: (params: any) => {
         const denom = data[params.dataIndex].denom
         const amount = formatAmount(data[params.dataIndex].total_amount, denom)
@@ -55,6 +58,7 @@ export function FeeRevenueChart() {
     legend: {
       data: data.map((d) => formatDenom(d.denom)),
       top: 'bottom',
+      textStyle: { color: '#707B92' }
     },
     grid: {
       left: '3%',
@@ -68,20 +72,26 @@ export function FeeRevenueChart() {
       data: data.map((d) => formatDenom(d.denom)),
       axisLabel: {
         rotate: 45,
+        color: '#707B92'
       },
+      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } }
     },
     yAxis: {
       type: 'value',
       name: 'Fee Revenue',
       nameLocation: 'middle',
       nameGap: 60,
+      nameTextStyle: { color: '#707B92' },
       axisLabel: {
+        color: '#707B92',
         formatter: (value: number) => {
           if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
           if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
           return value.toFixed(0)
         },
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } }
     },
     series: [
       {
@@ -96,14 +106,14 @@ export function FeeRevenueChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#10b981' },
-              { offset: 1, color: '#059669' },
+              { offset: 0, color: '#30FF6E' },
+              { offset: 1, color: '#7CFFB5' },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#34d399',
+            color: '#C8FFD8',
           },
         },
       },

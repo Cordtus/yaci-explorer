@@ -36,6 +36,9 @@ export function GasEfficiencyChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
+      backgroundColor: '#0D0F0F',
+      borderColor: 'rgba(48, 255, 110, 0.25)',
+      textStyle: { color: '#FFFFFF' },
       axisPointer: {
         type: 'shadow',
       },
@@ -61,22 +64,29 @@ export function GasEfficiencyChart() {
       data: distribution.map((d) => d.gas_range),
       axisLabel: {
         rotate: 45,
+        color: '#707B92'
       },
       name: 'Gas Used Range',
       nameLocation: 'middle',
       nameGap: 60,
+      nameTextStyle: { color: '#707B92' },
+      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } }
     },
     yAxis: {
       type: 'value',
       name: 'Number of Transactions',
       nameLocation: 'middle',
       nameGap: 50,
+      nameTextStyle: { color: '#707B92' },
       axisLabel: {
+        color: '#707B92',
         formatter: (value: number) => {
           if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
           return value.toString()
         },
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } }
     },
     series: [
       {
@@ -91,14 +101,14 @@ export function GasEfficiencyChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#3b82f6' },
-              { offset: 1, color: '#1d4ed8' },
+              { offset: 0, color: '#30FF6E' },
+              { offset: 1, color: '#C8FFD8' },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#2563eb',
+            color: '#7CFFB5',
           },
         },
       },

@@ -3,7 +3,7 @@ import { Activity, TrendingUp, Clock, Database, Users, Zap, DollarSign } from 'l
 import { useQuery } from '@tanstack/react-query'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
-import { getEnv } from '@/lib/env'
+import { getConfig } from '@/lib/env'
 import { api } from '@/lib/api'
 import { formatDenomAmount } from '@/lib/denom'
 import { DenomDisplay } from '@/components/common/DenomDisplay'
@@ -22,9 +22,9 @@ interface NetworkMetrics {
 }
 
 async function getNetworkMetrics(): Promise<NetworkMetrics> {
-  const baseUrl = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')
+  const baseUrl = getConfig().apiUrl
   if (!baseUrl) {
-    throw new Error('VITE_POSTGREST_URL is not set')
+    throw new Error('API URL is not configured')
   }
 
   // Fetch multiple data points in parallel
@@ -189,63 +189,63 @@ export function NetworkMetricsCard() {
       label: 'Latest Block',
       value: metrics.latestHeight.toLocaleString(),
       subtext: `${timeSinceLastBlock}s ago`,
-      color: 'blue.500'
+      color: '#30FF6E'
     },
     {
       icon: Database,
       label: 'Total Transactions',
       value: formatNumber(metrics.totalTransactions),
       subtext: `${metrics.txPerBlock} per block`,
-      color: 'green.500'
+      color: '#7CFFB5'
     },
     {
       icon: Clock,
       label: 'Block Time',
       value: `${metrics.avgBlockTime.toFixed(2)}s`,
       subtext: 'average',
-      color: 'purple.500'
+      color: '#30FF6E'
     },
     {
       icon: Users,
       label: 'Active Validators',
       value: metrics.activeValidators.toString(),
       subtext: 'participating',
-      color: 'orange.500'
+      color: '#7CFFB5'
     },
     {
       icon: TrendingUp,
       label: 'Success Rate',
       value: `${metrics.successRate.toFixed(1)}%`,
       subtext: 'transactions',
-      color: 'emerald.500'
+      color: '#30FF6E'
     },
     {
       icon: Zap,
       label: 'Avg Gas Used',
       value: formatNumber(metrics.avgGasUsed),
       subtext: 'per transaction',
-      color: 'yellow.500'
+      color: '#C8FFD8'
     },
     {
       icon: Database,
       label: 'Total Blocks',
       value: formatNumber(metrics.totalBlocks),
       subtext: 'indexed',
-      color: 'indigo.500'
+      color: '#7CFFB5'
     },
     {
       icon: Users,
       label: 'Active Addresses',
       value: metrics.uniqueAddresses.toString(),
       subtext: 'recent activity',
-      color: 'pink.500'
+      color: '#30FF6E'
     },
     {
       icon: DollarSign,
       label: 'Fee Revenue',
       value: feeRevenueDisplay.length > 0 ? feeRevenueDisplay[0].formatted : '-',
       subtext: feeRevenueDisplay.length > 0 ? 'total collected' : 'loading...',
-      color: 'cyan.500',
+      color: '#7CFFB5',
       customRender: feeRevenueDisplay.length > 0 ? (
         <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
           {feeRevenueDisplay.map(({ denom, formatted }) => (
@@ -296,7 +296,7 @@ export function NetworkMetricsCard() {
 }
 
 const styles = {
-  title: css({ fontSize: '2xl' }),
+  title: css({ fontSize: '2xl', fontWeight: 'semibold', color: 'white' }),
   animatePulse: css({ animation: 'pulse', display: 'flex', flexDirection: 'column', gap: '4' }),
   skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '4' }),
   skeletonItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
@@ -305,8 +305,8 @@ const styles = {
   metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '6' }),
   metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
   metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
-  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),
+  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'rgba(221, 244, 255, 0.75)' }),
   metricValues: css({ display: 'flex', flexDirection: 'column', gap: '1' }),
-  metricValue: css({ fontSize: '2xl', fontWeight: 'bold' }),
-  metricSubtext: css({ fontSize: 'xs', color: 'fg.muted' }),
+  metricValue: css({ fontSize: '2xl', fontWeight: 'bold', color: 'white' }),
+  metricSubtext: css({ fontSize: 'xs', color: 'rgba(221, 244, 255, 0.75)' }),
 }
