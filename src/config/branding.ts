@@ -1,8 +1,8 @@
-import { env } from '@/lib/env'
+import { getConfig } from '@/lib/env'
 
 /**
  * Branding and visual identity configuration
- * Override these via environment variables for chain-specific deployments
+ * Override these via config.json for chain-specific deployments
  */
 
 export interface BrandingConfig {
@@ -31,23 +31,25 @@ export interface BrandingConfig {
 }
 
 /**
- * Get branding configuration from environment variables or defaults
+ * Get branding configuration from runtime config or defaults
  */
 export function getBrandingConfig(): BrandingConfig {
+  const config = getConfig()
+
   return {
-    appName: env.VITE_APP_NAME || 'Republic Explorer',
-    appNameShort: env.VITE_APP_NAME_SHORT || 'Explorer',
-    logoUrl: env.VITE_LOGO_URL,
-    faviconUrl: env.VITE_FAVICON_URL,
-    primaryColor: env.VITE_PRIMARY_COLOR,
-    accentColor: env.VITE_ACCENT_COLOR,
-    footerText: env.VITE_FOOTER_TEXT,
+    appName: config.appName || 'Republic Explorer',
+    appNameShort: config.appNameShort || 'Explorer',
+    logoUrl: config.branding?.logoUrl,
+    faviconUrl: config.branding?.faviconUrl,
+    primaryColor: config.branding?.primaryColor,
+    accentColor: config.branding?.accentColor,
+    footerText: config.branding?.footerText,
     links: {
-      website: env.VITE_LINK_WEBSITE,
-      docs: env.VITE_LINK_DOCS,
-      github: env.VITE_LINK_GITHUB,
-      discord: env.VITE_LINK_DISCORD,
-      twitter: env.VITE_LINK_TWITTER,
+      website: config.links?.website,
+      docs: config.links?.docs,
+      github: config.links?.github,
+      discord: config.links?.discord,
+      twitter: config.links?.twitter,
     },
   }
 }
