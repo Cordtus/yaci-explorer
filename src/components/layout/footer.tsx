@@ -21,9 +21,9 @@ const links = {
 }
 
 const socialLinks = [
-  { icon: XIcon, href: 'https://x.com/RepublicAI', label: 'X (Twitter)' },
+  { icon: XIcon, href: 'https://x.com/republicai', label: 'X (Twitter)' },
   { icon: GitHubIcon, href: 'https://github.com/RepublicAI', label: 'GitHub' },
-  { icon: DiscordIcon, href: 'https://discord.gg/republicai', label: 'Discord' },
+  { icon: DiscordIcon, href: 'https://discord.com/invite/therepublic', label: 'Discord' },
   { icon: DocumentIcon, href: 'https://whitepaper.republicai.io', label: 'Whitepaper' },
 ]
 
