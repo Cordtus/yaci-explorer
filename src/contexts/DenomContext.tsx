@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { getDenomMetadata } from '@/lib/denom'
-import { getEnv } from '@/lib/env'
+import { getConfig } from '@/lib/env'
 
 interface DenomContextType {
   getDenomDisplay: (denom: string) => string
@@ -25,13 +25,13 @@ export function DenomProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadDenomMetadata = async () => {
       try {
-        const postgrestUrl = getEnv('VITE_POSTGREST_URL')
-        if (!postgrestUrl) {
-          console.warn('VITE_POSTGREST_URL environment variable is not set')
+        const apiUrl = getConfig().apiUrl
+        if (!apiUrl) {
+          console.warn('API URL is not configured')
           setIsLoading(false)
           return
         }
-        const response = await fetch(`${postgrestUrl}/denom_metadata?select=denom,symbol`)
+        const response = await fetch(`${apiUrl}/denom_metadata?select=denom,symbol`)
 
         if (!response.ok) {
           console.error('Failed to fetch denom metadata from database')
@@ -61,7 +61,8 @@ export function DenomProvider({ children }: { children: ReactNode }) {
   const getDenomDisplay = (denom: string): string => {
     // Check cache first
     if (denomCache.has(denom)) {
-      return denomCache.get(denom)!
+      const cached = denomCache.get(denom)
+      if (cached) return cached
     }
 
     // For IBC denoms, return as-is if not in cache (will be truncated by UI)

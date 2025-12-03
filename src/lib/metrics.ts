@@ -1,7 +1,7 @@
 import { api } from '@/lib/api'
 import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
 import { subMinutes, subHours, subDays } from 'date-fns'
-import { getEnv } from '@/lib/env'
+import { getConfig } from '@/lib/env'
 
 // Simple cache implementation
 const cacheStore = new Map<string, { value: any; expires: number }>()
@@ -56,8 +56,9 @@ export interface BlockInterval {
 }
 
 // Configuration
-const REST_ENDPOINT = getEnv('VITE_CHAIN_REST_ENDPOINT')
-const BASE_URL = getEnv('VITE_POSTGREST_URL', 'http://localhost:3000')!
+const config = getConfig()
+const REST_ENDPOINT = config.chainRestEndpoint
+const BASE_URL = config.apiUrl
 
 // Time utilities
 function getStartDate(range: TimeRange): Date {
@@ -134,7 +135,7 @@ export async function getTPS(range: TimeRange = { value: 1, unit: 'minutes' }): 
   return count / seconds
 }
 
-async function getActiveValidators(chainInfo: ChainInfo): Promise<number> {
+async function getActiveValidators(_chainInfo: ChainInfo): Promise<number> {
   // Prefer staking REST if provided
   if (REST_ENDPOINT) {
     try {

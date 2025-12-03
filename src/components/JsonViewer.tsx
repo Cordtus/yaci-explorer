@@ -62,29 +62,24 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
   const itemCount = isArray ? data.length : Object.keys(data).length
   const preview = isArray ? `[${itemCount}]` : `{${itemCount}}`
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      setIsExpanded(!isExpanded)
-    }
-  }
-
   return (
     <div>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         className={css({
           display: 'flex',
           gap: '2',
           py: '0.5',
           cursor: 'pointer',
           rounded: 'md',
+          bg: 'transparent',
+          border: 'none',
+          textAlign: 'left',
+          w: 'full',
           _hover: { bg: 'bg.muted/50' }
         })}
         style={{ paddingLeft: `${indent}px` }}
         onClick={() => setIsExpanded(!isExpanded)}
-        onKeyDown={handleKeyDown}
       >
         {isExpanded ? (
           <ChevronDown className={css({ h: '4', w: '4', color: 'fg.muted', flexShrink: '0', mt: '0.5' })} />
@@ -96,7 +91,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
           {isArray ? '[' : '{'}
           {!isExpanded && <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>{preview}</span>}
         </span>
-      </div>
+      </button>
 
       {isExpanded && (
         <>
