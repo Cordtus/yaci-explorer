@@ -14,7 +14,7 @@ export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const params = useParams()
-  const blockHeight = parseInt(params.id!, 10)
+  const blockHeight = parseInt(params.id ?? '0', 10)
 
   useEffect(() => {
     setMounted(true)
@@ -26,7 +26,7 @@ export default function BlockDetailPage() {
       const result = await api.getBlock(blockHeight)
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const { data: transactions, isLoading: txLoading } = useQuery({
@@ -35,7 +35,7 @@ export default function BlockDetailPage() {
       const result = await api.getTransactions(100, 0, { block_height: blockHeight })
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const copyToClipboard = (text: string) => {
@@ -314,9 +314,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'fg.muted',
+    color: '#FFFFFF',
     _hover: {
-      color: 'fg.default',
+      color: '#30FF6E',
     },
   }),
   icon: css({
@@ -377,10 +377,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'fg.muted',
+    color: '#FFFFFF',
     marginBottom: '1rem',
     _hover: {
-      color: 'fg.default',
+      color: '#30FF6E',
     },
   }),
   headerContent: css({
@@ -400,7 +400,7 @@ const styles = {
   }),
   timestamp: css({
     fontSize: 'sm',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   mainGrid: css({
     display: 'grid',
@@ -421,7 +421,9 @@ const styles = {
   label: css({
     fontSize: 'sm',
     fontWeight: 'medium',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
+    textTransform: 'uppercase',
+    letterSpacing: 'wider',
   }),
   hashRow: css({
     display: 'flex',
@@ -433,6 +435,7 @@ const styles = {
     fontSize: 'sm',
     fontFamily: 'mono',
     wordBreak: 'break-all',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   copyButton: css({
     height: '1.25rem',
@@ -450,6 +453,7 @@ const styles = {
   statValue: css({
     fontSize: 'lg',
     fontWeight: 'bold',
+    color: '#30FF6E',
   }),
   textSm: css({
     fontSize: 'sm',
@@ -459,6 +463,7 @@ const styles = {
     fontFamily: 'mono',
     wordBreak: 'break-all',
     marginTop: '0.25rem',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   warningBox: css({
     marginBottom: '1rem',
@@ -494,7 +499,11 @@ const styles = {
     justifyContent: 'space-between',
     paddingY: '0.75rem',
     borderBottom: '1px solid',
-    borderColor: 'border.default',
+    borderColor: 'rgba(94, 94, 94, 0.25)',
+    transition: 'all 0.2s',
+    _hover: {
+      backgroundColor: 'rgba(48, 255, 110, 0.05)',
+    },
     _last: {
       borderBottom: '0',
     },
@@ -522,13 +531,14 @@ const styles = {
     fontWeight: 'medium',
     fontFamily: 'mono',
     fontSize: 'sm',
+    color: '#FFFFFF',
     _hover: {
-      color: 'colorPalette.default',
+      color: '#30FF6E',
     },
   }),
   txTimestamp: css({
     fontSize: 'xs',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   txRight: css({
     textAlign: 'right',
@@ -538,11 +548,11 @@ const styles = {
   }),
   txFee: css({
     fontSize: 'xs',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   emptyMessage: css({
     fontSize: 'sm',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
     textAlign: 'center',
     paddingY: '2rem',
   }),
@@ -561,10 +571,11 @@ const styles = {
     justifyContent: 'space-between',
   }),
   summaryLabel: css({
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   summaryValue: css({
     fontWeight: 'medium',
+    color: '#30FF6E',
   }),
   navButtons: css({
     display: 'flex',

@@ -256,15 +256,16 @@ const styles = {
   },
   emptyState: {
     textAlign: 'center',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   },
   blockLink: {
     display: 'flex',
     alignItems: 'center',
     gap: '2',
     fontWeight: 'medium',
+    color: '#FFFFFF',
     _hover: {
-      color: 'colorPalette',
+      color: '#30FF6E',
     },
   },
   blockIcon: {
@@ -273,12 +274,15 @@ const styles = {
   },
   hashCode: {
     fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'rgba(221, 244, 255, 0.75)',
   },
   timeAgo: {
     fontSize: 'sm',
+    color: '#FFFFFF',
   },
   timestamp: {
     fontSize: 'xs',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   },
 }
