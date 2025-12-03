@@ -559,7 +559,7 @@ const styles = {
 		fontWeight: 'medium',
 		transition: 'color 0.2s ease',
 		_hover: {
-			color: '#30FF6E'
+			color: 'accent.default'
 		}
 	},
 	activityIcon: {
@@ -588,16 +588,16 @@ const styles = {
 		fontSize: '0.875rem',
 		transition: 'color 0.2s ease',
 		_hover: {
-			color: '#30FF6E'
+			color: 'accent.default'
 		}
 	},
 	unavailableText: {
 		fontSize: '0.875rem',
-		color: 'rgba(221, 244, 255, 0.75)'
+		color: 'fg.muted'
 	},
 	timeText: {
 		fontSize: '0.875rem',
-		color: 'rgba(221, 244, 255, 0.75)'
+		color: 'fg.muted'
 	},
 	statusBadge: {
 		display: 'flex',
@@ -612,12 +612,12 @@ const styles = {
 	feeText: {
 		fontFamily: 'monospace',
 		fontSize: '0.875rem',
-		color: 'rgba(221, 244, 255, 0.75)'
+		color: 'fg.muted'
 	},
 	tableRow: {
 		transition: 'background-color 0.2s ease',
 		_hover: {
-			backgroundColor: 'rgba(48, 255, 110, 0.05)'
+			backgroundColor: 'bg.accentSubtle'
 		}
 	}
 }

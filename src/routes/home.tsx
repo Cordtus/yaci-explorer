@@ -202,12 +202,12 @@ const styles = {
   },
   viewAllLink: {
     fontSize: 'sm',
-    color: '#FFFFFF',
+    color: 'fg.default',
     display: 'flex',
     alignItems: 'center',
     gap: '1',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   },
   arrowIcon: {
@@ -229,13 +229,13 @@ const styles = {
     justifyContent: 'space-between',
     paddingY: '3',
     borderBottomWidth: '1px',
-    borderColor: 'rgba(94, 94, 94, 0.25)',
+    borderColor: 'border.default',
     transition: 'all 0.2s',
     _hover: {
       borderLeftWidth: '2px',
-      borderLeftColor: '#30FF6E',
+      borderLeftColor: 'accent.default',
       paddingLeft: '2',
-      backgroundColor: 'rgba(48, 255, 110, 0.05)',
+      backgroundColor: 'bg.accentSubtle',
     },
     _last: {
       borderBottomWidth: '0',
@@ -248,26 +248,26 @@ const styles = {
   },
   itemLink: {
     fontWeight: 'medium',
-    color: '#FFFFFF',
+    color: 'fg.default',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   },
   itemSubtext: {
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   },
   itemRight: {
     textAlign: 'right',
   },
   itemStat: {
     fontSize: 'sm',
-    color: '#30FF6E',
+    color: 'fg.accent',
     fontWeight: 'medium',
   },
   itemHash: {
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     fontFamily: 'mono',
   },
   badge: {

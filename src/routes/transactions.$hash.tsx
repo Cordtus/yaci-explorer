@@ -664,21 +664,21 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     transition: 'color 0.2s ease',
     _hover: {
-      color: '#30FF6E'
+      color: 'accent.default'
     }
   },
   backLinkWithMargin: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginBottom: '1rem',
     transition: 'color 0.2s ease',
     _hover: {
-      color: '#30FF6E'
+      color: 'accent.default'
     }
   },
   backLinkIcon: {
@@ -706,7 +706,7 @@ const styles = {
     marginBottom: '0.5rem'
   },
   errorDescription: {
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginBottom: '1rem'
   },
   errorMessage: {
@@ -748,7 +748,7 @@ const styles = {
   hashText: {
     fontFamily: 'monospace',
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     wordBreak: 'break-all'
   },
   copyButton: {
@@ -782,7 +782,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   decodingIcon: {
     height: '1rem',
@@ -824,7 +824,7 @@ const styles = {
   fieldLabel: {
     fontSize: 'sm',
     fontWeight: 'semibold',
-    color: '#FFFFFF'
+    color: 'fg.default'
   },
   fieldValueLarge: {
     fontSize: 'lg'
@@ -833,23 +833,23 @@ const styles = {
     fontSize: 'sm'
   },
   primaryLink: {
-    color: '#FFFFFF',
+    color: 'fg.default',
     transition: 'color 0.2s ease',
     _hover: {
-      color: '#30FF6E'
+      color: 'accent.default'
     }
   },
   unavailableText: {
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     fontSize: 'sm'
   },
   unavailableTextSmall: {
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   timestampSecondary: {
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   memoContainer: {
     marginTop: '1rem'
@@ -887,7 +887,7 @@ const styles = {
   messageDetailsLabel: {
     fontSize: 'sm',
     fontWeight: 'semibold',
-    color: '#FFFFFF',
+    color: 'fg.default',
     marginBottom: '0.75rem',
     display: 'block'
   },
@@ -911,7 +911,7 @@ const styles = {
   },
   collapsibleBorder: {
     border: '1px solid',
-    borderColor: 'rgba(94, 94, 94, 0.25)',
+    borderColor: 'border.default',
     borderRadius: 'lg',
     overflow: 'hidden',
     background: 'linear-gradient(135deg, rgba(48, 255, 110, 0.02) 0%, rgba(0, 0, 0, 0.3) 100%)'
@@ -921,7 +921,7 @@ const styles = {
     padding: '1rem',
     transition: 'background-color 0.2s ease',
     _hover: {
-      backgroundColor: 'rgba(48, 255, 110, 0.05)'
+      backgroundColor: 'bg.accentSubtle'
     }
   },
   collapsibleTriggerContent: {
@@ -937,7 +937,7 @@ const styles = {
   chevronIcon: {
     height: '1rem',
     width: '1rem',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   messageTypeContainer: {
     textAlign: 'left'
@@ -957,7 +957,7 @@ const styles = {
   },
   messageSender: {
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginTop: '0.25rem'
   },
   eventCount: {
@@ -965,7 +965,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   collapsibleContentInner: {
     paddingX: '1rem',
@@ -992,7 +992,7 @@ const styles = {
   eventsHeaderLabel: {
     fontSize: 'xs',
     fontWeight: 'medium',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     textTransform: 'uppercase',
     letterSpacing: 'wider'
   },
@@ -1004,7 +1004,7 @@ const styles = {
   filterIcon: {
     height: '0.75rem',
     width: '0.75rem',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   filterInput: {
     height: '1.75rem',
@@ -1013,7 +1013,7 @@ const styles = {
   },
   eventTypeBorder: {
     border: '1px solid',
-    borderColor: 'rgba(94, 94, 94, 0.25)',
+    borderColor: 'border.default',
     borderRadius: 'lg',
     overflow: 'hidden'
   },
@@ -1022,7 +1022,7 @@ const styles = {
     padding: '0.75rem',
     transition: 'background-color 0.2s ease',
     _hover: {
-      backgroundColor: 'rgba(48, 255, 110, 0.03)'
+      backgroundColor: 'bg.accentSubtle'
     }
   },
   eventTypeTriggerContent: {
@@ -1038,7 +1038,7 @@ const styles = {
   chevronSmallIcon: {
     height: '0.75rem',
     width: '0.75rem',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   eventTypeName: {
     fontSize: 'xs',
@@ -1046,7 +1046,7 @@ const styles = {
   },
   eventTypeCount: {
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   eventTypeContentBorder: {
     borderTop: '1px solid',
@@ -1075,7 +1075,7 @@ const styles = {
     fontWeight: 'medium',
     fontSize: 'xs',
     paddingY: '0.5rem',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   tableValueCell: {
     fontSize: 'xs',
@@ -1107,7 +1107,7 @@ const styles = {
   },
   noMessagesText: {
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   sidebar: {
     display: 'flex',
@@ -1124,13 +1124,13 @@ const styles = {
     justifyContent: 'space-between'
   },
   summaryLabel: {
-    color: 'rgba(221, 244, 255, 0.75)'
+    color: 'fg.muted'
   },
   summaryValue: {
     fontWeight: 'medium'
   },
   summaryValueSuccess: {
-    color: '#30FF6E',
+    color: 'fg.accent',
     fontWeight: 'medium'
   },
   summaryValueError: {
@@ -1139,17 +1139,18 @@ const styles = {
   },
   summaryLinkValue: {
     fontWeight: 'medium',
-    color: '#FFFFFF',
+    color: 'fg.default',
     transition: 'color 0.2s ease',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
       textDecoration: 'underline'
     }
   },
   successBadge: {
-    backgroundColor: 'rgba(48, 255, 110, 0.1)',
-    borderLeft: '3px solid #30FF6E',
-    color: '#30FF6E'
+    backgroundColor: 'bg.accentEmph',
+    borderLeft: '3px solid',
+    borderLeftColor: 'accent.default',
+    color: 'fg.accent'
   },
   errorBadge: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

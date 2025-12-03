@@ -426,21 +426,21 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     transition: 'color 0.2s',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   }),
   backLinkWithMargin: css({
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginBottom: '1rem',
     transition: 'color 0.2s',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   }),
   backIcon: css({
@@ -457,18 +457,18 @@ const styles = {
   notFoundIcon: css({
     height: '3rem',
     width: '3rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginX: 'auto',
     marginBottom: '1rem',
   }),
   notFoundTitle: css({
     fontSize: '1.5rem',
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: 'fg.default',
     marginBottom: '0.5rem',
   }),
   notFoundText: css({
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   invalidIcon: css({
     height: '3rem',
@@ -478,7 +478,7 @@ const styles = {
     marginBottom: '1rem',
   }),
   invalidHint: css({
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     fontSize: 'sm',
     marginTop: '0.5rem',
   }),
@@ -491,7 +491,7 @@ const styles = {
   headerIcon: css({
     height: '2rem',
     width: '2rem',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   headerTitle: css({
     fontSize: '1.875rem',
@@ -501,10 +501,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    background: 'rgba(48, 255, 110, 0.05)',
+    background: 'bg.accentSubtle',
     padding: '1rem',
     borderRadius: 'lg',
-    border: '1px solid rgba(48, 255, 110, 0.25)',
+    border: '1px solid',
+    borderColor: 'border.accent',
     boxShadow: '0 0 20px rgba(48, 255, 110, 0.1)',
   }),
   addressText: css({
@@ -512,16 +513,16 @@ const styles = {
     fontSize: 'sm',
     wordBreak: 'break-all',
     flex: '1',
-    color: '#FFFFFF',
+    color: 'fg.default',
   }),
   copyButton: css({
     height: '2rem',
     width: '2rem',
     flexShrink: '0',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     _hover: {
-      color: '#30FF6E',
-      background: 'rgba(48, 255, 110, 0.1)',
+      color: 'accent.default',
+      background: 'bg.accentEmph',
     },
   }),
   copyIcon: css({
@@ -552,7 +553,7 @@ const styles = {
   statCardIcon: css({
     height: '1rem',
     width: '1rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   statCardIconBlue: css({
     height: '1rem',
@@ -562,21 +563,21 @@ const styles = {
   statCardIconGreen: css({
     height: '1rem',
     width: '1rem',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   statValue: css({
     fontSize: '2rem',
     fontWeight: 'bold',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   statValueSmall: css({
     fontSize: '1.25rem',
     fontWeight: 'bold',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   statDescription: css({
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginTop: '0.25rem',
   }),
   skeletonList: css({
@@ -590,7 +591,8 @@ const styles = {
   }),
   tableContainer: css({
     borderRadius: 'md',
-    border: '1px solid rgba(94, 94, 94, 0.25)',
+    border: '1px solid',
+    borderColor: 'border.default',
     overflowX: 'auto',
   }),
   typeBadge: css({
@@ -605,11 +607,12 @@ const styles = {
     },
   }),
   typeBadgeIn: css({
-    backgroundColor: 'rgba(48, 255, 110, 0.15)',
-    color: '#30FF6E',
-    border: '1px solid rgba(48, 255, 110, 0.3)',
+    backgroundColor: 'bg.accentMuted',
+    color: 'fg.accent',
+    border: '1px solid',
+    borderColor: 'border.accent',
     _hover: {
-      backgroundColor: 'rgba(48, 255, 110, 0.25)',
+      backgroundColor: 'bg.accentEmph',
     },
   }),
   typeBadgeIcon: css({
@@ -620,24 +623,24 @@ const styles = {
   txHashLink: css({
     fontFamily: 'mono',
     fontSize: 'sm',
-    color: '#7CFFB5',
+    color: 'chart.secondary',
     transition: 'color 0.2s',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
       textShadow: '0 0 8px rgba(48, 255, 110, 0.5)',
     },
   }),
   blockLink: css({
-    color: '#7CFFB5',
+    color: 'chart.secondary',
     transition: 'color 0.2s',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
       textShadow: '0 0 8px rgba(48, 255, 110, 0.5)',
     },
   }),
   emptyValue: css({
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   statusIcon: css({
     height: '0.75rem',
@@ -646,7 +649,7 @@ const styles = {
   }),
   timeCell: css({
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   emptyState: css({
     textAlign: 'center',
@@ -655,11 +658,11 @@ const styles = {
   emptyStateIcon: css({
     height: '3rem',
     width: '3rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     marginX: 'auto',
     marginBottom: '1rem',
   }),
   emptyStateText: css({
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
 }

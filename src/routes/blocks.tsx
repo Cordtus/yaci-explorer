@@ -256,16 +256,16 @@ const styles = {
   },
   emptyState: {
     textAlign: 'center',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   },
   blockLink: {
     display: 'flex',
     alignItems: 'center',
     gap: '2',
     fontWeight: 'medium',
-    color: '#FFFFFF',
+    color: 'fg.default',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   },
   blockIcon: {
@@ -275,14 +275,14 @@ const styles = {
   hashCode: {
     fontSize: 'xs',
     fontFamily: 'mono',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   },
   timeAgo: {
     fontSize: 'sm',
-    color: '#FFFFFF',
+    color: 'fg.default',
   },
   timestamp: {
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   },
 }

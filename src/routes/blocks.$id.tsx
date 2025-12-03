@@ -314,9 +314,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: '#FFFFFF',
+    color: 'fg.default',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   }),
   icon: css({
@@ -377,10 +377,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: '#FFFFFF',
+    color: 'fg.default',
     marginBottom: '1rem',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   }),
   headerContent: css({
@@ -400,7 +400,7 @@ const styles = {
   }),
   timestamp: css({
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   mainGrid: css({
     display: 'grid',
@@ -421,7 +421,7 @@ const styles = {
   label: css({
     fontSize: 'sm',
     fontWeight: 'medium',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     textTransform: 'uppercase',
     letterSpacing: 'wider',
   }),
@@ -435,7 +435,7 @@ const styles = {
     fontSize: 'sm',
     fontFamily: 'mono',
     wordBreak: 'break-all',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   copyButton: css({
     height: '1.25rem',
@@ -453,7 +453,7 @@ const styles = {
   statValue: css({
     fontSize: 'lg',
     fontWeight: 'bold',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   textSm: css({
     fontSize: 'sm',
@@ -463,7 +463,7 @@ const styles = {
     fontFamily: 'mono',
     wordBreak: 'break-all',
     marginTop: '0.25rem',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   warningBox: css({
     marginBottom: '1rem',
@@ -499,10 +499,10 @@ const styles = {
     justifyContent: 'space-between',
     paddingY: '0.75rem',
     borderBottom: '1px solid',
-    borderColor: 'rgba(94, 94, 94, 0.25)',
+    borderColor: 'border.default',
     transition: 'all 0.2s',
     _hover: {
-      backgroundColor: 'rgba(48, 255, 110, 0.05)',
+      backgroundColor: 'bg.accentSubtle',
     },
     _last: {
       borderBottom: '0',
@@ -531,14 +531,14 @@ const styles = {
     fontWeight: 'medium',
     fontFamily: 'mono',
     fontSize: 'sm',
-    color: '#FFFFFF',
+    color: 'fg.default',
     _hover: {
-      color: '#30FF6E',
+      color: 'accent.default',
     },
   }),
   txTimestamp: css({
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   txRight: css({
     textAlign: 'right',
@@ -548,11 +548,11 @@ const styles = {
   }),
   txFee: css({
     fontSize: 'xs',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   emptyMessage: css({
     fontSize: 'sm',
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
     textAlign: 'center',
     paddingY: '2rem',
   }),
@@ -571,11 +571,11 @@ const styles = {
     justifyContent: 'space-between',
   }),
   summaryLabel: css({
-    color: 'rgba(221, 244, 255, 0.75)',
+    color: 'fg.muted',
   }),
   summaryValue: css({
     fontWeight: 'medium',
-    color: '#30FF6E',
+    color: 'fg.accent',
   }),
   navButtons: css({
     display: 'flex',
