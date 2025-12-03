@@ -68,9 +68,6 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev
-            VITE_CHAIN_REST_ENDPOINT=https://api.republicai.io
 
   deploy:
     name: Deploy Preview
