@@ -32,8 +32,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const primaryStyles =
       (!variant || variant === 'default' || variant === 'solid')
         ? css({
-            bg: '#30FF6E',
-            color: '#050607',
+            bg: 'accent.default',
+            color: 'accent.fg',
             borderTopLeftRadius: 'md',
             borderBottomRightRadius: 'md',
             borderTopRightRadius: '0',
@@ -41,7 +41,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             textTransform: 'uppercase',
             fontWeight: '600',
             _hover: {
-              boxShadow: '0px 0px 20px rgba(48, 255, 110, 0.3)',
+              boxShadow: 'glow.medium',
             },
           })
         : undefined
@@ -49,10 +49,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const destructiveStyles =
       variant === 'destructive'
         ? css({
-            bg: 'rgba(220, 38, 38, 0.15)',
-            color: '#DC2626',
+            bg: 'error.bgStrong',
+            color: 'error.default',
             borderWidth: '1px',
-            borderColor: 'rgba(220, 38, 38, 0.3)',
+            borderColor: 'error.borderStrong',
             borderTopLeftRadius: 'md',
             borderBottomRightRadius: 'md',
             borderTopRightRadius: '0',
@@ -60,7 +60,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             textTransform: 'uppercase',
             fontWeight: '600',
             _hover: {
-              bg: 'rgba(220, 38, 38, 0.25)',
+              bg: 'error.border',
               boxShadow: '0px 0px 20px rgba(220, 38, 38, 0.2)',
             },
           })
@@ -75,10 +75,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             borderBottomLeftRadius: '0',
             textTransform: 'uppercase',
             fontWeight: '600',
-            borderColor: 'rgba(94, 94, 94, 0.25)',
+            borderColor: 'border.default',
             _hover: {
-              borderColor: 'rgba(48, 255, 110, 0.25)',
-              boxShadow: '0px 0px 15px rgba(48, 255, 110, 0.15)',
+              borderColor: 'border.accent',
+              boxShadow: 'glow.subtle',
             },
           })
         : undefined

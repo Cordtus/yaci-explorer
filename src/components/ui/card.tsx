@@ -15,9 +15,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className={cx(
         slots.root,
         css({
-          background: 'linear-gradient(to right, #0D0F0F, #0A0C0C)',
+          background: 'gradients.card',
           borderWidth: '1px',
-          borderColor: 'rgba(94, 94, 94, 0.25)',
+          borderColor: 'border.default',
           position: 'relative',
           overflow: 'hidden',
         }),
@@ -33,7 +33,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             left: '0',
             right: '0',
             height: '1px',
-            background: 'linear-gradient(-90deg, rgba(0,255,77,0) 0%, #30FF6E 49.23%, #FFFFFF 100%)',
+            background: 'gradients.glowLine',
             opacity: '0.5',
           })}
         />

@@ -21,24 +21,24 @@ function Badge({ className, variant, ...props }: BadgeProps) {
   const colorOverrides =
     variant === 'success'
       ? css({
-          bg: 'rgba(48, 255, 110, 0.1)',
-          color: '#30FF6E',
+          bg: 'success.bg',
+          color: 'success.default',
           borderWidth: '1px',
-          borderColor: 'rgba(48, 255, 110, 0.25)',
+          borderColor: 'success.border',
         })
       : variant === 'warning'
         ? css({
-            bg: 'rgba(234, 179, 8, 0.1)',
-            color: '#EAB308',
+            bg: 'warning.bg',
+            color: 'warning.default',
             borderWidth: '1px',
-            borderColor: 'rgba(234, 179, 8, 0.25)',
+            borderColor: 'warning.border',
           })
         : variant === 'destructive'
           ? css({
-              bg: 'rgba(220, 38, 38, 0.1)',
-              color: '#DC2626',
+              bg: 'error.bg',
+              color: 'error.default',
               borderWidth: '1px',
-              borderColor: 'rgba(220, 38, 38, 0.25)',
+              borderColor: 'error.border',
             })
           : undefined
 
