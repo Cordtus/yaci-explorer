@@ -20,11 +20,26 @@ function Badge({ className, variant, ...props }: BadgeProps) {
 
   const colorOverrides =
     variant === 'success'
-      ? css({ bg: 'green.600', color: 'white' })
+      ? css({
+          bg: 'rgba(48, 255, 110, 0.1)',
+          color: '#30FF6E',
+          borderWidth: '1px',
+          borderColor: 'rgba(48, 255, 110, 0.25)',
+        })
       : variant === 'warning'
-        ? css({ bg: 'yellow.500', color: 'black' })
+        ? css({
+            bg: 'rgba(234, 179, 8, 0.1)',
+            color: '#EAB308',
+            borderWidth: '1px',
+            borderColor: 'rgba(234, 179, 8, 0.25)',
+          })
         : variant === 'destructive'
-          ? css({ bg: 'red.600', color: 'white' })
+          ? css({
+              bg: 'rgba(220, 38, 38, 0.1)',
+              color: '#DC2626',
+              borderWidth: '1px',
+              borderColor: 'rgba(220, 38, 38, 0.25)',
+            })
           : undefined
 
   return <div className={cx(recipeClass, colorOverrides, className)} {...props} />

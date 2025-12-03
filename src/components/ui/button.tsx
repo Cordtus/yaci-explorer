@@ -29,12 +29,57 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
     const recipeClass = button({ variant: mapVariant(variant), size: mapSize(size) })
 
+    const primaryStyles =
+      (!variant || variant === 'default' || variant === 'solid')
+        ? css({
+            bg: '#30FF6E',
+            color: '#050607',
+            borderTopLeftRadius: 'md',
+            borderBottomRightRadius: 'md',
+            borderTopRightRadius: '0',
+            borderBottomLeftRadius: '0',
+            textTransform: 'uppercase',
+            fontWeight: '600',
+            _hover: {
+              boxShadow: '0px 0px 20px rgba(48, 255, 110, 0.3)',
+            },
+          })
+        : undefined
+
     const destructiveStyles =
       variant === 'destructive'
         ? css({
-            bg: 'red.600',
-            color: 'white',
-            _hover: { bg: 'red.700' },
+            bg: 'rgba(220, 38, 38, 0.15)',
+            color: '#DC2626',
+            borderWidth: '1px',
+            borderColor: 'rgba(220, 38, 38, 0.3)',
+            borderTopLeftRadius: 'md',
+            borderBottomRightRadius: 'md',
+            borderTopRightRadius: '0',
+            borderBottomLeftRadius: '0',
+            textTransform: 'uppercase',
+            fontWeight: '600',
+            _hover: {
+              bg: 'rgba(220, 38, 38, 0.25)',
+              boxShadow: '0px 0px 20px rgba(220, 38, 38, 0.2)',
+            },
+          })
+        : undefined
+
+    const outlineStyles =
+      variant === 'outline'
+        ? css({
+            borderTopLeftRadius: 'md',
+            borderBottomRightRadius: 'md',
+            borderTopRightRadius: '0',
+            borderBottomLeftRadius: '0',
+            textTransform: 'uppercase',
+            fontWeight: '600',
+            borderColor: 'rgba(94, 94, 94, 0.25)',
+            _hover: {
+              borderColor: 'rgba(48, 255, 110, 0.25)',
+              boxShadow: '0px 0px 15px rgba(48, 255, 110, 0.15)',
+            },
           })
         : undefined
 
@@ -48,7 +93,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           })
         : undefined
 
-    const mergedClass = cx(recipeClass, destructiveStyles, iconStyles, className)
+    const mergedClass = cx(recipeClass, primaryStyles, destructiveStyles, outlineStyles, iconStyles, className)
 
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
