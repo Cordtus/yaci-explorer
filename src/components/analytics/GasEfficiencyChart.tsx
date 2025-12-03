@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
@@ -36,9 +37,9 @@ export function GasEfficiencyChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#0D0F0F',
-      borderColor: 'rgba(48, 255, 110, 0.25)',
-      textStyle: { color: '#FFFFFF' },
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       axisPointer: {
         type: 'shadow',
       },
@@ -70,7 +71,7 @@ export function GasEfficiencyChart() {
       nameLocation: 'middle',
       nameGap: 60,
       nameTextStyle: { color: '#707B92' },
-      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } }
+      axisLine: { lineStyle: { color: token('colors.border.default') } }
     },
     yAxis: {
       type: 'value',
@@ -86,7 +87,7 @@ export function GasEfficiencyChart() {
         },
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } }
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } }
     },
     series: [
       {
@@ -101,14 +102,14 @@ export function GasEfficiencyChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#30FF6E' },
-              { offset: 1, color: '#C8FFD8' },
+              { offset: 0, color: token('colors.republicGreen.7') },
+              { offset: 1, color: token('colors.republicGreen.1') },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#7CFFB5',
+            color: token('colors.republicGreen.5'),
           },
         },
       },

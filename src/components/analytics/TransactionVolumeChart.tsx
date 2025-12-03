@@ -5,6 +5,7 @@ import { TrendingUp } from 'lucide-react'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 
 interface VolumeData {
   time: string
@@ -70,12 +71,12 @@ export function TransactionVolumeChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#0D0F0F',
-      borderColor: 'rgba(48, 255, 110, 0.25)',
-      textStyle: { color: '#FFFFFF' },
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       axisPointer: {
         type: 'line',
-        lineStyle: { color: '#30FF6E', width: 1 }
+        lineStyle: { color: token('colors.republicGreen.7'), width: 1 }
       },
       formatter: (params: any) => {
         const date = new Date(params[0].axisValue)
@@ -83,7 +84,7 @@ export function TransactionVolumeChart() {
         const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
         return `<div style="font-size: 13px;">
           <strong>${dateStr} ${timeStr}</strong><br/>
-          Transactions: <span style="color: #30FF6E; font-weight: 600;">${params[0].value}</span>
+          Transactions: <span style="color: ${token('colors.republicGreen.7')}; font-weight: 600;">${params[0].value}</span>
         </div>`
       }
     },
@@ -107,7 +108,7 @@ export function TransactionVolumeChart() {
         },
         interval: Math.floor(data.length / 8)
       },
-      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } },
+      axisLine: { lineStyle: { color: token('colors.border.default') } },
       splitLine: { show: false }
     },
     yAxis: {
@@ -118,7 +119,7 @@ export function TransactionVolumeChart() {
         formatter: '{value}'
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } }
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } }
     },
     series: [{
       name: 'Transactions',
@@ -127,8 +128,8 @@ export function TransactionVolumeChart() {
       symbol: 'circle',
       symbolSize: 6,
       sampling: 'average',
-      itemStyle: { color: '#30FF6E' },
-      lineStyle: { width: 3, color: '#30FF6E' },
+      itemStyle: { color: token('colors.republicGreen.7') },
+      lineStyle: { width: 3, color: token('colors.republicGreen.7') },
       areaStyle: {
         color: {
           type: 'linear',

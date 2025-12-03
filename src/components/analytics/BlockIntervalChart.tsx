@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 import { getConfig } from '@/lib/env'
 
 interface BlockTimeData {
@@ -70,18 +71,18 @@ export function BlockIntervalChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#0D0F0F',
-      borderColor: 'rgba(48, 255, 110, 0.25)',
-      textStyle: { color: '#FFFFFF' },
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       axisPointer: {
         type: 'line',
-        lineStyle: { color: '#30FF6E', width: 1 }
+        lineStyle: { color: token('colors.republicGreen.7'), width: 1 }
       },
       formatter: (params: any) => {
         const point = params[0]
         return `<div style="font-size: 13px;">
           <strong>Block ${Number(point.name).toLocaleString()}</strong><br/>
-          Interval: <span style="color: #30FF6E; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
+          Interval: <span style="color: ${token('colors.republicGreen.7')}; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
         </div>`
       },
     },
@@ -102,7 +103,7 @@ export function BlockIntervalChart() {
         interval: Math.floor(data.length / 6),
         formatter: (value: number) => value.toLocaleString(),
       },
-      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } },
+      axisLine: { lineStyle: { color: token('colors.border.default') } },
       splitLine: { show: false },
     },
     yAxis: {
@@ -113,7 +114,7 @@ export function BlockIntervalChart() {
         formatter: '{value}s',
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } },
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } },
     },
     series: [{
       name: 'Block Interval',
@@ -122,8 +123,8 @@ export function BlockIntervalChart() {
       smooth: true,
       symbol: 'circle',
       symbolSize: 6,
-      itemStyle: { color: '#7CFFB5' },
-      lineStyle: { width: 3, color: '#7CFFB5' },
+      itemStyle: { color: token('colors.republicGreen.5') },
+      lineStyle: { width: 3, color: token('colors.republicGreen.5') },
       areaStyle: {
         color: {
           type: 'linear',
@@ -137,9 +138,9 @@ export function BlockIntervalChart() {
       markLine: {
         silent: true,
         symbol: 'none',
-        lineStyle: { type: 'dashed', color: '#30FF6E', width: 2 },
+        lineStyle: { type: 'dashed', color: token('colors.republicGreen.7'), width: 2 },
         label: {
-          color: '#7CFFB5',
+          color: token('colors.republicGreen.5'),
           fontSize: 12,
           fontWeight: 'bold',
           formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,

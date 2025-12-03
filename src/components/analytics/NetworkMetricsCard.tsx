@@ -3,6 +3,7 @@ import { Activity, TrendingUp, Clock, Database, Users, Zap, DollarSign } from 'l
 import { useQuery } from '@tanstack/react-query'
 import { appConfig } from '@/config/app'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 import { getConfig } from '@/lib/env'
 import { api } from '@/lib/api'
 import { formatDenomAmount } from '@/lib/denom'
@@ -189,63 +190,63 @@ export function NetworkMetricsCard() {
       label: 'Latest Block',
       value: metrics.latestHeight.toLocaleString(),
       subtext: `${timeSinceLastBlock}s ago`,
-      color: '#30FF6E'
+      color: token('colors.republicGreen.7')
     },
     {
       icon: Database,
       label: 'Total Transactions',
       value: formatNumber(metrics.totalTransactions),
       subtext: `${metrics.txPerBlock} per block`,
-      color: '#7CFFB5'
+      color: token('colors.republicGreen.5')
     },
     {
       icon: Clock,
       label: 'Block Time',
       value: `${metrics.avgBlockTime.toFixed(2)}s`,
       subtext: 'average',
-      color: '#30FF6E'
+      color: token('colors.republicGreen.7')
     },
     {
       icon: Users,
       label: 'Active Validators',
       value: metrics.activeValidators.toString(),
       subtext: 'participating',
-      color: '#7CFFB5'
+      color: token('colors.republicGreen.5')
     },
     {
       icon: TrendingUp,
       label: 'Success Rate',
       value: `${metrics.successRate.toFixed(1)}%`,
       subtext: 'transactions',
-      color: '#30FF6E'
+      color: token('colors.republicGreen.7')
     },
     {
       icon: Zap,
       label: 'Avg Gas Used',
       value: formatNumber(metrics.avgGasUsed),
       subtext: 'per transaction',
-      color: '#C8FFD8'
+      color: token('colors.republicGreen.1')
     },
     {
       icon: Database,
       label: 'Total Blocks',
       value: formatNumber(metrics.totalBlocks),
       subtext: 'indexed',
-      color: '#7CFFB5'
+      color: token('colors.republicGreen.5')
     },
     {
       icon: Users,
       label: 'Active Addresses',
       value: metrics.uniqueAddresses.toString(),
       subtext: 'recent activity',
-      color: '#30FF6E'
+      color: token('colors.republicGreen.7')
     },
     {
       icon: DollarSign,
       label: 'Fee Revenue',
       value: feeRevenueDisplay.length > 0 ? feeRevenueDisplay[0].formatted : '-',
       subtext: feeRevenueDisplay.length > 0 ? 'total collected' : 'loading...',
-      color: '#7CFFB5',
+      color: token('colors.republicGreen.5'),
       customRender: feeRevenueDisplay.length > 0 ? (
         <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
           {feeRevenueDisplay.map(({ denom, formatted }) => (
@@ -305,8 +306,8 @@ const styles = {
   metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '6' }),
   metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
   metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
-  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'rgba(221, 244, 255, 0.75)' }),
+  metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),
   metricValues: css({ display: 'flex', flexDirection: 'column', gap: '1' }),
   metricValue: css({ fontSize: '2xl', fontWeight: 'bold', color: 'white' }),
-  metricSubtext: css({ fontSize: 'xs', color: 'rgba(221, 244, 255, 0.75)' }),
+  metricSubtext: css({ fontSize: 'xs', color: 'fg.muted' }),
 }

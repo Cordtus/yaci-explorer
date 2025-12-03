@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 
 export function FeeRevenueChart() {
   const { data, isLoading } = useQuery({
@@ -46,9 +47,9 @@ export function FeeRevenueChart() {
   const option = {
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#0D0F0F',
-      borderColor: 'rgba(48, 255, 110, 0.25)',
-      textStyle: { color: '#FFFFFF' },
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       formatter: (params: any) => {
         const denom = data[params.dataIndex].denom
         const amount = formatAmount(data[params.dataIndex].total_amount, denom)
@@ -74,7 +75,7 @@ export function FeeRevenueChart() {
         rotate: 45,
         color: '#707B92'
       },
-      axisLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)' } }
+      axisLine: { lineStyle: { color: token('colors.border.default') } }
     },
     yAxis: {
       type: 'value',
@@ -91,7 +92,7 @@ export function FeeRevenueChart() {
         },
       },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(94, 94, 94, 0.25)', type: 'dashed' } }
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } }
     },
     series: [
       {
@@ -106,14 +107,14 @@ export function FeeRevenueChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#30FF6E' },
-              { offset: 1, color: '#7CFFB5' },
+              { offset: 0, color: token('colors.republicGreen.7') },
+              { offset: 1, color: token('colors.republicGreen.5') },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#C8FFD8',
+            color: token('colors.republicGreen.1'),
           },
         },
       },
