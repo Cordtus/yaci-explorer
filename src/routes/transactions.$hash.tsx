@@ -110,13 +110,6 @@ export default function TransactionDetailPage() {
     refetchInterval: isDecodingEVM ? 2000 : false,
   })
 
-  const { data: chainStats } = useQuery({
-    queryKey: ['chainStats'],
-    queryFn: () => api.getChainStats(),
-    enabled: mounted,
-    staleTime: 10000,
-  })
-
   useEffect(() => {
     if (!transaction || decodeAttempted) return
 
@@ -289,7 +282,6 @@ export default function TransactionDetailPage() {
             evmData={transaction.evm_data}
             blockHeight={transaction.height}
             timestamp={transaction.timestamp}
-            latestBlockHeight={chainStats?.latest_block}
           />
           {transaction.evm_logs && transaction.evm_logs.length > 0 && (
             <EVMLogsCard logs={transaction.evm_logs} />
@@ -656,7 +648,6 @@ export default function TransactionDetailPage() {
               evmData={transaction.evm_data}
               blockHeight={transaction.height}
               timestamp={transaction.timestamp}
-              latestBlockHeight={chainStats?.latest_block}
             />
           )}
         </div>

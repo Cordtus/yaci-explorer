@@ -13,7 +13,6 @@ interface EVMTransactionCardProps {
   evmData: EvmData
   blockHeight?: number
   timestamp?: string
-  latestBlockHeight?: number
 }
 
 // Format wei to native token with appropriate decimals
@@ -102,7 +101,7 @@ function getTransactionAction(evmData: EvmData): { label: string; description: s
   }
 }
 
-export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBlockHeight }: EVMTransactionCardProps) {
+export function EVMTransactionCard({ evmData, blockHeight, timestamp }: EVMTransactionCardProps) {
   const [copied, setCopied] = useState<string | null>(null)
   const [inputExpanded, setInputExpanded] = useState(false)
 
@@ -153,7 +152,6 @@ export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBloc
   }
 
   const action = getTransactionAction(evmData)
-  const confirmations = blockHeight && latestBlockHeight ? Math.max(0, latestBlockHeight - blockHeight + 1) : null
 
   return (
     <Card>
@@ -196,16 +194,9 @@ export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBloc
         {blockHeight && (
           <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
             <span className={css({ color: 'fg.muted' })}>Block:</span>
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-              <Link to={`/blocks/${blockHeight}`} className={css({ fontSize: 'xs', fontFamily: 'mono', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
-                #{formatNumber(blockHeight)}
-              </Link>
-              {confirmations !== null && (
-                <Badge variant="outline" className={css({ fontSize: 'xs' })}>
-                  {formatNumber(confirmations)} {confirmations === 1 ? 'confirmation' : 'confirmations'}
-                </Badge>
-              )}
-            </div>
+            <Link to={`/blocks/${blockHeight}`} className={css({ fontSize: 'xs', fontFamily: 'mono', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+              #{formatNumber(blockHeight)}
+            </Link>
           </div>
         )}
 
