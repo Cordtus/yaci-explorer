@@ -4,19 +4,20 @@ on:
   pull_request_target:
     types: [closed]
 
-env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  PREVIEW_APP: yaci-explorer-pr-${{ github.event.pull_request.number }}
-
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Delete preview app
         run: |
+          PREVIEW_APP="yaci-explorer-pr-${{ github.event.pull_request.number }}"
           if flyctl apps list | grep -q "$PREVIEW_APP"; then
             echo "Deleting preview app: $PREVIEW_APP"
             flyctl apps destroy "$PREVIEW_APP" --yes
+          else
+            echo "Preview app $PREVIEW_APP does not exist, skipping"
           fi
