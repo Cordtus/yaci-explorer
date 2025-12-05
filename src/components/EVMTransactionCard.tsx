@@ -270,7 +270,7 @@ export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBloc
             {formatWei(evmData.value)} RAI
             {evmData.value !== '0' && (
               <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
-                ({evmData.value} arai)
+                ({evmData.value} wei)
               </span>
             )}
           </span>
@@ -301,7 +301,7 @@ export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBloc
           <span>
             {formatGwei(evmData.gasPrice)} Gwei
             <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
-              ({evmData.gasPrice} arai)
+              ({evmData.gasPrice} wei)
             </span>
           </span>
         </div>
