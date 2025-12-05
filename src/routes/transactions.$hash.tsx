@@ -93,11 +93,11 @@ export default function TransactionDetailPage() {
 
   useEffect(() => {
     setMounted(true)
-    // Auto-enable EVM view if searched by EVM hash
-    if (searchParams.get('evm') === 'true') {
+    // Auto-enable EVM view if searched by EVM hash or URL contains EVM hash
+    if (searchParams.get('evm') === 'true' || (params.hash && /^0x[a-fA-F0-9]{64}$/.test(params.hash))) {
       setEvmView(true)
     }
-  }, [searchParams])
+  }, [searchParams, params.hash])
 
   const { data: transaction, isLoading, error, refetch } = useQuery({
     queryKey: ['transaction', params.hash],
