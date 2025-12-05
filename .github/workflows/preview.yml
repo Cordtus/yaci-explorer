@@ -90,7 +90,7 @@ jobs:
             cpus = 1
           EOF
 
-          flyctl deploy --config fly.preview.toml --image registry.fly.io/${{ env.FLY_APP }}:${{ github.event.pull_request.head.sha }}
+          flyctl deploy --app "$PREVIEW_APP" --config fly.preview.toml --image registry.fly.io/${{ env.FLY_APP }}:${{ github.event.pull_request.head.sha }} --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
