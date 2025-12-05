@@ -1,48 +1,68 @@
-name: Preview Deployment
+name: PR Checks
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-${{ github.head_ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+  packages: write
   pull-requests: write
-  actions: read
+  deployments: write
 
 env:
   FLY_APP: yaci-explorer
 
 jobs:
-  deploy:
-    name: Deploy Preview
+  check-and-deploy:
+    name: preview
     runs-on: ubuntu-latest
-    if: >
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get PR info
-        id: pr
-        uses: actions/github-script@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          script: |
-            const pr = context.payload.workflow_run.pull_requests[0];
-            if (!pr) {
-              core.setFailed('No PR found for this workflow run');
-              return;
-            }
-            core.setOutput('number', pr.number);
-            core.setOutput('sha', context.payload.workflow_run.head_sha);
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Fly Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.fly.io
+          username: x
+          password: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: registry.fly.io/${{ env.FLY_APP }}:${{ github.event.pull_request.head.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Create preview app if needed
         run: |
-          PREVIEW_APP="yaci-explorer-pr-${{ steps.pr.outputs.number }}"
+          PREVIEW_APP="yaci-explorer-pr-${{ github.event.pull_request.number }}"
           if ! flyctl apps list | grep -q "$PREVIEW_APP"; then
-            echo "Creating preview app: $PREVIEW_APP"
             flyctl apps create "$PREVIEW_APP" --org personal
           fi
         env:
@@ -50,8 +70,7 @@ jobs:
 
       - name: Deploy preview
         run: |
-          PREVIEW_APP="yaci-explorer-pr-${{ steps.pr.outputs.number }}"
-          PR_SHA="${{ steps.pr.outputs.sha }}"
+          PREVIEW_APP="yaci-explorer-pr-${{ github.event.pull_request.number }}"
 
           cat > fly.preview.toml << EOF
           app = "$PREVIEW_APP"
@@ -71,16 +90,44 @@ jobs:
             cpus = 1
           EOF
 
-          flyctl deploy --app "$PREVIEW_APP" --config fly.preview.toml --image registry.fly.io/${{ env.FLY_APP }}:$PR_SHA
+          flyctl deploy --config fly.preview.toml --image registry.fly.io/${{ env.FLY_APP }}:${{ github.event.pull_request.head.sha }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Post preview URL
+      - name: Create deployment status
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = ${{ steps.pr.outputs.number }};
-            const sha = '${{ steps.pr.outputs.sha }}'.slice(0, 7);
+            const prNumber = ${{ github.event.pull_request.number }};
+            const sha = context.payload.pull_request.head.sha;
+            const previewUrl = `https://yaci-explorer-pr-${prNumber}.fly.dev`;
+
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: sha,
+              environment: 'preview',
+              auto_merge: false,
+              required_contexts: [],
+              transient_environment: true,
+              production_environment: false,
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              environment_url: previewUrl,
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+      - name: Comment preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ github.event.pull_request.number }};
+            const sha = '${{ github.event.pull_request.head.sha }}'.slice(0, 7);
             const previewUrl = `https://yaci-explorer-pr-${prNumber}.fly.dev`;
             const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
             const body = `**Preview deployment ready!**\n\n${previewUrl}\n\nLast deployed: \`${sha}\` at ${timestamp}`;
