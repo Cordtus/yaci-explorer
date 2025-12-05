@@ -15,8 +15,8 @@ const links = {
     { label: 'Faucet', href: 'https://faucet.republicai.io' },
   ],
   legal: [
-    { label: 'Terms of Service', href: 'https://republicai.io/terms' },
-    { label: 'Privacy Policy', href: 'https://republicai.io/privacy' },
+    { label: 'Terms of Service', href: 'https://points.republicai.io/terms' },
+    { label: 'Privacy Policy', href: 'https://points.republicai.io/privacy' },
   ],
 }
 
