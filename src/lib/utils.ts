@@ -11,7 +11,7 @@ export function formatAddress(address: string, length = 8): string {
 
 export function formatNumber(num: number | string, decimals = 2): string {
   const n = typeof num === 'string' ? parseFloat(num) : num
-  if (isNaN(n)) return '0'
+  if (Number.isNaN(n)) return '0'
   return n.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
@@ -192,7 +192,7 @@ function bech32Encode(prefix: string, bytes: Uint8Array): string {
     checksumChars.push((checksum >> (5 * (5 - i))) & 31)
   }
 
-  return prefix + '1' + [...values, ...checksumChars].map(v => BECH32_ALPHABET[v]).join('')
+  return `${prefix}1${[...values, ...checksumChars].map(v => BECH32_ALPHABET[v]).join('')}`
 }
 
 /** Convert hex address to bech32 */
@@ -209,7 +209,7 @@ export function hexToBech32(hexAddr: string, prefix = 'republic'): string | null
 export function bech32ToHex(bech32Addr: string): string | null {
   const decoded = bech32Decode(bech32Addr)
   if (!decoded || decoded.bytes.length !== 20) return null
-  return '0x' + Array.from(decoded.bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+  return `0x${Array.from(decoded.bytes).map(b => b.toString(16).padStart(2, '0')).join('')}`
 }
 
 /** Get the alternate address format (hex<->bech32) */

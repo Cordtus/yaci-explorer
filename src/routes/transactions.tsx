@@ -355,7 +355,7 @@ export default function TransactionsPage() {
 									const isEVM = isEVMTransaction(tx.messages)
 
 									return (
-										<TableRow key={tx.id}>
+										<TableRow key={tx.id} className={css(styles.tableRow)}>
 											<TableCell>
 												<Link
 													to={`/tx/${tx.id}`}
@@ -557,8 +557,9 @@ const styles = {
 		alignItems: 'center',
 		gap: '0.5rem',
 		fontWeight: 'medium',
+		transition: 'color 0.2s ease',
 		_hover: {
-			color: 'colorPalette.fg'
+			color: 'accent.default'
 		}
 	},
 	activityIcon: {
@@ -566,6 +567,7 @@ const styles = {
 		width: '1rem'
 	},
 	txHashCode: {
+		fontFamily: 'monospace',
 		fontSize: '0.75rem'
 	},
 	typeCell: {
@@ -584,8 +586,9 @@ const styles = {
 	},
 	blockLink: {
 		fontSize: '0.875rem',
+		transition: 'color 0.2s ease',
 		_hover: {
-			color: 'colorPalette.fg'
+			color: 'accent.default'
 		}
 	},
 	unavailableText: {
@@ -593,7 +596,8 @@ const styles = {
 		color: 'fg.muted'
 	},
 	timeText: {
-		fontSize: '0.875rem'
+		fontSize: '0.875rem',
+		color: 'fg.muted'
 	},
 	statusBadge: {
 		display: 'flex',
@@ -606,6 +610,14 @@ const styles = {
 		width: '0.75rem'
 	},
 	feeText: {
-		fontSize: '0.875rem'
+		fontFamily: 'monospace',
+		fontSize: '0.875rem',
+		color: 'fg.muted'
+	},
+	tableRow: {
+		transition: 'background-color 0.2s ease',
+		_hover: {
+			backgroundColor: 'bg.accentSubtle'
+		}
 	}
 }

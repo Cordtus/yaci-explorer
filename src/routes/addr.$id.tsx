@@ -427,8 +427,9 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     color: 'fg.muted',
+    transition: 'color 0.2s',
     _hover: {
-      color: 'fg.default',
+      color: 'accent.default',
     },
   }),
   backLinkWithMargin: css({
@@ -437,8 +438,9 @@ const styles = {
     gap: '0.5rem',
     color: 'fg.muted',
     marginBottom: '1rem',
+    transition: 'color 0.2s',
     _hover: {
-      color: 'fg.default',
+      color: 'accent.default',
     },
   }),
   backIcon: css({
@@ -462,7 +464,7 @@ const styles = {
   notFoundTitle: css({
     fontSize: '1.5rem',
     fontWeight: 'bold',
-    color: 'fg.muted',
+    color: 'fg.default',
     marginBottom: '0.5rem',
   }),
   notFoundText: css({
@@ -489,7 +491,7 @@ const styles = {
   headerIcon: css({
     height: '2rem',
     width: '2rem',
-    color: 'accent.default',
+    color: 'fg.accent',
   }),
   headerTitle: css({
     fontSize: '1.875rem',
@@ -499,20 +501,29 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    backgroundColor: 'bg.muted',
-    padding: '0.75rem',
+    background: 'bg.accentSubtle',
+    padding: '1rem',
     borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'border.accent',
+    boxShadow: '0 0 20px rgba(48, 255, 110, 0.1)',
   }),
   addressText: css({
     fontFamily: 'mono',
     fontSize: 'sm',
     wordBreak: 'break-all',
     flex: '1',
+    color: 'fg.default',
   }),
   copyButton: css({
     height: '2rem',
     width: '2rem',
     flexShrink: '0',
+    color: 'fg.muted',
+    _hover: {
+      color: 'accent.default',
+      background: 'bg.accentEmph',
+    },
   }),
   copyIcon: css({
     height: '1rem',
@@ -552,15 +563,17 @@ const styles = {
   statCardIconGreen: css({
     height: '1rem',
     width: '1rem',
-    color: 'green.500',
+    color: 'fg.accent',
   }),
   statValue: css({
-    fontSize: '1.5rem',
+    fontSize: '2rem',
     fontWeight: 'bold',
+    color: 'fg.accent',
   }),
   statValueSmall: css({
-    fontSize: '1.125rem',
+    fontSize: '1.25rem',
     fontWeight: 'bold',
+    color: 'fg.accent',
   }),
   statDescription: css({
     fontSize: 'xs',
@@ -586,15 +599,20 @@ const styles = {
     fontWeight: 'medium',
   }),
   typeBadgeOut: css({
-    backgroundColor: 'blue.500',
+    backgroundColor: 'rgba(124, 207, 255, 0.2)',
+    color: '#7CCFFF',
+    border: '1px solid rgba(124, 207, 255, 0.3)',
     _hover: {
-      backgroundColor: 'blue.600',
+      backgroundColor: 'rgba(124, 207, 255, 0.3)',
     },
   }),
   typeBadgeIn: css({
-    backgroundColor: 'green.500',
+    backgroundColor: 'bg.accentMuted',
+    color: 'fg.accent',
+    border: '1px solid',
+    borderColor: 'border.accent',
     _hover: {
-      backgroundColor: 'green.600',
+      backgroundColor: 'bg.accentEmph',
     },
   }),
   typeBadgeIcon: css({
@@ -605,15 +623,19 @@ const styles = {
   txHashLink: css({
     fontFamily: 'mono',
     fontSize: 'sm',
-    color: 'accent.default',
+    color: 'chart.secondary',
+    transition: 'color 0.2s',
     _hover: {
-      color: 'accent.default/80',
+      color: 'accent.default',
+      textShadow: '0 0 8px rgba(48, 255, 110, 0.5)',
     },
   }),
   blockLink: css({
-    color: 'accent.default',
+    color: 'chart.secondary',
+    transition: 'color 0.2s',
     _hover: {
-      color: 'accent.default/80',
+      color: 'accent.default',
+      textShadow: '0 0 8px rgba(48, 255, 110, 0.5)',
     },
   }),
   emptyValue: css({

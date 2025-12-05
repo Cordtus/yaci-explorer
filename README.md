@@ -38,6 +38,8 @@ docker compose -f docker/docker-compose.yml up -d
 
 ## Configuration
 
+### Backend Configuration (.env)
+
 Only two variables are required:
 
 | Variable | Description |
@@ -48,9 +50,39 @@ Only two variables are required:
 Optional:
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_POSTGREST_URL` | PostgREST URL for frontend | `/api` |
-| `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC resolution | - |
 | `YACI_MAX_CONCURRENCY` | Concurrent block processing | `100` |
+
+### Frontend Configuration (config.json)
+
+Frontend configuration is provided at runtime via `config.json` (not build-time environment variables).
+
+1. Copy the example configuration:
+```bash
+cp public/config.json.example public/config.json
+```
+
+2. Edit `public/config.json` with your settings:
+```json
+{
+  "apiUrl": "https://your-postgrest-api.com",
+  "chainRestEndpoint": "https://your-chain-rest-api.com",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "My Explorer",
+  ...
+}
+```
+
+3. For Docker deployments, mount or copy config.json to the container:
+```bash
+# Mount as volume
+docker run -v ./config.json:/usr/share/nginx/html/config.json ...
+
+# Or copy to container
+docker cp config.json container:/usr/share/nginx/html/config.json
+```
+
+See `public/config.json.example` for all available options.
 
 ## Development
 
@@ -62,30 +94,20 @@ yarn typecheck              # Type check
 yarn lint                   # Lint code
 ```
 
-## Key Env Vars (see `.env.example`)
+## Backend Environment Variables
+
+See `.env.example` for complete reference:
+
 | Variable | Purpose | Default |
 | -- | -- | -- |
 | `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
-| `CHAIN_RPC_ENDPOINT` | Tendermint RPC (used by reset guard/banner) | `http://localhost:26657` |
+| `CHAIN_RPC_ENDPOINT` | Tendermint RPC (used by reset guard) | `http://localhost:26657` |
 | `POSTGRES_USER` | Database role used by PostgREST/Yaci | `yaci` |
 | `POSTGRES_PASSWORD` | DB password | `changeme` |
-| `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
-| `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
 | `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
 | `YACI_IMAGE` | Yaci image tag | `ghcr.io/cordtus/yaci:main` |
 | `ENABLE_CHAIN_RESET_GUARD` | Auto-wipe DB when chain restarts | `false` |
 | `RESET_GUARD_AUTO_TRUNCATE` | Whether the guard truncates automatically | `true` |
-
-### Frontend config overrides (`VITE_*`)
-All UI timing/limit constants can be tuned via env vars (see `.env.example`). Highlights:
-
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `VITE_TX_PAGE_SIZE` | Transactions per page | `20` |
-| `VITE_SEARCH_ADDRESS_LIMIT` | Max address results checked | `20` |
-| `VITE_ANALYTICS_*` | Lookbacks + refresh intervals for charts/cards | (various) |
-| `VITE_RESET_NOTICE_ENABLED` | Toggle the chain-reset banner | `true` |
-| `VITE_QUERY_*` | React Query cache timings | `10s` / `5m` |
 
 Multi-chain: run separate compose stacks with unique `POSTGRES_PORT`, `POSTGREST_PORT`, `EXPLORER_PORT`.
 

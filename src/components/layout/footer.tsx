@@ -21,9 +21,9 @@ const links = {
 }
 
 const socialLinks = [
-  { icon: XIcon, href: 'https://x.com/RepublicAI', label: 'X (Twitter)' },
+  { icon: XIcon, href: 'https://x.com/republicai', label: 'X (Twitter)' },
   { icon: GitHubIcon, href: 'https://github.com/RepublicAI', label: 'GitHub' },
-  { icon: DiscordIcon, href: 'https://discord.gg/republicai', label: 'Discord' },
+  { icon: DiscordIcon, href: 'https://discord.com/invite/therepublic', label: 'Discord' },
   { icon: DocumentIcon, href: 'https://whitepaper.republicai.io', label: 'Whitepaper' },
 ]
 
@@ -106,10 +106,12 @@ export function Footer() {
 
 const styles = {
   footer: css({
-    borderTopWidth: '1px',
-    borderColor: 'border.default',
     bg: 'bg.default',
     mt: 'auto',
+    borderTop: '1px solid transparent',
+    backgroundImage: 'linear-gradient(bg.default, bg.default), linear-gradient(90deg, rgba(204,204,204,0) 0%, #707B92 20%, #707B92 80%, rgba(153,153,153,0) 100%)',
+    backgroundOrigin: 'border-box',
+    backgroundClip: 'padding-box, border-box',
   }),
   container: css({
     maxW: '7xl',
@@ -137,7 +139,7 @@ const styles = {
   }),
   tagline: css({
     fontSize: 'sm',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
   socialLinks: css({
     display: 'flex',
@@ -152,11 +154,12 @@ const styles = {
     w: '10',
     rounded: 'full',
     bg: 'bg.muted',
-    color: 'fg.muted',
-    transition: 'all',
+    color: 'rgba(221, 244, 255, 0.75)',
+    transition: 'all 0.2s ease',
     _hover: {
       bg: 'accent.default',
-      color: 'accent.fg',
+      color: '#050607',
+      boxShadow: '0px 0px 20px rgba(48, 255, 110, 0.3)',
     },
   }),
   socialIcon: css({
@@ -175,16 +178,18 @@ const styles = {
     gap: '3',
   }),
   linkHeader: css({
-    fontSize: 'sm',
+    fontSize: 'xs',
     fontWeight: 'semibold',
-    color: 'fg.default',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 'wide',
     mb: '1',
   }),
   link: css({
     fontSize: 'sm',
-    color: 'fg.muted',
-    transition: 'colors',
-    _hover: { color: 'fg.default' },
+    color: 'rgba(221, 244, 255, 0.75)',
+    transition: 'color 0.2s ease',
+    _hover: { color: '#FFFFFF' },
   }),
   bottom: css({
     pt: '8',
@@ -193,6 +198,6 @@ const styles = {
   }),
   copyright: css({
     fontSize: 'sm',
-    color: 'fg.muted',
+    color: 'rgba(221, 244, 255, 0.75)',
   }),
 }

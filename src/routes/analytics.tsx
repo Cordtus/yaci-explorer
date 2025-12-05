@@ -28,7 +28,8 @@ const styles = {
   }),
   title: css({
     fontSize: '3xl',
-    fontWeight: 'bold',
+    fontWeight: 'semibold',
+    color: 'white'
   }),
   gridTwo: css({
     display: 'grid',

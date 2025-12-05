@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 
 export function FeeRevenueChart() {
   const { data, isLoading } = useQuery({
@@ -46,6 +47,9 @@ export function FeeRevenueChart() {
   const option = {
     tooltip: {
       trigger: 'item',
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       formatter: (params: any) => {
         const denom = data[params.dataIndex].denom
         const amount = formatAmount(data[params.dataIndex].total_amount, denom)
@@ -55,6 +59,7 @@ export function FeeRevenueChart() {
     legend: {
       data: data.map((d) => formatDenom(d.denom)),
       top: 'bottom',
+      textStyle: { color: '#707B92' }
     },
     grid: {
       left: '3%',
@@ -68,20 +73,26 @@ export function FeeRevenueChart() {
       data: data.map((d) => formatDenom(d.denom)),
       axisLabel: {
         rotate: 45,
+        color: '#707B92'
       },
+      axisLine: { lineStyle: { color: token('colors.border.default') } }
     },
     yAxis: {
       type: 'value',
       name: 'Fee Revenue',
       nameLocation: 'middle',
       nameGap: 60,
+      nameTextStyle: { color: '#707B92' },
       axisLabel: {
+        color: '#707B92',
         formatter: (value: number) => {
           if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
           if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
           return value.toFixed(0)
         },
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } }
     },
     series: [
       {
@@ -96,14 +107,14 @@ export function FeeRevenueChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#10b981' },
-              { offset: 1, color: '#059669' },
+              { offset: 0, color: token('colors.republicGreen.7') },
+              { offset: 1, color: token('colors.republicGreen.5') },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#34d399',
+            color: token('colors.republicGreen.1'),
           },
         },
       },

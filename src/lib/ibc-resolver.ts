@@ -4,7 +4,7 @@
  */
 
 import { extractIBCHash } from './denom'
-import { getEnv } from './env'
+import { getConfig } from './env'
 
 export interface IBCChannelInfo {
 	channelId: string
@@ -32,11 +32,10 @@ export const IBC_CACHE_KEY = 'yaci_ibc_denom_cache'
 export const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
 
 /**
- * Get the chain's REST API endpoint from environment
+ * Get the chain's REST API endpoint from config
  */
 function getChainRestEndpoint(): string | undefined {
-	const endpoint = getEnv('VITE_CHAIN_REST_ENDPOINT')
-	return endpoint
+	return getConfig().chainRestEndpoint
 }
 
 /**
@@ -197,7 +196,7 @@ function guessDecimals(baseDenom: string): number {
  * Get enhanced base denom info (optional)
  * This could query an external registry or local config
  */
-async function getBaseDenomInfo(baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
+async function getBaseDenomInfo(_baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
 	// Could query chain registry or other source
 	// For now, return null to use defaults
 	return null

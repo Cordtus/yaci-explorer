@@ -202,12 +202,12 @@ const styles = {
   },
   viewAllLink: {
     fontSize: 'sm',
-    color: 'fg.muted',
+    color: 'fg.default',
     display: 'flex',
     alignItems: 'center',
     gap: '1',
     _hover: {
-      color: 'fg.default',
+      color: 'accent.default',
     },
   },
   arrowIcon: {
@@ -229,6 +229,14 @@ const styles = {
     justifyContent: 'space-between',
     paddingY: '3',
     borderBottomWidth: '1px',
+    borderColor: 'border.default',
+    transition: 'all 0.2s',
+    _hover: {
+      borderLeftWidth: '2px',
+      borderLeftColor: 'accent.default',
+      paddingLeft: '2',
+      backgroundColor: 'bg.accentSubtle',
+    },
     _last: {
       borderBottomWidth: '0',
     },
@@ -240,8 +248,9 @@ const styles = {
   },
   itemLink: {
     fontWeight: 'medium',
+    color: 'fg.default',
     _hover: {
-      color: 'colorPalette',
+      color: 'accent.default',
     },
   },
   itemSubtext: {
@@ -253,10 +262,13 @@ const styles = {
   },
   itemStat: {
     fontSize: 'sm',
+    color: 'fg.accent',
+    fontWeight: 'medium',
   },
   itemHash: {
     fontSize: 'xs',
     color: 'fg.muted',
+    fontFamily: 'mono',
   },
   badge: {
     marginBottom: '1',

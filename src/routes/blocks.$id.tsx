@@ -14,7 +14,7 @@ export default function BlockDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const params = useParams()
-  const blockHeight = parseInt(params.id!, 10)
+  const blockHeight = parseInt(params.id ?? '0', 10)
 
   useEffect(() => {
     setMounted(true)
@@ -26,7 +26,7 @@ export default function BlockDetailPage() {
       const result = await api.getBlock(blockHeight)
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const { data: transactions, isLoading: txLoading } = useQuery({
@@ -35,7 +35,7 @@ export default function BlockDetailPage() {
       const result = await api.getTransactions(100, 0, { block_height: blockHeight })
       return result
     },
-    enabled: mounted && !isNaN(blockHeight),
+    enabled: mounted && !Number.isNaN(blockHeight),
   })
 
   const copyToClipboard = (text: string) => {
@@ -314,9 +314,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'fg.muted',
+    color: 'fg.default',
     _hover: {
-      color: 'fg.default',
+      color: 'accent.default',
     },
   }),
   icon: css({
@@ -377,10 +377,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: 'fg.muted',
+    color: 'fg.default',
     marginBottom: '1rem',
     _hover: {
-      color: 'fg.default',
+      color: 'accent.default',
     },
   }),
   headerContent: css({
@@ -422,6 +422,8 @@ const styles = {
     fontSize: 'sm',
     fontWeight: 'medium',
     color: 'fg.muted',
+    textTransform: 'uppercase',
+    letterSpacing: 'wider',
   }),
   hashRow: css({
     display: 'flex',
@@ -433,6 +435,7 @@ const styles = {
     fontSize: 'sm',
     fontFamily: 'mono',
     wordBreak: 'break-all',
+    color: 'fg.muted',
   }),
   copyButton: css({
     height: '1.25rem',
@@ -450,6 +453,7 @@ const styles = {
   statValue: css({
     fontSize: 'lg',
     fontWeight: 'bold',
+    color: 'fg.accent',
   }),
   textSm: css({
     fontSize: 'sm',
@@ -459,6 +463,7 @@ const styles = {
     fontFamily: 'mono',
     wordBreak: 'break-all',
     marginTop: '0.25rem',
+    color: 'fg.muted',
   }),
   warningBox: css({
     marginBottom: '1rem',
@@ -495,6 +500,10 @@ const styles = {
     paddingY: '0.75rem',
     borderBottom: '1px solid',
     borderColor: 'border.default',
+    transition: 'all 0.2s',
+    _hover: {
+      backgroundColor: 'bg.accentSubtle',
+    },
     _last: {
       borderBottom: '0',
     },
@@ -522,8 +531,9 @@ const styles = {
     fontWeight: 'medium',
     fontFamily: 'mono',
     fontSize: 'sm',
+    color: 'fg.default',
     _hover: {
-      color: 'colorPalette.default',
+      color: 'accent.default',
     },
   }),
   txTimestamp: css({
@@ -565,6 +575,7 @@ const styles = {
   }),
   summaryValue: css({
     fontWeight: 'medium',
+    color: 'fg.accent',
   }),
   navButtons: css({
     display: 'flex',

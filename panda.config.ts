@@ -1,7 +1,145 @@
-import { defineConfig } from '@pandacss/dev'
+import { defineConfig, defineSemanticTokens, defineTokens } from '@pandacss/dev'
 import { createPreset } from '@park-ui/panda-preset'
-import cyan from '@park-ui/panda-preset/colors/cyan'
-import slate from '@park-ui/panda-preset/colors/slate'
+
+const republicGreen = {
+  name: 'republicGreen',
+  tokens: defineTokens.colors({
+    light: {
+      "1": { value: "#C8FFD8" },
+      "2": { value: "#B3FFCC" },
+      "3": { value: "#9EFFBF" },
+      "4": { value: "#89FFB3" },
+      "5": { value: "#7CFFB5" },
+      "6": { value: "#5FFF99" },
+      "7": { value: "#30FF6E" },
+      "8": { value: "#1FE65C" },
+      "9": { value: "#0FCC4A" },
+      "10": { value: "#0AB33F" },
+      "11": { value: "#089933" },
+      "12": { value: "#068028" },
+    },
+    dark: {
+      "1": { value: "#C8FFD8" },
+      "2": { value: "#B3FFCC" },
+      "3": { value: "#9EFFBF" },
+      "4": { value: "#89FFB3" },
+      "5": { value: "#7CFFB5" },
+      "6": { value: "#5FFF99" },
+      "7": { value: "#30FF6E" },
+      "8": { value: "#1FE65C" },
+      "9": { value: "#0FCC4A" },
+      "10": { value: "#0AB33F" },
+      "11": { value: "#089933" },
+      "12": { value: "#068028" },
+    },
+  }),
+  semanticTokens: defineSemanticTokens.colors({
+    "1": { value: { _light: "{colors.republicGreen.light.1}", _dark: "{colors.republicGreen.dark.1}" } },
+    "2": { value: { _light: "{colors.republicGreen.light.2}", _dark: "{colors.republicGreen.dark.2}" } },
+    "3": { value: { _light: "{colors.republicGreen.light.3}", _dark: "{colors.republicGreen.dark.3}" } },
+    "4": { value: { _light: "{colors.republicGreen.light.4}", _dark: "{colors.republicGreen.dark.4}" } },
+    "5": { value: { _light: "{colors.republicGreen.light.5}", _dark: "{colors.republicGreen.dark.5}" } },
+    "6": { value: { _light: "{colors.republicGreen.light.6}", _dark: "{colors.republicGreen.dark.6}" } },
+    "7": { value: { _light: "{colors.republicGreen.light.7}", _dark: "{colors.republicGreen.dark.7}" } },
+    "8": { value: { _light: "{colors.republicGreen.light.8}", _dark: "{colors.republicGreen.dark.8}" } },
+    "9": { value: { _light: "{colors.republicGreen.light.9}", _dark: "{colors.republicGreen.dark.9}" } },
+    "10": { value: { _light: "{colors.republicGreen.light.10}", _dark: "{colors.republicGreen.dark.10}" } },
+    "11": { value: { _light: "{colors.republicGreen.light.11}", _dark: "{colors.republicGreen.dark.11}" } },
+    "12": { value: { _light: "{colors.republicGreen.light.12}", _dark: "{colors.republicGreen.dark.12}" } },
+    default: { value: { _light: "{colors.republicGreen.light.7}", _dark: "{colors.republicGreen.dark.7}" } },
+    emphasized: { value: { _light: "{colors.republicGreen.light.8}", _dark: "{colors.republicGreen.dark.8}" } },
+    fg: { value: { _light: "#050607", _dark: "#050607" } },
+    text: { value: { _light: "{colors.republicGreen.light.7}", _dark: "{colors.republicGreen.dark.7}" } },
+  }),
+}
+
+const republicDark = {
+  name: 'republicDark',
+  tokens: defineTokens.colors({
+    light: {
+      "1": { value: "#050607" },
+      "2": { value: "#0A0C0C" },
+      "3": { value: "#0D0F0F" },
+      "4": { value: "#0D1A0F" },
+      "5": { value: "#121212" },
+      "6": { value: "#1A1B1F" },
+      "7": { value: "#26272B" },
+      "8": { value: "#323338" },
+      "9": { value: "#3E3F45" },
+      "10": { value: "#4A4B52" },
+      "11": { value: "#626C71" },
+      "12": { value: "#DDF4FF" },
+      a1: { value: "rgba(5, 6, 7, 0.05)" },
+      a2: { value: "rgba(5, 6, 7, 0.1)" },
+      a3: { value: "rgba(5, 6, 7, 0.15)" },
+      a4: { value: "rgba(5, 6, 7, 0.2)" },
+      a5: { value: "rgba(5, 6, 7, 0.3)" },
+      a6: { value: "rgba(5, 6, 7, 0.4)" },
+      a7: { value: "rgba(5, 6, 7, 0.5)" },
+      a8: { value: "rgba(5, 6, 7, 0.6)" },
+      a9: { value: "rgba(5, 6, 7, 0.7)" },
+      a10: { value: "rgba(5, 6, 7, 0.8)" },
+      a11: { value: "rgba(5, 6, 7, 0.9)" },
+      a12: { value: "rgba(5, 6, 7, 0.95)" },
+    },
+    dark: {
+      "1": { value: "#050607" },
+      "2": { value: "#0A0C0C" },
+      "3": { value: "#0D0F0F" },
+      "4": { value: "#0D1A0F" },
+      "5": { value: "#121212" },
+      "6": { value: "#1A1B1F" },
+      "7": { value: "#26272B" },
+      "8": { value: "#323338" },
+      "9": { value: "#3E3F45" },
+      "10": { value: "#4A4B52" },
+      "11": { value: "#626C71" },
+      "12": { value: "#DDF4FF" },
+      a1: { value: "rgba(5, 6, 7, 0.05)" },
+      a2: { value: "rgba(5, 6, 7, 0.1)" },
+      a3: { value: "rgba(5, 6, 7, 0.15)" },
+      a4: { value: "rgba(5, 6, 7, 0.2)" },
+      a5: { value: "rgba(5, 6, 7, 0.3)" },
+      a6: { value: "rgba(5, 6, 7, 0.4)" },
+      a7: { value: "rgba(5, 6, 7, 0.5)" },
+      a8: { value: "rgba(5, 6, 7, 0.6)" },
+      a9: { value: "rgba(5, 6, 7, 0.7)" },
+      a10: { value: "rgba(5, 6, 7, 0.8)" },
+      a11: { value: "rgba(5, 6, 7, 0.9)" },
+      a12: { value: "rgba(5, 6, 7, 0.95)" },
+    },
+  }),
+  semanticTokens: defineSemanticTokens.colors({
+    "1": { value: { _light: "{colors.republicDark.light.1}", _dark: "{colors.republicDark.dark.1}" } },
+    "2": { value: { _light: "{colors.republicDark.light.2}", _dark: "{colors.republicDark.dark.2}" } },
+    "3": { value: { _light: "{colors.republicDark.light.3}", _dark: "{colors.republicDark.dark.3}" } },
+    "4": { value: { _light: "{colors.republicDark.light.4}", _dark: "{colors.republicDark.dark.4}" } },
+    "5": { value: { _light: "{colors.republicDark.light.5}", _dark: "{colors.republicDark.dark.5}" } },
+    "6": { value: { _light: "{colors.republicDark.light.6}", _dark: "{colors.republicDark.dark.6}" } },
+    "7": { value: { _light: "{colors.republicDark.light.7}", _dark: "{colors.republicDark.dark.7}" } },
+    "8": { value: { _light: "{colors.republicDark.light.8}", _dark: "{colors.republicDark.dark.8}" } },
+    "9": { value: { _light: "{colors.republicDark.light.9}", _dark: "{colors.republicDark.dark.9}" } },
+    "10": { value: { _light: "{colors.republicDark.light.10}", _dark: "{colors.republicDark.dark.10}" } },
+    "11": { value: { _light: "{colors.republicDark.light.11}", _dark: "{colors.republicDark.dark.11}" } },
+    "12": { value: { _light: "{colors.republicDark.light.12}", _dark: "{colors.republicDark.dark.12}" } },
+    a1: { value: { _light: "{colors.republicDark.light.a1}", _dark: "{colors.republicDark.dark.a1}" } },
+    a2: { value: { _light: "{colors.republicDark.light.a2}", _dark: "{colors.republicDark.dark.a2}" } },
+    a3: { value: { _light: "{colors.republicDark.light.a3}", _dark: "{colors.republicDark.dark.a3}" } },
+    a4: { value: { _light: "{colors.republicDark.light.a4}", _dark: "{colors.republicDark.dark.a4}" } },
+    a5: { value: { _light: "{colors.republicDark.light.a5}", _dark: "{colors.republicDark.dark.a5}" } },
+    a6: { value: { _light: "{colors.republicDark.light.a6}", _dark: "{colors.republicDark.dark.a6}" } },
+    a7: { value: { _light: "{colors.republicDark.light.a7}", _dark: "{colors.republicDark.dark.a7}" } },
+    a8: { value: { _light: "{colors.republicDark.light.a8}", _dark: "{colors.republicDark.dark.a8}" } },
+    a9: { value: { _light: "{colors.republicDark.light.a9}", _dark: "{colors.republicDark.dark.a9}" } },
+    a10: { value: { _light: "{colors.republicDark.light.a10}", _dark: "{colors.republicDark.dark.a10}" } },
+    a11: { value: { _light: "{colors.republicDark.light.a11}", _dark: "{colors.republicDark.dark.a11}" } },
+    a12: { value: { _light: "{colors.republicDark.light.a12}", _dark: "{colors.republicDark.dark.a12}" } },
+    default: { value: { _light: "{colors.republicDark.light.1}", _dark: "{colors.republicDark.dark.1}" } },
+    emphasized: { value: { _light: "{colors.republicDark.light.12}", _dark: "{colors.republicDark.dark.12}" } },
+    fg: { value: { _light: "white", _dark: "white" } },
+    text: { value: { _light: "{colors.republicDark.light.12}", _dark: "{colors.republicDark.dark.12}" } },
+  }),
+}
 
 export default defineConfig({
   preflight: true,
@@ -19,8 +157,8 @@ export default defineConfig({
 
   presets: [
     createPreset({
-      accentColor: cyan,
-      grayColor: slate,
+      accentColor: republicGreen,
+      grayColor: republicDark,
       radius: 'md',
     }),
   ],
@@ -39,21 +177,74 @@ export default defineConfig({
 
   theme: {
     extend: {
+      tokens: {
+        colors: {
+          republic: {
+            green: {
+              primary: { value: "#30FF6E" },
+              light: { value: "#7CFFB5" },
+              pale: { value: "#C8FFD8" },
+              darkBgTint: { value: "#0D1A0F" },
+            },
+            bg: {
+              page: { value: "#050607" },
+              card: { value: "#0D0F0F" },
+              cardGradientEnd: { value: "#0A0C0C" },
+              elevated: { value: "#1A1B1F" },
+              drawer: { value: "#121212" },
+            },
+            text: {
+              primary: { value: "#FFFFFF" },
+              muted: { value: "rgba(221, 244, 255, 0.75)" },
+              subtle: { value: "rgba(221, 244, 255, 0.5)" },
+              placeholder: { value: "#626C71" },
+            },
+            border: {
+              default: { value: "rgba(94, 94, 94, 0.25)" },
+              accent: { value: "rgba(48, 255, 110, 0.25)" },
+              divider: { value: "rgba(84, 97, 99, 0.25)" },
+            },
+          },
+        },
+      },
       semanticTokens: {
         colors: {
+          accent: {
+            default: { value: { base: "#30FF6E", _dark: "#30FF6E" } },
+            emphasized: { value: { base: "#1FE65C", _dark: "#1FE65C" } },
+            fg: { value: { base: "#050607", _dark: "#050607" } },
+            text: { value: { base: "#30FF6E", _dark: "#30FF6E" } },
+          },
+          bg: {
+            default: { value: { base: "#050607", _dark: "#050607" } },
+            subtle: { value: { base: "#0A0C0C", _dark: "#0A0C0C" } },
+            muted: { value: { base: "#0D0F0F", _dark: "#0D0F0F" } },
+            emphasized: { value: { base: "#1A1B1F", _dark: "#1A1B1F" } },
+            accent: { value: { base: "#0D1A0F", _dark: "#0D1A0F" } },
+            canvas: { value: { base: "#050607", _dark: "#050607" } },
+          },
+          fg: {
+            default: { value: { base: "#FFFFFF", _dark: "#FFFFFF" } },
+            muted: { value: { base: "rgba(221, 244, 255, 0.75)", _dark: "rgba(221, 244, 255, 0.75)" } },
+            subtle: { value: { base: "rgba(221, 244, 255, 0.5)", _dark: "rgba(221, 244, 255, 0.5)" } },
+            accent: { value: { base: "#30FF6E", _dark: "#30FF6E" } },
+          },
+          border: {
+            default: { value: { base: "rgba(94, 94, 94, 0.25)", _dark: "rgba(94, 94, 94, 0.25)" } },
+            muted: { value: { base: "rgba(84, 97, 99, 0.25)", _dark: "rgba(84, 97, 99, 0.25)" } },
+            subtle: { value: { base: "rgba(84, 97, 99, 0.25)", _dark: "rgba(84, 97, 99, 0.25)" } },
+            accent: { value: { base: "rgba(48, 255, 110, 0.25)", _dark: "rgba(48, 255, 110, 0.25)" } },
+          },
           chart: {
-            transactions: {
-              value: { base: '#00d2ff', _dark: '#00d2ff' },
-            },
-            gas: {
-              value: { base: '#10b981', _dark: '#34d399' },
-            },
-            grid: {
-              value: { base: '#e5e7eb', _dark: '#30363d' },
-            },
-            axis: {
-              value: { base: '#9ca3af', _dark: '#8b949e' },
-            },
+            transactions: { value: { base: "#30FF6E", _dark: "#30FF6E" } },
+            gas: { value: { base: "#7CFFB5", _dark: "#7CFFB5" } },
+            grid: { value: { base: "rgba(94, 94, 94, 0.25)", _dark: "rgba(94, 94, 94, 0.25)" } },
+            axis: { value: { base: "rgba(221, 244, 255, 0.5)", _dark: "rgba(221, 244, 255, 0.5)" } },
+          },
+          glow: {
+            subtle: { value: { base: "0px 0px 15px rgba(48, 255, 110, 0.08)", _dark: "0px 0px 15px rgba(48, 255, 110, 0.08)" } },
+            medium: { value: { base: "0px 0px 20px rgba(48, 255, 110, 0.2)", _dark: "0px 0px 20px rgba(48, 255, 110, 0.2)" } },
+            strong: { value: { base: "0px 0px 20px rgba(48, 255, 110, 0.4)", _dark: "0px 0px 20px rgba(48, 255, 110, 0.4)" } },
           },
         },
       },

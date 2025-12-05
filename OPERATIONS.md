@@ -119,9 +119,27 @@ BATCH_SIZE=100                 # Transactions per batch (default: 100)
 
 #### Frontend Configuration
 
+Frontend configuration is provided at runtime via `config.json`:
+
+```json
+{
+  "apiUrl": "https://yaci-explorer-apis.fly.dev",
+  "chainRestEndpoint": "https://rest.example.com",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "My Explorer"
+}
+```
+
+Deploy config.json to container:
 ```bash
-VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev
-VITE_CHAIN_REST_ENDPOINT=https://rest.example.com  # For IBC denom resolution
+# Mount as volume in fly.toml
+[mounts]
+  source = "config"
+  destination = "/usr/share/nginx/html/config.json"
+
+# Or copy after deployment
+fly ssh console -C "cat > /usr/share/nginx/html/config.json" < config.json
 ```
 
 ### Database Schema Architecture
@@ -277,14 +295,25 @@ fly logs -a yaci-indexer
 ```bash
 cd ~/repos/yaci-explorer
 
-# Ensure .env or build-time vars are set
-echo "VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev" > .env.production
-
 # Create app (if not exists)
 fly apps create yaci-explorer --org personal
 
 # Deploy
 fly deploy -a yaci-explorer
+
+# Configure via config.json
+cat > config.json << EOF
+{
+  "apiUrl": "https://yaci-explorer-apis.fly.dev",
+  "chainRestEndpoint": "https://api.yourchain.io",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "My Explorer"
+}
+EOF
+
+# Copy config to deployed container
+fly ssh console -C "cat > /usr/share/nginx/html/config.json" < config.json
 
 # Verify
 curl https://yaci-explorer.fly.dev
@@ -840,8 +869,17 @@ npx tsx scripts/decode-evm-daemon.ts &
 
 # Run frontend locally
 cd yaci-explorer
-echo "VITE_POSTGREST_URL=http://localhost:3000" > .env.local
-yarn dev
+# Create local config.json
+cat > public/config.json << EOF
+{
+  "apiUrl": "http://localhost:3000",
+  "chainRestEndpoint": "http://localhost:1317",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "Local Explorer"
+}
+EOF
+bun dev
 ```
 
 ### Testing Changes
@@ -866,13 +904,19 @@ npx tsx scripts/decode-evm-daemon.ts
 cd yaci-explorer
 
 # Type check
-yarn typecheck
+bun run typecheck
 
 # Build test
-yarn build
+bun run build
 
-# Run tests (if implemented)
-yarn test
+# Test with local config.json
+cat > public/config.json << EOF
+{
+  "apiUrl": "http://localhost:3000",
+  "chainRestEndpoint": "http://localhost:1317"
+}
+EOF
+bun dev
 ```
 
 ### Creating New Migrations
@@ -1111,18 +1155,20 @@ fly config show -a yaci-explorer-apis
 **Development:**
 - Local PostgreSQL
 - Local PostgREST
-- Vite dev server with hot reload
-- Mock data for testing
+- Bun dev server with hot reload
+- config.json for local testing
 
 **Staging:**
 - Fly.io staging apps (yaci-explorer-staging)
 - Separate database (yaci-pg-staging)
 - Connected to testnet
+- Staging-specific config.json
 
 **Production:**
 - Fly.io production apps
 - Production database with backups
 - Connected to mainnet
 - Auto-scaling enabled
+- Production config.json
 
 This guide provides comprehensive coverage for operating the YACI Explorer stack. For component-specific details, refer to individual repository documentation. For issues not covered here, check GitHub issues or contact the development team.

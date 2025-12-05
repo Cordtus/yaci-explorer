@@ -6,11 +6,6 @@
 app = 'yaci-explorer'
 primary_region = 'sjc'
 
-[build]
-  [build.args]
-    VITE_POSTGREST_URL = "https://yaci-explorer-apis.fly.dev"
-    VITE_CHAIN_REST_ENDPOINT = "https://api.republicai.io"
-
 [http_service]
   internal_port = 80
   force_https = true

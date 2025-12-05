@@ -197,8 +197,8 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
     const inputs = metadata.inputs || []
     const outputs = metadata.outputs || []
 
-    // Calculate total amounts
-    const totalInputAmount = inputs.reduce((sum, input) => {
+    // Calculate total amounts (for future use if needed)
+    const _totalInputAmount = inputs.reduce((sum, input) => {
       return sum + input.coins.reduce((coinSum, coin) => coinSum + BigInt(coin.amount), BigInt(0))
     }, BigInt(0))
 
@@ -522,7 +522,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
   // IBC Transfer
   if (type === '/ibc.applications.transfer.v1.MsgTransfer') {
     // Try to get actual sent amount from send_packet or transfer event
-    const sendPacketAmount = getEventAttribute(events || [], 'send_packet', 'packet_data_hex')
+    const _sendPacketAmount = getEventAttribute(events || [], 'send_packet', 'packet_data_hex')
     const transferAmountStr = getEventAttribute(events || [], 'transfer', 'amount')
     const transferAmounts = transferAmountStr ? parseMultiDenomAmount(transferAmountStr) : []
 
@@ -570,7 +570,7 @@ export function MessageDetails({ type, metadata, events }: MessageDetailsProps) 
       try {
         const decoded = atob(metadata.msg)
         decodedMsg = JSON.parse(decoded)
-      } catch (e) {
+      } catch {
         // Ignore decode errors
       }
     }

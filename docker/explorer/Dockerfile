@@ -12,9 +12,8 @@ RUN corepack enable && corepack prepare yarn@1.22.22 --activate && yarn install 
 # Copy source code
 COPY . .
 
-# Build the application with /api as the PostgREST URL
-# This ensures the built JS uses relative URLs that work with the nginx proxy
-ENV VITE_POSTGREST_URL=/api
+# Build the application
+# Configuration is provided at runtime via config.json
 RUN yarn build
 
 # Production stage

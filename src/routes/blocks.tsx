@@ -263,8 +263,9 @@ const styles = {
     alignItems: 'center',
     gap: '2',
     fontWeight: 'medium',
+    color: 'fg.default',
     _hover: {
-      color: 'colorPalette',
+      color: 'accent.default',
     },
   },
   blockIcon: {
@@ -273,9 +274,12 @@ const styles = {
   },
   hashCode: {
     fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'fg.muted',
   },
   timeAgo: {
     fontSize: 'sm',
+    color: 'fg.default',
   },
   timestamp: {
     fontSize: 'xs',

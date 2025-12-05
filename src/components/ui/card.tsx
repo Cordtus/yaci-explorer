@@ -4,22 +4,42 @@ import { card } from '@/styled-system/recipes'
 
 const slots = card()
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  withGlow?: boolean
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, withGlow = false, ...props }, ref) => (
     <div
       ref={ref}
       className={cx(
         slots.root,
         css({
-          boxShadow: 'sm',
+          background: 'gradients.card',
           borderWidth: '1px',
           borderColor: 'border.default',
-          bg: 'bg.default',
+          position: 'relative',
+          overflow: 'hidden',
         }),
         className
       )}
       {...props}
-    />
+    >
+      {withGlow && (
+        <div
+          className={css({
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            height: '1px',
+            background: 'gradients.glowLine',
+            opacity: '0.5',
+          })}
+        />
+      )}
+      {props.children}
+    </div>
   )
 )
 Card.displayName = 'Card'

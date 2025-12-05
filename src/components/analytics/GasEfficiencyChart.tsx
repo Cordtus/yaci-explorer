@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { css } from '@/styled-system/css'
+import { token } from '@/styled-system/tokens'
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
@@ -36,6 +37,9 @@ export function GasEfficiencyChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
+      backgroundColor: token('colors.bg.muted'),
+      borderColor: token('colors.border.accent'),
+      textStyle: { color: token('colors.fg.default') },
       axisPointer: {
         type: 'shadow',
       },
@@ -61,22 +65,29 @@ export function GasEfficiencyChart() {
       data: distribution.map((d) => d.gas_range),
       axisLabel: {
         rotate: 45,
+        color: '#707B92'
       },
       name: 'Gas Used Range',
       nameLocation: 'middle',
       nameGap: 60,
+      nameTextStyle: { color: '#707B92' },
+      axisLine: { lineStyle: { color: token('colors.border.default') } }
     },
     yAxis: {
       type: 'value',
       name: 'Number of Transactions',
       nameLocation: 'middle',
       nameGap: 50,
+      nameTextStyle: { color: '#707B92' },
       axisLabel: {
+        color: '#707B92',
         formatter: (value: number) => {
           if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
           return value.toString()
         },
       },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: token('colors.border.default'), type: 'dashed' } }
     },
     series: [
       {
@@ -91,14 +102,14 @@ export function GasEfficiencyChart() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#3b82f6' },
-              { offset: 1, color: '#1d4ed8' },
+              { offset: 0, color: token('colors.republicGreen.7') },
+              { offset: 1, color: token('colors.republicGreen.1') },
             ],
           },
         },
         emphasis: {
           itemStyle: {
-            color: '#2563eb',
+            color: token('colors.republicGreen.5'),
           },
         },
       },
