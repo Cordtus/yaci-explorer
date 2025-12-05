@@ -110,6 +110,13 @@ export default function TransactionDetailPage() {
     refetchInterval: isDecodingEVM ? 2000 : false,
   })
 
+  const { data: chainStats } = useQuery({
+    queryKey: ['chainStats'],
+    queryFn: () => api.getChainStats(),
+    enabled: mounted,
+    staleTime: 10000,
+  })
+
   useEffect(() => {
     if (!transaction || decodeAttempted) return
 
@@ -278,7 +285,12 @@ export default function TransactionDetailPage() {
       {/* EVM Details View - Full width, shows only EVM details */}
       {evmView && transaction.evm_data ? (
         <div className={css({ display: 'flex', flexDir: 'column', gap: '6' })}>
-          <EVMTransactionCard evmData={transaction.evm_data} />
+          <EVMTransactionCard
+            evmData={transaction.evm_data}
+            blockHeight={transaction.height}
+            timestamp={transaction.timestamp}
+            latestBlockHeight={chainStats?.latest_block}
+          />
           {transaction.evm_logs && transaction.evm_logs.length > 0 && (
             <EVMLogsCard logs={transaction.evm_logs} />
           )}
@@ -640,7 +652,12 @@ export default function TransactionDetailPage() {
 
           {/* EVM Data in sidebar when in Cosmos view */}
           {!evmView && transaction.evm_data && (
-            <EVMTransactionCard evmData={transaction.evm_data} />
+            <EVMTransactionCard
+              evmData={transaction.evm_data}
+              blockHeight={transaction.height}
+              timestamp={transaction.timestamp}
+              latestBlockHeight={chainStats?.latest_block}
+            />
           )}
         </div>
       </div>

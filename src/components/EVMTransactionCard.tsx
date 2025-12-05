@@ -7,12 +7,16 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import type { EvmData } from '@/lib/api'
 import { css } from '@/styled-system/css'
+import { formatTimeAgo } from '@/lib/utils'
 
 interface EVMTransactionCardProps {
   evmData: EvmData
+  blockHeight?: number
+  timestamp?: string
+  latestBlockHeight?: number
 }
 
-// Format wei to ether with appropriate decimals
+// Format wei to native token with appropriate decimals
 function formatWei(wei: string, decimals = 18): string {
   if (!wei || wei === '0') return '0'
   const value = BigInt(wei)
@@ -98,7 +102,7 @@ function getTransactionAction(evmData: EvmData): { label: string; description: s
   }
 }
 
-export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
+export function EVMTransactionCard({ evmData, blockHeight, timestamp, latestBlockHeight }: EVMTransactionCardProps) {
   const [copied, setCopied] = useState<string | null>(null)
   const [inputExpanded, setInputExpanded] = useState(false)
 
@@ -149,6 +153,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
   }
 
   const action = getTransactionAction(evmData)
+  const confirmations = blockHeight && latestBlockHeight ? Math.max(0, latestBlockHeight - blockHeight + 1) : null
 
   return (
     <Card>
@@ -186,6 +191,36 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
             <CopyButton text={evmData.hash} field="hash" />
           </div>
         </div>
+
+        {/* Block */}
+        {blockHeight && (
+          <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+            <span className={css({ color: 'fg.muted' })}>Block:</span>
+            <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+              <Link to={`/blocks/${blockHeight}`} className={css({ fontSize: 'xs', fontFamily: 'mono', color: 'accent.default', _hover: { textDecoration: 'underline' } })}>
+                #{formatNumber(blockHeight)}
+              </Link>
+              {confirmations !== null && (
+                <Badge variant="outline" className={css({ fontSize: 'xs' })}>
+                  {formatNumber(confirmations)} {confirmations === 1 ? 'confirmation' : 'confirmations'}
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Timestamp */}
+        {timestamp && (
+          <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+            <span className={css({ color: 'fg.muted' })}>Timestamp:</span>
+            <div className={css({ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1' })}>
+              <span className={css({ fontSize: 'xs' })}>{formatTimeAgo(timestamp)}</span>
+              <span className={css({ fontSize: 'xs', color: 'fg.muted' })}>
+                ({new Date(timestamp).toLocaleString()})
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Transaction Type */}
         <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
@@ -271,22 +306,25 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
           </span>
         </div>
 
-        {/* EIP-1559 fields */}
-        {evmData.type === 2 && (
-          <>
-            {evmData.maxFeePerGas && (
-              <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
-                <span className={css({ color: 'fg.muted' })}>Max Fee:</span>
-                <span>{formatGwei(evmData.maxFeePerGas)} Gwei</span>
-              </div>
-            )}
-            {evmData.maxPriorityFeePerGas && (
-              <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
-                <span className={css({ color: 'fg.muted' })}>Max Priority:</span>
-                <span>{formatGwei(evmData.maxPriorityFeePerGas)} Gwei</span>
-              </div>
-            )}
-          </>
+        {/* EIP-1559 Gas Fees */}
+        {evmData.type === 2 && (evmData.maxFeePerGas || evmData.maxPriorityFeePerGas) && (
+          <div className={css({ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '2', fontSize: 'sm' })}>
+            <span className={css({ color: 'fg.muted' })}>Gas Fees:</span>
+            <div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
+              {evmData.maxFeePerGas && (
+                <div className={css({ display: 'flex', gap: '1', alignItems: 'center' })}>
+                  <span className={css({ fontSize: 'xs', color: 'fg.muted', w: '16' })}>Max:</span>
+                  <span className={css({ fontSize: 'xs' })}>{formatGwei(evmData.maxFeePerGas)} Gwei</span>
+                </div>
+              )}
+              {evmData.maxPriorityFeePerGas && (
+                <div className={css({ display: 'flex', gap: '1', alignItems: 'center' })}>
+                  <span className={css({ fontSize: 'xs', color: 'fg.muted', w: '16' })}>Priority:</span>
+                  <span className={css({ fontSize: 'xs' })}>{formatGwei(evmData.maxPriorityFeePerGas)} Gwei</span>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Nonce */}
