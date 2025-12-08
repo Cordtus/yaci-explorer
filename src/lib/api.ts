@@ -583,7 +583,7 @@ import { getConfig } from './env'
 const baseUrl = getConfig().apiUrl
 export const api = new YaciClient({ baseUrl })
 
-// Chain REST API types
+// Chain query types
 export interface TokenBalance {
 	denom: string
 	amount: string
@@ -591,24 +591,16 @@ export interface TokenBalance {
 
 export interface BalancesResponse {
 	balances: TokenBalance[]
-	pagination: {
-		next_key: string | null
-		total: string
-	}
 }
 
-// Chain REST API client for direct chain queries (balances, supply, etc.)
+// Chain query client for direct chain queries (balances, supply, etc.)
+// Uses the middleware's /chain/* endpoints which proxy to chain gRPC
 export async function getAccountBalances(address: string): Promise<TokenBalance[]> {
 	const config = getConfig()
-	const restEndpoint = config.chainRestEndpoint
-	if (!restEndpoint) {
-		return []
-	}
+	const apiUrl = config.apiUrl
 
 	try {
-		const response = await fetch(
-			`${restEndpoint}/cosmos/bank/v1beta1/balances/${address}`
-		)
+		const response = await fetch(`${apiUrl}/chain/balances/${address}`)
 		if (!response.ok) {
 			console.warn(`Failed to fetch balances: ${response.status}`)
 			return []
