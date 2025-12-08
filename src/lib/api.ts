@@ -252,7 +252,7 @@ export class YaciClient {
 	// Transaction endpoints
 
 	async getTransaction(hash: string): Promise<TransactionDetail> {
-		return this.rpc('get_transaction_detail', { _hash: hash })
+		return this.rpc('get_transaction_detail', { _hash: hash.toLowerCase() })
 	}
 
 	async getTransactions(
