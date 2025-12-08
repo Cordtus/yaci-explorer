@@ -77,7 +77,8 @@ function verifyBech32Checksum(hrp: string, data: number[]): boolean {
 export function isValidBech32Address(address: string): boolean {
   const lower = address.toLowerCase()
   // Basic format check: lowercase, has separator, correct charset
-  if (!/^[a-z]+1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,}$/.test(lower)) {
+  // Bech32 data: 32 data chars + 6 checksum = 38 min for 20-byte addresses
+  if (!/^[a-z]+1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,}$/.test(lower)) {
     return false
   }
 

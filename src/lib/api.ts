@@ -252,7 +252,7 @@ export class YaciClient {
 	// Transaction endpoints
 
 	async getTransaction(hash: string): Promise<TransactionDetail> {
-		return this.rpc('get_transaction_detail', { _hash: hash })
+		return this.rpc('get_transaction_detail', { _hash: hash.toLowerCase() })
 	}
 
 	async getTransactions(
@@ -582,3 +582,33 @@ import { getConfig } from './env'
 // Singleton instance
 const baseUrl = getConfig().apiUrl
 export const api = new YaciClient({ baseUrl })
+
+// Chain query types
+export interface TokenBalance {
+	denom: string
+	amount: string
+}
+
+export interface BalancesResponse {
+	balances: TokenBalance[]
+}
+
+// Chain query client for direct chain queries (balances, supply, etc.)
+// Uses the middleware's /chain/* endpoints which proxy to chain gRPC
+export async function getAccountBalances(address: string): Promise<TokenBalance[]> {
+	const config = getConfig()
+	const apiUrl = config.apiUrl
+
+	try {
+		const response = await fetch(`${apiUrl}/chain/balances/${address}`)
+		if (!response.ok) {
+			console.warn(`Failed to fetch balances: ${response.status}`)
+			return []
+		}
+		const data: BalancesResponse = await response.json()
+		return data.balances || []
+	} catch (error) {
+		console.warn('Failed to fetch account balances:', error)
+		return []
+	}
+}
