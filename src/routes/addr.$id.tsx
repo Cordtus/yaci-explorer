@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle, Coins } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { api, type EnhancedTransaction } from '@/lib/api'
+import { api, getAccountBalances, type EnhancedTransaction, type TokenBalance } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
+import { formatDenomAmount, getDenomMetadata } from '@/lib/denom'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -76,6 +77,17 @@ export default function AddressDetailPage() {
       return await api.getTransactionsByAddress(bech32Addr, pageSize, page * pageSize)
     },
     enabled: mounted && !!bech32Addr,
+  })
+
+  // Fetch account balances from chain REST API
+  const { data: balances, isLoading: balancesLoading } = useQuery({
+    queryKey: ['account-balances', bech32Addr],
+    queryFn: async () => {
+      if (!bech32Addr) return []
+      return await getAccountBalances(bech32Addr)
+    },
+    enabled: mounted && !!bech32Addr,
+    staleTime: 30000, // 30 seconds
   })
 
   /**
@@ -275,6 +287,44 @@ export default function AddressDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Token Balances */}
+      {(balancesLoading || (balances && balances.length > 0)) && (
+        <Card>
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle>Token Balances</CardTitle>
+            <Coins className={styles.statCardIcon} />
+          </CardHeader>
+          <CardContent>
+            {balancesLoading ? (
+              <div className={styles.skeletonList}>
+                <Skeleton className={styles.skeletonRow} />
+                <Skeleton className={styles.skeletonRow} />
+              </div>
+            ) : balances && balances.length > 0 ? (
+              <div className={styles.balanceGrid}>
+                {balances.map((balance: TokenBalance) => {
+                  const metadata = getDenomMetadata(balance.denom)
+                  const formattedAmount = formatDenomAmount(balance.amount, balance.denom, { maxDecimals: 6 })
+                  return (
+                    <div key={balance.denom} className={styles.balanceItem}>
+                      <div className={styles.balanceAmount}>{formattedAmount}</div>
+                      <div className={styles.balanceSymbol}>{metadata.symbol}</div>
+                      {metadata.isIBC && (
+                        <Badge variant="outline" className={styles.ibcBadge}>IBC</Badge>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyStateText}>No token balances</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transactions Table */}
       <Card>
@@ -664,5 +714,40 @@ const styles = {
   }),
   emptyStateText: css({
     color: 'fg.muted',
+  }),
+  balanceGrid: css({
+    display: 'grid',
+    gap: '0.75rem',
+    gridTemplateColumns: {
+      base: '1fr',
+      sm: 'repeat(2, 1fr)',
+      lg: 'repeat(3, 1fr)',
+    },
+  }),
+  balanceItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem',
+    borderRadius: 'md',
+    border: '1px solid',
+    borderColor: 'border.default',
+    backgroundColor: 'bg.subtle',
+  }),
+  balanceAmount: css({
+    fontSize: 'lg',
+    fontWeight: 'bold',
+    fontFamily: 'mono',
+    color: 'fg.accent',
+  }),
+  balanceSymbol: css({
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'fg.default',
+  }),
+  ibcBadge: css({
+    fontSize: '10px',
+    padding: '0 0.25rem',
+    marginLeft: 'auto',
   }),
 }

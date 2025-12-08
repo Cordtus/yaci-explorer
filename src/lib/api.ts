@@ -582,3 +582,41 @@ import { getConfig } from './env'
 // Singleton instance
 const baseUrl = getConfig().apiUrl
 export const api = new YaciClient({ baseUrl })
+
+// Chain REST API types
+export interface TokenBalance {
+	denom: string
+	amount: string
+}
+
+export interface BalancesResponse {
+	balances: TokenBalance[]
+	pagination: {
+		next_key: string | null
+		total: string
+	}
+}
+
+// Chain REST API client for direct chain queries (balances, supply, etc.)
+export async function getAccountBalances(address: string): Promise<TokenBalance[]> {
+	const config = getConfig()
+	const restEndpoint = config.chainRestEndpoint
+	if (!restEndpoint) {
+		return []
+	}
+
+	try {
+		const response = await fetch(
+			`${restEndpoint}/cosmos/bank/v1beta1/balances/${address}`
+		)
+		if (!response.ok) {
+			console.warn(`Failed to fetch balances: ${response.status}`)
+			return []
+		}
+		const data: BalancesResponse = await response.json()
+		return data.balances || []
+	} catch (error) {
+		console.warn('Failed to fetch account balances:', error)
+		return []
+	}
+}
