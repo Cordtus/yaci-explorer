@@ -175,9 +175,72 @@ export default defineConfig({
   },
 ],
 
+  patterns: {
+    extend: {
+      // Stat row - compact label/value display
+      statRow: {
+        description: 'A compact stat display with label and value',
+        transform() {
+          return {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            py: '2',
+            px: '3',
+            borderRadius: 'md',
+            border: '1px solid',
+            borderColor: 'border.default',
+            bg: 'bg.subtle',
+          }
+        },
+      },
+      // List item with hover effect
+      listItem: {
+        description: 'A list item with hover accent border',
+        transform() {
+          return {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            py: '3',
+            borderBottomWidth: '1px',
+            borderColor: 'border.default',
+            transition: 'all 0.2s',
+            _hover: {
+              borderLeftWidth: '2px',
+              borderLeftColor: 'accent.default',
+              pl: '2',
+              bg: 'bg.accentSubtle',
+            },
+            _last: { borderBottomWidth: '0' },
+          }
+        },
+      },
+      // Section header - title with optional action
+      sectionHeader: {
+        description: 'A section header with space-between layout',
+        transform() {
+          return {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: '4',
+          }
+        },
+      },
+    },
+  },
+
   theme: {
     extend: {
       tokens: {
+        sizes: {
+          'icon.xs': { value: '0.75rem' },
+          'icon.sm': { value: '1rem' },
+          'icon.md': { value: '1.25rem' },
+          'icon.lg': { value: '1.5rem' },
+          'icon.xl': { value: '2rem' },
+        },
         colors: {
           republic: {
             green: {

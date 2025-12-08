@@ -315,6 +315,194 @@ const tokens = {
     "value": "9999px",
     "variable": "var(--radii-full)"
   },
+  "spacing.0": {
+    "value": "0rem",
+    "variable": "var(--spacing-0)"
+  },
+  "spacing.1": {
+    "value": "0.25rem",
+    "variable": "var(--spacing-1)"
+  },
+  "spacing.2": {
+    "value": "0.5rem",
+    "variable": "var(--spacing-2)"
+  },
+  "spacing.3": {
+    "value": "0.75rem",
+    "variable": "var(--spacing-3)"
+  },
+  "spacing.4": {
+    "value": "1rem",
+    "variable": "var(--spacing-4)"
+  },
+  "spacing.5": {
+    "value": "1.25rem",
+    "variable": "var(--spacing-5)"
+  },
+  "spacing.6": {
+    "value": "1.5rem",
+    "variable": "var(--spacing-6)"
+  },
+  "spacing.7": {
+    "value": "1.75rem",
+    "variable": "var(--spacing-7)"
+  },
+  "spacing.8": {
+    "value": "2rem",
+    "variable": "var(--spacing-8)"
+  },
+  "spacing.9": {
+    "value": "2.25rem",
+    "variable": "var(--spacing-9)"
+  },
+  "spacing.10": {
+    "value": "2.5rem",
+    "variable": "var(--spacing-10)"
+  },
+  "spacing.11": {
+    "value": "2.75rem",
+    "variable": "var(--spacing-11)"
+  },
+  "spacing.12": {
+    "value": "3rem",
+    "variable": "var(--spacing-12)"
+  },
+  "spacing.14": {
+    "value": "3.5rem",
+    "variable": "var(--spacing-14)"
+  },
+  "spacing.16": {
+    "value": "4rem",
+    "variable": "var(--spacing-16)"
+  },
+  "spacing.20": {
+    "value": "5rem",
+    "variable": "var(--spacing-20)"
+  },
+  "spacing.24": {
+    "value": "6rem",
+    "variable": "var(--spacing-24)"
+  },
+  "spacing.28": {
+    "value": "7rem",
+    "variable": "var(--spacing-28)"
+  },
+  "spacing.32": {
+    "value": "8rem",
+    "variable": "var(--spacing-32)"
+  },
+  "spacing.36": {
+    "value": "9rem",
+    "variable": "var(--spacing-36)"
+  },
+  "spacing.40": {
+    "value": "10rem",
+    "variable": "var(--spacing-40)"
+  },
+  "spacing.44": {
+    "value": "11rem",
+    "variable": "var(--spacing-44)"
+  },
+  "spacing.48": {
+    "value": "12rem",
+    "variable": "var(--spacing-48)"
+  },
+  "spacing.52": {
+    "value": "13rem",
+    "variable": "var(--spacing-52)"
+  },
+  "spacing.56": {
+    "value": "14rem",
+    "variable": "var(--spacing-56)"
+  },
+  "spacing.60": {
+    "value": "15rem",
+    "variable": "var(--spacing-60)"
+  },
+  "spacing.64": {
+    "value": "16rem",
+    "variable": "var(--spacing-64)"
+  },
+  "spacing.72": {
+    "value": "18rem",
+    "variable": "var(--spacing-72)"
+  },
+  "spacing.80": {
+    "value": "20rem",
+    "variable": "var(--spacing-80)"
+  },
+  "spacing.96": {
+    "value": "24rem",
+    "variable": "var(--spacing-96)"
+  },
+  "spacing.0.5": {
+    "value": "0.125rem",
+    "variable": "var(--spacing-0\\.5)"
+  },
+  "spacing.1.5": {
+    "value": "0.375rem",
+    "variable": "var(--spacing-1\\.5)"
+  },
+  "spacing.2.5": {
+    "value": "0.625rem",
+    "variable": "var(--spacing-2\\.5)"
+  },
+  "spacing.3.5": {
+    "value": "0.875rem",
+    "variable": "var(--spacing-3\\.5)"
+  },
+  "spacing.4.5": {
+    "value": "1.125rem",
+    "variable": "var(--spacing-4\\.5)"
+  },
+  "zIndex.hide": {
+    "value": -1,
+    "variable": "var(--z-index-hide)"
+  },
+  "zIndex.base": {
+    "value": 0,
+    "variable": "var(--z-index-base)"
+  },
+  "zIndex.docked": {
+    "value": 10,
+    "variable": "var(--z-index-docked)"
+  },
+  "zIndex.dropdown": {
+    "value": 1000,
+    "variable": "var(--z-index-dropdown)"
+  },
+  "zIndex.sticky": {
+    "value": 1100,
+    "variable": "var(--z-index-sticky)"
+  },
+  "zIndex.banner": {
+    "value": 1200,
+    "variable": "var(--z-index-banner)"
+  },
+  "zIndex.overlay": {
+    "value": 1300,
+    "variable": "var(--z-index-overlay)"
+  },
+  "zIndex.modal": {
+    "value": 1400,
+    "variable": "var(--z-index-modal)"
+  },
+  "zIndex.popover": {
+    "value": 1500,
+    "variable": "var(--z-index-popover)"
+  },
+  "zIndex.skipLink": {
+    "value": 1600,
+    "variable": "var(--z-index-skip-link)"
+  },
+  "zIndex.toast": {
+    "value": 1700,
+    "variable": "var(--z-index-toast)"
+  },
+  "zIndex.tooltip": {
+    "value": 1800,
+    "variable": "var(--z-index-tooltip)"
+  },
   "sizes.0": {
     "value": "0rem",
     "variable": "var(--sizes-0)"
@@ -523,6 +711,26 @@ const tokens = {
     "value": "fit-content",
     "variable": "var(--sizes-fit)"
   },
+  "sizes.icon.xs": {
+    "value": "0.75rem",
+    "variable": "var(--sizes-icon\\.xs)"
+  },
+  "sizes.icon.sm": {
+    "value": "1rem",
+    "variable": "var(--sizes-icon\\.sm)"
+  },
+  "sizes.icon.md": {
+    "value": "1.25rem",
+    "variable": "var(--sizes-icon\\.md)"
+  },
+  "sizes.icon.lg": {
+    "value": "1.5rem",
+    "variable": "var(--sizes-icon\\.lg)"
+  },
+  "sizes.icon.xl": {
+    "value": "2rem",
+    "variable": "var(--sizes-icon\\.xl)"
+  },
   "sizes.breakpoint-sm": {
     "value": "640px",
     "variable": "var(--sizes-breakpoint-sm)"
@@ -542,194 +750,6 @@ const tokens = {
   "sizes.breakpoint-2xl": {
     "value": "1536px",
     "variable": "var(--sizes-breakpoint-2xl)"
-  },
-  "spacing.0": {
-    "value": "0rem",
-    "variable": "var(--spacing-0)"
-  },
-  "spacing.1": {
-    "value": "0.25rem",
-    "variable": "var(--spacing-1)"
-  },
-  "spacing.2": {
-    "value": "0.5rem",
-    "variable": "var(--spacing-2)"
-  },
-  "spacing.3": {
-    "value": "0.75rem",
-    "variable": "var(--spacing-3)"
-  },
-  "spacing.4": {
-    "value": "1rem",
-    "variable": "var(--spacing-4)"
-  },
-  "spacing.5": {
-    "value": "1.25rem",
-    "variable": "var(--spacing-5)"
-  },
-  "spacing.6": {
-    "value": "1.5rem",
-    "variable": "var(--spacing-6)"
-  },
-  "spacing.7": {
-    "value": "1.75rem",
-    "variable": "var(--spacing-7)"
-  },
-  "spacing.8": {
-    "value": "2rem",
-    "variable": "var(--spacing-8)"
-  },
-  "spacing.9": {
-    "value": "2.25rem",
-    "variable": "var(--spacing-9)"
-  },
-  "spacing.10": {
-    "value": "2.5rem",
-    "variable": "var(--spacing-10)"
-  },
-  "spacing.11": {
-    "value": "2.75rem",
-    "variable": "var(--spacing-11)"
-  },
-  "spacing.12": {
-    "value": "3rem",
-    "variable": "var(--spacing-12)"
-  },
-  "spacing.14": {
-    "value": "3.5rem",
-    "variable": "var(--spacing-14)"
-  },
-  "spacing.16": {
-    "value": "4rem",
-    "variable": "var(--spacing-16)"
-  },
-  "spacing.20": {
-    "value": "5rem",
-    "variable": "var(--spacing-20)"
-  },
-  "spacing.24": {
-    "value": "6rem",
-    "variable": "var(--spacing-24)"
-  },
-  "spacing.28": {
-    "value": "7rem",
-    "variable": "var(--spacing-28)"
-  },
-  "spacing.32": {
-    "value": "8rem",
-    "variable": "var(--spacing-32)"
-  },
-  "spacing.36": {
-    "value": "9rem",
-    "variable": "var(--spacing-36)"
-  },
-  "spacing.40": {
-    "value": "10rem",
-    "variable": "var(--spacing-40)"
-  },
-  "spacing.44": {
-    "value": "11rem",
-    "variable": "var(--spacing-44)"
-  },
-  "spacing.48": {
-    "value": "12rem",
-    "variable": "var(--spacing-48)"
-  },
-  "spacing.52": {
-    "value": "13rem",
-    "variable": "var(--spacing-52)"
-  },
-  "spacing.56": {
-    "value": "14rem",
-    "variable": "var(--spacing-56)"
-  },
-  "spacing.60": {
-    "value": "15rem",
-    "variable": "var(--spacing-60)"
-  },
-  "spacing.64": {
-    "value": "16rem",
-    "variable": "var(--spacing-64)"
-  },
-  "spacing.72": {
-    "value": "18rem",
-    "variable": "var(--spacing-72)"
-  },
-  "spacing.80": {
-    "value": "20rem",
-    "variable": "var(--spacing-80)"
-  },
-  "spacing.96": {
-    "value": "24rem",
-    "variable": "var(--spacing-96)"
-  },
-  "spacing.0.5": {
-    "value": "0.125rem",
-    "variable": "var(--spacing-0\\.5)"
-  },
-  "spacing.1.5": {
-    "value": "0.375rem",
-    "variable": "var(--spacing-1\\.5)"
-  },
-  "spacing.2.5": {
-    "value": "0.625rem",
-    "variable": "var(--spacing-2\\.5)"
-  },
-  "spacing.3.5": {
-    "value": "0.875rem",
-    "variable": "var(--spacing-3\\.5)"
-  },
-  "spacing.4.5": {
-    "value": "1.125rem",
-    "variable": "var(--spacing-4\\.5)"
-  },
-  "zIndex.hide": {
-    "value": -1,
-    "variable": "var(--z-index-hide)"
-  },
-  "zIndex.base": {
-    "value": 0,
-    "variable": "var(--z-index-base)"
-  },
-  "zIndex.docked": {
-    "value": 10,
-    "variable": "var(--z-index-docked)"
-  },
-  "zIndex.dropdown": {
-    "value": 1000,
-    "variable": "var(--z-index-dropdown)"
-  },
-  "zIndex.sticky": {
-    "value": 1100,
-    "variable": "var(--z-index-sticky)"
-  },
-  "zIndex.banner": {
-    "value": 1200,
-    "variable": "var(--z-index-banner)"
-  },
-  "zIndex.overlay": {
-    "value": 1300,
-    "variable": "var(--z-index-overlay)"
-  },
-  "zIndex.modal": {
-    "value": 1400,
-    "variable": "var(--z-index-modal)"
-  },
-  "zIndex.popover": {
-    "value": 1500,
-    "variable": "var(--z-index-popover)"
-  },
-  "zIndex.skipLink": {
-    "value": 1600,
-    "variable": "var(--z-index-skip-link)"
-  },
-  "zIndex.toast": {
-    "value": 1700,
-    "variable": "var(--z-index-toast)"
-  },
-  "zIndex.tooltip": {
-    "value": 1800,
-    "variable": "var(--z-index-tooltip)"
   },
   "colors.current": {
     "value": "currentColor",
