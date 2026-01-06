@@ -344,7 +344,7 @@ export class YaciClient {
 	// Transaction endpoints
 
 	async getTransaction(hash: string): Promise<TransactionDetail> {
-		return this.rpc('get_transaction_detail', { _hash: hash })
+		return this.rpc('get_transaction_detail', { _hash: hash.toLowerCase() })
 	}
 
 	async getTransactions(
@@ -804,3 +804,46 @@ export const api = new Proxy({} as YaciClient, {
 		return Reflect.get(getApiInstance(), prop)
 	}
 })
+
+// Chain query types
+export interface TokenBalance {
+	denom: string
+	amount: string
+}
+
+export interface BalancesResponse {
+	balances: TokenBalance[]
+}
+
+/**
+ * Fetch account balances via middleware's chain proxy endpoint
+ * Uses the /chain/balances/{address} endpoint which proxies to chain gRPC
+ */
+export async function getAccountBalances(address: string): Promise<TokenBalance[]> {
+	const config = getConfig()
+	const apiUrl = config.apiUrl
+
+	try {
+		const controller = new AbortController()
+		const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
+		const response = await fetch(`${apiUrl}/chain/balances/${address}`, {
+			signal: controller.signal
+		})
+		clearTimeout(timeoutId)
+
+		if (!response.ok) {
+			console.warn(`Failed to fetch balances: ${response.status}`)
+			return []
+		}
+		const data: BalancesResponse = await response.json()
+		return data.balances || []
+	} catch (error) {
+		if (error instanceof Error && error.name === 'AbortError') {
+			console.warn('Balance fetch timed out')
+		} else {
+			console.warn('Failed to fetch account balances:', error)
+		}
+		return []
+	}
+}

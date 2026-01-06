@@ -75,7 +75,8 @@ if [ "$deploy_type" != "3" ]; then
 fi
 
 if [ "$deploy_type" = "3" ]; then
-    prompt VITE_POSTGREST_URL "PostgREST API URL" "http://localhost:3000"
+    prompt API_URL "PostgREST API URL" "http://localhost:3000"
+    prompt CHAIN_REST_ENDPOINT "Chain REST endpoint (optional)" ""
 fi
 
 # Optional config
@@ -85,7 +86,6 @@ if [[ "$advanced" =~ ^[Yy]$ ]]; then
     prompt POSTGRES_USER "PostgreSQL user" "postgres"
     prompt POSTGRES_DB "PostgreSQL database" "yaci"
     prompt YACI_MAX_CONCURRENCY "Yaci max concurrency" "100"
-    prompt VITE_CHAIN_REST_ENDPOINT "Chain REST endpoint (for IBC)" ""
 fi
 
 # Save configuration
@@ -100,18 +100,28 @@ CHAIN_GRPC_ENDPOINT=${CHAIN_GRPC_ENDPOINT:-localhost:9090}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
 POSTGRES_USER=${POSTGRES_USER:-postgres}
 POSTGRES_DB=${POSTGRES_DB:-yaci}
-VITE_POSTGREST_URL=${VITE_POSTGREST_URL:-/api}
 EOF
 
 if [ -n "$YACI_MAX_CONCURRENCY" ]; then
     echo "YACI_MAX_CONCURRENCY=$YACI_MAX_CONCURRENCY" >> .env
 fi
 
-if [ -n "$VITE_CHAIN_REST_ENDPOINT" ]; then
-    echo "VITE_CHAIN_REST_ENDPOINT=$VITE_CHAIN_REST_ENDPOINT" >> .env
-fi
-
 echo -e "${GREEN}Configuration saved to .env${NC}"
+
+# Create config.json for frontend-only deployment
+if [ "$deploy_type" = "3" ]; then
+    echo -e "${YELLOW}Creating frontend config.json...${NC}"
+    cat > public/config.json << EOF
+{
+  "apiUrl": "${API_URL}",
+  "chainRestEndpoint": "${CHAIN_REST_ENDPOINT:-}",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "Block Explorer"
+}
+EOF
+    echo -e "${GREEN}Frontend configuration saved to public/config.json${NC}"
+fi
 
 # Execute deployment
 echo ""
@@ -270,15 +280,19 @@ EOF
         fi
 
         npm install
-        VITE_POSTGREST_URL="$VITE_POSTGREST_URL" npm run build
+        npm run build
 
         echo ""
         echo -e "${GREEN}Build complete!${NC}"
         echo ""
+        echo "Configuration: public/config.json has been created"
+        echo ""
         echo "To run locally:"
         echo "  npx serve -s build/client -l 3001"
         echo ""
-        echo "For production, copy build/client to your web server"
+        echo "For production:"
+        echo "  1. Copy build/client to your web server"
+        echo "  2. Ensure config.json is accessible at /config.json"
         ;;
 
     *)

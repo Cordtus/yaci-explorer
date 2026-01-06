@@ -1,0 +1,64 @@
+{
+  "apiUrl": "/api",
+  "chainRestEndpoint": "",
+  "evmRpcEndpoint": "",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "wasmEnabled": false,
+  "appName": "Block Explorer",
+  "appNameShort": "Explorer",
+  "queries": {
+    "staleTimeMs": 10000,
+    "gcTimeMs": 300000
+  },
+  "dashboard": {
+    "refetchIntervalMs": 6000,
+    "itemCount": 5
+  },
+  "transactions": {
+    "pageSize": 10
+  },
+  "blocks": {
+    "pageSize": 10
+  },
+  "search": {
+    "addressResultLimit": 20,
+    "autoNavigateSingle": true
+  },
+  "analytics": {
+    "transactionVolumeHours": 24,
+    "transactionVolumeRefetchMs": 60000,
+    "messageSampleLimit": 10000,
+    "messageTopN": 10,
+    "messageRefetchMs": 60000,
+    "eventSampleLimit": 10000,
+    "eventTopN": 10,
+    "eventRefetchMs": 60000,
+    "blockIntervalLookback": 100,
+    "blockIntervalRefetchMs": 30000,
+    "blockIntervalMaxSeconds": 100,
+    "networkBlocksWindow": 100,
+    "networkTxWindow": 1000,
+    "networkMessageWindow": 2000,
+    "networkRefetchMs": 10000
+  },
+  "resetNotice": {
+    "enabled": true,
+    "refetchIntervalMs": 30000,
+    "hashCheckHeight": 5
+  },
+  "branding": {
+    "logoUrl": "",
+    "faviconUrl": "",
+    "primaryColor": "",
+    "accentColor": "",
+    "footerText": ""
+  },
+  "links": {
+    "website": "",
+    "docs": "",
+    "github": "",
+    "discord": "",
+    "twitter": ""
+  }
+}
