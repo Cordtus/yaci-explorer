@@ -32,12 +32,13 @@ CREATE TABLE IF NOT EXISTS api.transactions_raw (
 -- Parsed transaction metadata
 CREATE TABLE IF NOT EXISTS api.transactions_main (
   id TEXT PRIMARY KEY,
-  height BIGINT NOT NULL,
+  height BIGINT,  -- Nullable to allow ingest error transactions
   timestamp TIMESTAMP WITH TIME ZONE,
   fee JSONB,
   memo TEXT,
   error TEXT,
-  proposal_ids TEXT[]
+  proposal_ids TEXT[],
+  ingest_error JSONB  -- Stores error metadata when tx fetch fails
 );
 
 -- Raw message data
@@ -87,6 +88,7 @@ CREATE TABLE IF NOT EXISTS api.events_main (
 CREATE INDEX IF NOT EXISTS idx_tx_height ON api.transactions_main(height DESC);
 CREATE INDEX IF NOT EXISTS idx_tx_timestamp ON api.transactions_main(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_tx_error_not_null ON api.transactions_main(id) WHERE error IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tx_ingest_error ON api.transactions_main(id) WHERE ingest_error IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_msg_type ON api.messages_main(type);
 CREATE INDEX IF NOT EXISTS idx_msg_sender ON api.messages_main(sender);
 CREATE INDEX IF NOT EXISTS idx_msg_mentions ON api.messages_main USING GIN(mentions);
@@ -428,9 +430,9 @@ ORDER BY MIN((fee->>'gasLimit')::bigint);
 CREATE OR REPLACE VIEW api.tx_success_rate AS
 SELECT
   COUNT(*) AS total,
-  COUNT(*) FILTER (WHERE error IS NULL) AS successful,
-  COUNT(*) FILTER (WHERE error IS NOT NULL) AS failed,
-  ROUND(100.0 * COUNT(*) FILTER (WHERE error IS NULL) / NULLIF(COUNT(*), 0), 2) AS success_rate_percent
+  COUNT(*) FILTER (WHERE error IS NULL AND ingest_error IS NULL) AS successful,
+  COUNT(*) FILTER (WHERE error IS NOT NULL OR ingest_error IS NOT NULL) AS failed,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE error IS NULL AND ingest_error IS NULL) / NULLIF(COUNT(*), 0), 2) AS success_rate_percent
 FROM api.transactions_main;
 
 -- Fee revenue by denomination
@@ -669,7 +671,42 @@ AS $$
 DECLARE
   error_text TEXT;
   proposal_ids TEXT[];
+  ingest_err JSONB;
 BEGIN
+  -- Check if this is an ingest error transaction
+  -- Yaci stores failed transactions as: {"error": "...", "hash": "...", "reason": "..."}
+  IF NEW.data ? 'error' AND NOT NEW.data ? 'txResponse' THEN
+    -- This is an ingest error - store the error metadata
+    ingest_err := jsonb_build_object(
+      'message', NEW.data->>'error',
+      'reason', NEW.data->>'reason',
+      'hash', NEW.data->>'hash'
+    );
+
+    INSERT INTO api.transactions_main (id, fee, memo, error, height, timestamp, proposal_ids, ingest_error)
+    VALUES (
+      NEW.id,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      ingest_err
+    )
+    ON CONFLICT (id) DO UPDATE
+    SET fee = EXCLUDED.fee,
+        memo = EXCLUDED.memo,
+        error = EXCLUDED.error,
+        height = EXCLUDED.height,
+        timestamp = EXCLUDED.timestamp,
+        proposal_ids = EXCLUDED.proposal_ids,
+        ingest_error = EXCLUDED.ingest_error;
+
+    RETURN NEW;
+  END IF;
+
+  -- Normal transaction processing
   error_text := NEW.data->'txResponse'->>'rawLog';
 
   IF error_text IS NULL THEN
@@ -678,7 +715,7 @@ BEGIN
 
   proposal_ids := extract_proposal_ids(NEW.data->'txResponse'->'events');
 
-  INSERT INTO api.transactions_main (id, fee, memo, error, height, timestamp, proposal_ids)
+  INSERT INTO api.transactions_main (id, fee, memo, error, height, timestamp, proposal_ids, ingest_error)
   VALUES (
             NEW.id,
             NEW.data->'tx'->'authInfo'->'fee',
@@ -686,7 +723,8 @@ BEGIN
             error_text,
             (NEW.data->'txResponse'->>'height')::BIGINT,
             (NEW.data->'txResponse'->>'timestamp')::TIMESTAMPTZ,
-            proposal_ids
+            proposal_ids,
+            NULL
          )
   ON CONFLICT (id) DO UPDATE
   SET fee = EXCLUDED.fee,
@@ -694,9 +732,10 @@ BEGIN
       error = EXCLUDED.error,
       height = EXCLUDED.height,
       timestamp = EXCLUDED.timestamp,
-      proposal_ids = EXCLUDED.proposal_ids;
+      proposal_ids = EXCLUDED.proposal_ids,
+      ingest_error = EXCLUDED.ingest_error;
 
-  -- Insert top level messages
+  -- Insert top level messages (only for normal transactions)
   INSERT INTO api.messages_raw (id, message_index, data)
   SELECT
     NEW.id,
@@ -1173,6 +1212,7 @@ BEGIN
     'height', t.height,
     'timestamp', t.timestamp,
     'proposal_ids', t.proposal_ids,
+    'ingest_error', t.ingest_error,
     'messages', COALESCE(msg.messages, '[]'::jsonb),
     'events', COALESCE(evt.events, '[]'::jsonb),
     'evm_data', evm.evm,
@@ -1272,8 +1312,8 @@ AS $$
     FROM api.transactions_main t
     LEFT JOIN api.messages_main m ON t.id = m.id
     WHERE (_status IS NULL OR
-           (_status = 'success' AND t.error IS NULL) OR
-           (_status = 'failed' AND t.error IS NOT NULL))
+           (_status = 'success' AND t.error IS NULL AND t.ingest_error IS NULL) OR
+           (_status = 'failed' AND (t.error IS NOT NULL OR t.ingest_error IS NOT NULL)))
       AND (_block_height IS NULL OR t.height = _block_height)
       AND (_block_height_min IS NULL OR t.height >= _block_height_min)
       AND (_block_height_max IS NULL OR t.height <= _block_height_max)
@@ -1285,7 +1325,7 @@ AS $$
     SELECT t.*
     FROM api.transactions_main t
     JOIN filtered_txs f ON t.id = f.id
-    ORDER BY t.height DESC, t.id
+    ORDER BY t.height DESC NULLS LAST, t.id
     LIMIT _limit OFFSET _offset
   ),
   total AS (
@@ -1338,8 +1378,8 @@ AS $$
         'proposal_ids', p.proposal_ids,
         'messages', COALESCE(m.messages, '[]'::jsonb),
         'events', COALESCE(e.events, '[]'::jsonb),
-        'ingest_error', NULL
-      ) ORDER BY p.height DESC
+        'ingest_error', p.ingest_error
+      ) ORDER BY p.height DESC NULLS LAST
     ), '[]'::jsonb),
     'pagination', jsonb_build_object(
       'total', (SELECT count FROM total),
@@ -1372,7 +1412,7 @@ AS $$
     SELECT t.*
     FROM api.transactions_main t
     JOIN addr_txs a ON t.id = a.id
-    ORDER BY t.height DESC
+    ORDER BY t.height DESC NULLS LAST
     LIMIT _limit OFFSET _offset
   ),
   total AS (
@@ -1425,8 +1465,8 @@ AS $$
         'proposal_ids', p.proposal_ids,
         'messages', COALESCE(m.messages, '[]'::jsonb),
         'events', COALESCE(e.events, '[]'::jsonb),
-        'ingest_error', NULL
-      ) ORDER BY p.height DESC
+        'ingest_error', p.ingest_error
+      ) ORDER BY p.height DESC NULLS LAST
     ), '[]'::jsonb),
     'pagination', jsonb_build_object(
       'total', (SELECT count FROM total),
