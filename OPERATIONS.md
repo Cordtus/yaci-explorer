@@ -151,9 +151,17 @@ fly ssh console -C "cat > /usr/share/nginx/html/config.json" < config.json
 - `api.events_raw`: Flattened events (populated by trigger)
 
 **Parsed Tables (populated by triggers):**
-- `api.transactions_main`: Height, timestamp, fee, memo, error, proposal_ids
+- `api.transactions_main`: Height, timestamp, fee, memo, error, proposal_ids, ingest_error
 - `api.messages_main`: Type, sender, mentions array, metadata
 - `api.events_main`: Normalized key-value event attributes
+
+**Ingest Error Handling:**
+When yaci fails to fetch transaction details (e.g., oversized transactions exceeding gRPC limits), it stores error metadata instead of failing the entire block. These partial transactions have:
+- `height` and `timestamp` as NULL
+- `ingest_error` containing `{message, reason, hash}`
+- No messages or events (since the full tx data couldn't be fetched)
+
+The frontend displays an alert for these transactions explaining that only partial data is available.
 
 **EVM Tables (populated by worker):**
 - `api.evm_transactions`: Decoded EVM tx fields (from, to, value, data, gas)
@@ -329,6 +337,20 @@ fly deploy -a yaci-explorer
 # Always test in development first
 cat migrations/004_new_migration.sql | fly postgres connect -a yaci-pg
 ```
+
+**Ingest Error Support Migration (required for yaci >= v0.x.x):**
+If upgrading from an older version, apply the ingest error migration:
+```bash
+# For Fly.io deployments
+cat docker/020_ingest_error_support.sql | fly postgres connect -a yaci-pg
+
+# For local/Docker deployments
+docker exec -i yaci-explorer-postgres psql -U yaci -d yaci < docker/020_ingest_error_support.sql
+```
+This migration:
+- Makes `height` nullable in `transactions_main`
+- Adds `ingest_error` column for storing error metadata
+- Updates triggers and RPC functions to handle partial transactions
 
 **Indexer Updates (use with caution):**
 ```bash
