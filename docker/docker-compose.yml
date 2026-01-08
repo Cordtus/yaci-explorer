@@ -9,7 +9,8 @@ services:
       PGDATA: /var/lib/postgresql/18/docker
     volumes:
       - postgres-data:/var/lib/postgresql
-      - ./init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
+      # Minimal init - just create api schema, let yaci run its own migrations
+      - ./init-api-schema.sql:/docker-entrypoint-initdb.d/init-api-schema.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -64,12 +65,19 @@ services:
   yaci:
     image: ghcr.io/cordtus/yaci:main
     container_name: yaci-indexer
+    command: >
+      extract postgres
+      --postgres-conn postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
+      --live
+      --enable-prometheus
+      --start ${YACI_START_HEIGHT:-1}
+      --max-concurrency ${YACI_MAX_CONCURRENCY:-5}
+      -k
+      ${CHAIN_GRPC_ENDPOINT}
     environment:
       YACI_GRPC_ENDPOINT: ${CHAIN_GRPC_ENDPOINT}
       YACI_POSTGRES_DSN: postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       YACI_INSECURE: ${YACI_INSECURE:-false}
-      YACI_CONCURRENCY: ${YACI_MAX_CONCURRENCY:-5}
-      YACI_START_HEIGHT: ${YACI_START_HEIGHT:-}
     ports:
       - "2112:2112"
     depends_on:
