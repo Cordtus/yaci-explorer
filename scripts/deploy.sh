@@ -38,7 +38,22 @@ cmd_install() {
 
   # Install systemd service
   info "Installing systemd service..."
-  cp "$SCRIPT_DIR/yaci-explorer.service" /etc/systemd/system/
+  cat > /etc/systemd/system/yaci-explorer.service << EOF
+[Unit]
+Description=Yaci Explorer Frontend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=/usr/local/bin/bun serve ./dist --port 3001
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+EOF
   systemctl daemon-reload
   systemctl enable "$SERVICE_NAME"
 
