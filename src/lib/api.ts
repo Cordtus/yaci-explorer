@@ -23,8 +23,8 @@ export interface Transaction {
 	fee: TransactionFee | null
 	memo: string | null
 	error: string | null
-	height: number
-	timestamp: string
+	height: number | null  // null for ingest error transactions
+	timestamp: string | null  // null for ingest error transactions
 	messages: Message[]
 	events: Event[]
 	ingest_error: IngestError | null

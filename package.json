@@ -19,7 +19,7 @@
     "reinstall": "bun run clean:all && bun install",
     "configure:env": "bash ./scripts/configure-env.sh",
     "deploy:build": "bun install && bun run typecheck && bun run build",
-    "reset:full": "bash ./scripts/full-reset.sh",
+    "reset:db": "bash ./scripts/reset-database.sh",
     "redeploy:systemd": "bash ./scripts/redeploy-systemd.sh"
   },
   "dependencies": {
