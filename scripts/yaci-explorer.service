@@ -4,8 +4,6 @@ After=network.target
 
 [Service]
 Type=simple
-User=yaci
-Group=yaci
 WorkingDirectory=/opt/yaci-explorer
 ExecStart=/usr/local/bin/bun serve ./dist --port 3001
 Restart=always
