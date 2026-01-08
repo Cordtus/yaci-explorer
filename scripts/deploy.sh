@@ -30,8 +30,7 @@ cmd_install() {
   check_bun
 
   # Create install directory
-  sudo mkdir -p "$INSTALL_DIR"
-  sudo chown "$(whoami):$(whoami)" "$INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR"
 
   # Copy files
   info "Copying files..."
@@ -39,15 +38,30 @@ cmd_install() {
 
   # Install systemd service
   info "Installing systemd service..."
-  sudo cp "$SCRIPT_DIR/yaci-explorer.service" /etc/systemd/system/
-  sudo systemctl daemon-reload
-  sudo systemctl enable "$SERVICE_NAME"
+  cat > /etc/systemd/system/yaci-explorer.service << EOF
+[Unit]
+Description=Yaci Explorer Frontend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=/usr/local/bin/bun serve ./dist --port 3001
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+  systemctl enable "$SERVICE_NAME"
 
   success "Installation complete"
   echo ""
   echo "Next steps:"
   echo "  1. Edit ${INSTALL_DIR}/dist/config.json with your API URL"
-  echo "  2. Start the service: sudo systemctl start $SERVICE_NAME"
+  echo "  2. Start the service: systemctl start $SERVICE_NAME"
   echo "  3. Configure Caddy to reverse proxy to localhost:3001"
 }
 
@@ -62,17 +76,17 @@ cmd_build() {
 
 cmd_start() {
   info "Starting $SERVICE_NAME..."
-  sudo systemctl start "$SERVICE_NAME"
-  sudo systemctl status "$SERVICE_NAME" --no-pager
+  systemctl start "$SERVICE_NAME"
+  systemctl status "$SERVICE_NAME" --no-pager
 }
 
 cmd_stop() {
   info "Stopping $SERVICE_NAME..."
-  sudo systemctl stop "$SERVICE_NAME"
+  systemctl stop "$SERVICE_NAME"
 }
 
 cmd_status() {
-  sudo systemctl status "$SERVICE_NAME" --no-pager || true
+  systemctl status "$SERVICE_NAME" --no-pager || true
   echo ""
   journalctl -u "$SERVICE_NAME" -n 20 --no-pager
 }
