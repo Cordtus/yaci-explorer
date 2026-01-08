@@ -119,9 +119,27 @@ BATCH_SIZE=100                 # Transactions per batch (default: 100)
 
 #### Frontend Configuration
 
+Frontend configuration is provided at runtime via `config.json`:
+
+```json
+{
+  "apiUrl": "https://yaci-explorer-apis.fly.dev",
+  "chainRestEndpoint": "https://rest.example.com",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "My Explorer"
+}
+```
+
+Deploy config.json to container:
 ```bash
-VITE_POSTGREST_URL=https://yaci-explorer-apis.fly.dev
-VITE_CHAIN_REST_ENDPOINT=https://rest.example.com  # For IBC denom resolution
+# Mount as volume in fly.toml
+[mounts]
+  source = "config"
+  destination = "/usr/share/nginx/html/config.json"
+
+# Or copy after deployment
+fly ssh console -C "cat > /usr/share/nginx/html/config.json" < config.json
 ```
 
 ### Database Schema Architecture

@@ -10,6 +10,7 @@ import { formatTimeAgo, formatHash, getTransactionStatus } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DashboardMetrics } from '@/components/common/DashboardMetrics'
 import { css } from '@/styled-system/css'
+import { listItem, hstack } from '@/styled-system/patterns'
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -79,28 +80,25 @@ export default function DashboardPage() {
                 ))
               ) : (
                 blocks?.data.map((block) => (
-                  <div
-                    key={block.id}
-                    className={css(styles.listItem)}
-                  >
-                    <div className={css(styles.itemLeft)}>
+                  <div key={block.id} className={listItem()}>
+                    <div className={hstack({ gap: '4' })}>
                       <div>
                         <Link
                           to={`/blocks/${block.id}`}
-                          className={css(styles.itemLink)}
+                          className={css({ fontWeight: 'medium', _hover: { color: 'accent.default' } })}
                         >
                           Block #{block.id}
                         </Link>
-                        <div className={css(styles.itemSubtext)}>
+                        <div className={css({ fontSize: 'sm', color: 'fg.muted' })}>
                           {block.data?.block?.header?.time ? formatTimeAgo(block.data.block.header.time) : '-'}
                         </div>
                       </div>
                     </div>
-                    <div className={css(styles.itemRight)}>
-                      <div className={css(styles.itemStat)}>
+                    <div className={css({ textAlign: 'right' })}>
+                      <div className={css({ fontSize: 'sm', color: 'accent.default', fontWeight: 'medium' })}>
                         {block.data?.txs?.length || 0} txs
                       </div>
-                      <div className={css(styles.itemHash)}>
+                      <div className={css({ fontSize: 'xs', color: 'fg.muted', fontFamily: 'mono' })}>
                         {formatHash(block.data?.block_id?.hash || block.data?.blockId?.hash || '', 6)}
                       </div>
                     </div>
@@ -131,31 +129,28 @@ export default function DashboardPage() {
                 transactions?.data.map((tx) => {
                   const status = getTransactionStatus(tx.error)
                   return (
-                    <div
-                      key={tx.id}
-                      className={css(styles.listItem)}
-                    >
-                      <div className={css(styles.itemLeft)}>
+                    <div key={tx.id} className={listItem()}>
+                      <div className={hstack({ gap: '4' })}>
                         <div>
                           <Link
                             to={`/tx/${tx.id}`}
-                            className={css(styles.itemLink)}
+                            className={css({ fontWeight: 'medium', _hover: { color: 'accent.default' } })}
                           >
                             {formatHash(tx.id, 8)}
                           </Link>
-                          <div className={css(styles.itemSubtext)}>
+                          <div className={css({ fontSize: 'sm', color: 'fg.muted' })}>
                             {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
                           </div>
                         </div>
                       </div>
-                      <div className={css(styles.itemRight)}>
+                      <div className={css({ textAlign: 'right' })}>
                         <Badge
                           variant={tx.error ? 'destructive' : 'success'}
-                          className={css(styles.badge)}
+                          className={css({ mb: '1' })}
                         >
                           {status.label}
                         </Badge>
-                        <div className={css(styles.itemHash)}>
+                        <div className={css({ fontSize: 'xs', color: 'fg.muted', fontFamily: 'mono' })}>
                           {tx.height ? `Block #${tx.height}` : 'Block unknown'}
                         </div>
                       </div>

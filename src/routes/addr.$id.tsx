@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle, Coins } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { api, type EnhancedTransaction } from '@/lib/api'
+import { api, getAccountBalances, type EnhancedTransaction, type TokenBalance } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
+import { formatDenomAmount, getDenomMetadata } from '@/lib/denom'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -76,6 +77,17 @@ export default function AddressDetailPage() {
       return await api.getTransactionsByAddress(bech32Addr, pageSize, page * pageSize)
     },
     enabled: mounted && !!bech32Addr,
+  })
+
+  // Fetch account balances
+  const { data: balances, isLoading: balancesLoading } = useQuery({
+    queryKey: ['account-balances', bech32Addr],
+    queryFn: async () => {
+      if (!bech32Addr) return []
+      return await getAccountBalances(bech32Addr)
+    },
+    enabled: mounted && !!bech32Addr,
+    staleTime: 30000,
   })
 
   /**
@@ -275,6 +287,51 @@ export default function AddressDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Token Balances */}
+      <Card>
+        <CardHeader className={styles.statCardHeader}>
+          <CardTitle className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+            <Coins className={css({ w: '5', h: '5' })} />
+            Token Balances
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {balancesLoading ? (
+            <div className={styles.skeletonList}>
+              <Skeleton className={css({ h: '10', w: 'full' })} />
+              <Skeleton className={css({ h: '10', w: 'full' })} />
+            </div>
+          ) : balances && balances.length > 0 ? (
+            <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
+              {balances.map((balance: TokenBalance) => {
+                const metadata = getDenomMetadata(balance.denom)
+                const formattedAmount = formatDenomAmount(balance.amount, balance.denom, { maxDecimals: 6 })
+                return (
+                  <div key={balance.denom} className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                    p: '2',
+                    borderRadius: 'md',
+                    border: '1px solid',
+                    borderColor: 'border.default',
+                    bg: 'bg.subtle',
+                  })}>
+                    <span className={css({ fontFamily: 'mono', fontWeight: 'bold', color: 'accent.default' })}>{formattedAmount}</span>
+                    <span className={css({ fontSize: 'sm', fontWeight: 'medium' })}>{metadata.symbol}</span>
+                    {metadata.isIBC && <Badge variant="outline" className={css({ fontSize: '10px', ml: 'auto' })}>IBC</Badge>}
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className={css({ textAlign: 'center', py: '4', color: 'fg.muted' })}>
+              No balances found
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Transactions Table */}
       <Card>

@@ -66,7 +66,20 @@ fly secrets set YACI_POSTGRES_DSN="postgres://..." YACI_GRPC_ENDPOINT="..."
 # Explorer
 cd /path/to/yaci-explorer
 fly launch --name yaci-explorer
-fly secrets set VITE_POSTGREST_URL="https://..."
+
+# Configure frontend via config.json
+cat > config.json << EOF
+{
+  "apiUrl": "https://your-postgrest-url.fly.dev",
+  "chainRestEndpoint": "https://api.yourchain.io",
+  "evmEnabled": true,
+  "ibcEnabled": true,
+  "appName": "My Explorer"
+}
+EOF
+
+# Copy config to deployed container
+fly ssh console -C "cat > /usr/share/nginx/html/config.json" < config.json
 ```
 
 ## Reverse Proxy
@@ -97,11 +110,37 @@ server {
 
 ## Configuration
 
-### Environment Variables
+### Frontend Configuration (config.json)
 
-**Frontend (.env):**
-- `VITE_POSTGREST_URL`: PostgREST endpoint (default: /api for production, http://localhost:3000 for dev)
-- `VITE_CHAIN_REST_ENDPOINT`: Chain REST API for IBC denom resolution (optional)
+Frontend configuration is provided at runtime via `config.json` instead of build-time environment variables.
+
+**Create config.json:**
+```bash
+cp public/config.json.example public/config.json
+# Edit config.json with your settings
+```
+
+**Key settings:**
+- `apiUrl`: PostgREST endpoint URL (required)
+- `chainRestEndpoint`: Chain REST API for IBC denom resolution (optional)
+- `evmEnabled`: Enable/disable EVM features
+- `ibcEnabled`: Enable/disable IBC features
+- `appName`: Custom application name
+- `branding`: Logo URLs, colors, footer text
+- `links`: Website, docs, social media links
+
+**Docker deployment:**
+```bash
+# Mount config.json as volume
+docker run -v ./config.json:/usr/share/nginx/html/config.json ...
+
+# Or copy to running container
+docker cp config.json container:/usr/share/nginx/html/config.json
+```
+
+See `public/config.json.example` for all available options.
+
+### Backend Configuration (.env)
 
 **Docker/Backend:**
 - `CHAIN_GRPC_ENDPOINT`: gRPC endpoint of chain (required)
@@ -111,9 +150,11 @@ server {
 
 ### EVM Support
 
-Enable per-chain in `src/config/chains.ts`:
-```typescript
-features: { evm: true }
+Enable via config.json:
+```json
+{
+  "evmEnabled": true
+}
 ```
 
 ### Prometheus Metrics
