@@ -14,6 +14,10 @@ export interface AppConfig {
 	primaryColor?: string
 	accentColor?: string
 	footerText?: string
+	// Feature flags
+	evmEnabled?: boolean
+	ibcEnabled?: boolean
+	wasmEnabled?: boolean
 	links?: {
 		website?: string
 		docs?: string
@@ -61,6 +65,10 @@ const defaultConfig: AppConfig = {
 	evmRpcEndpoint: undefined,
 	appName: 'Block Explorer',
 	appNameShort: 'Explorer',
+	// Feature flag defaults
+	evmEnabled: false,
+	ibcEnabled: true,
+	wasmEnabled: true,
 	// Query defaults
 	queryStaleMs: 10_000,
 	queryGcMs: 300_000,

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle, Coins } from 'lucide-react'
+import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle, Coins, ArrowLeftRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table'
 import { Pagination } from '@/components/ui/pagination'
 import { css, cx } from '@/styled-system/css'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 
 /**
  * Address detail page component
@@ -28,8 +29,10 @@ export default function AddressDetailPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const [page, setPage] = useState(0)
+  const [ibcPage, setIbcPage] = useState(0)
   const params = useParams()
   const pageSize = 20
+  const { ibcEnabled } = useFeatureFlags()
 
   // Validate the address format early
   const isValidAddr = params.id ? isValidAddress(params.id) : false
@@ -88,6 +91,16 @@ export default function AddressDetailPage() {
     },
     enabled: mounted && !!bech32Addr,
     staleTime: 30000,
+  })
+
+  // Fetch IBC transfers for this address
+  const { data: ibcTransfers, isLoading: ibcLoading } = useQuery({
+    queryKey: ['address-ibc-transfers', bech32Addr, ibcPage],
+    queryFn: async () => {
+      if (!bech32Addr) return { data: [], pagination: { total: 0, limit: 10, offset: 0, has_next: false, has_prev: false } }
+      return await api.getIbcTransfersByAddress(bech32Addr, 10, ibcPage * 10)
+    },
+    enabled: mounted && !!bech32Addr && ibcEnabled,
   })
 
   /**
@@ -332,6 +345,102 @@ export default function AddressDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* IBC Transfers */}
+      {ibcEnabled && ibcTransfers && ibcTransfers.data.length > 0 && (
+        <Card>
+          <CardHeader className={styles.statCardHeader}>
+            <CardTitle className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+              <ArrowLeftRight className={css({ w: '5', h: '5' })} />
+              IBC Transfers
+            </CardTitle>
+            <Badge variant="outline">{ibcTransfers.pagination.total} total</Badge>
+          </CardHeader>
+          <CardContent>
+            {ibcLoading ? (
+              <div className={styles.skeletonList}>
+                <Skeleton className={styles.skeletonRow} />
+                <Skeleton className={styles.skeletonRow} />
+              </div>
+            ) : (
+              <>
+                <div className={styles.tableContainer}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Direction</TableHead>
+                        <TableHead>Tx Hash</TableHead>
+                        <TableHead>Channel</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ibcTransfers.data.map((transfer) => (
+                        <TableRow key={transfer.tx_hash}>
+                          <TableCell>
+                            <Badge
+                              variant={transfer.direction === 'outgoing' ? 'warning' : 'success'}
+                              className={css({ gap: '1' })}
+                            >
+                              {transfer.direction === 'outgoing' ? (
+                                <><ArrowUpRight className={styles.typeBadgeIcon} /> Out</>
+                              ) : (
+                                <><ArrowDownLeft className={styles.typeBadgeIcon} /> In</>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Link
+                              to={`/tx/${transfer.tx_hash}`}
+                              className={styles.txHashLink}
+                            >
+                              {formatHash(transfer.tx_hash, 8)}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            <span className={css({ fontFamily: 'mono', fontSize: 'sm' })}>
+                              {transfer.source_channel || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {transfer.token_amount && transfer.token_denom ? (
+                              <span className={css({ fontSize: 'sm' })}>
+                                {transfer.resolved_denom
+                                  ? `${(Number(transfer.token_amount) / Math.pow(10, transfer.resolved_denom.decimals)).toFixed(2)} ${transfer.resolved_denom.symbol}`
+                                  : `${transfer.token_amount} ${transfer.token_denom.slice(0, 8)}...`
+                                }
+                              </span>
+                            ) : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={transfer.success ? 'success' : 'destructive'}>
+                              {transfer.success ? 'Success' : 'Failed'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className={styles.timeCell}>
+                            {transfer.timestamp ? formatTimeAgo(transfer.timestamp) : 'N/A'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {ibcTransfers.pagination.total > 10 && (
+                  <Pagination
+                    currentPage={ibcPage}
+                    totalPages={Math.ceil(ibcTransfers.pagination.total / 10)}
+                    onPageChange={setIbcPage}
+                    isLoading={ibcLoading}
+                  />
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transactions Table */}
       <Card>

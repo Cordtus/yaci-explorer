@@ -173,6 +173,62 @@ export interface IbcChainSummary {
 	active_channels: number
 }
 
+export interface IbcStats {
+	outgoing_transfers: number
+	incoming_transfers: number
+	completed_transfers: number
+	timed_out_transfers: number
+	relayer_updates: number
+	total_channels: number
+	open_channels: number
+	active_channels: number
+	connected_chains: number
+	total_denoms: number
+}
+
+export interface IbcTransfer {
+	tx_hash: string
+	height: number
+	timestamp: string
+	direction: 'outgoing' | 'incoming' | 'other'
+	sender: string
+	receiver: string | null
+	source_channel: string | null
+	token_denom: string | null
+	token_amount: string | null
+	resolved_denom: {
+		symbol: string
+		decimals: number
+		base_denom: string
+	} | null
+	counterparty_chain: string | null
+	success: boolean
+}
+
+export interface IbcChannelActivity {
+	channel_id: string
+	transfer_count: number
+	successful_transfers: number
+	counterparty_chain_id: string | null
+	state: string | null
+	client_status: string | null
+}
+
+export interface IbcVolumeDataPoint {
+	hour: string
+	outgoing_count: number
+	incoming_count: number
+	outgoing_volume: number
+	incoming_volume: number
+}
+
+export interface IbcVolumeTimeSeries {
+	hours: number
+	channel_filter: string | null
+	data: IbcVolumeDataPoint[]
+	channels: string[]
+}
+
 export interface BlockRaw {
 	id: number
 	data: {
@@ -776,6 +832,48 @@ async resolveIbcDenom(ibcDenom: string): Promise<IbcDenomResolution | null> {
 
 	async getIbcChains(): Promise<IbcChainSummary[]> {
 		return this.rpc('get_ibc_chains', {})
+	}
+
+	async getIbcStats(): Promise<IbcStats> {
+		return this.rpc('get_ibc_stats', {})
+	}
+
+	async getIbcTransfers(
+		limit = 20,
+		offset = 0,
+		direction?: 'outgoing' | 'incoming'
+	): Promise<PaginatedResponse<IbcTransfer>> {
+		return this.rpc('get_ibc_transfers', {
+			_limit: limit,
+			_offset: offset,
+			_direction: direction
+		})
+	}
+
+	async getIbcTransfersByAddress(
+		address: string,
+		limit = 20,
+		offset = 0
+	): Promise<PaginatedResponse<IbcTransfer>> {
+		return this.rpc('get_ibc_transfers_by_address', {
+			_address: address,
+			_limit: limit,
+			_offset: offset
+		})
+	}
+
+	async getIbcChannelActivity(): Promise<IbcChannelActivity[]> {
+		return this.rpc('get_ibc_channel_activity', {})
+	}
+
+	async getIbcVolumeTimeSeries(
+		hours = 24,
+		channel?: string
+	): Promise<IbcVolumeTimeSeries> {
+		return this.rpc('get_ibc_volume_timeseries', {
+			_hours: hours,
+			_channel: channel
+		})
 	}
 
 }

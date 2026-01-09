@@ -16,10 +16,12 @@ import { JsonViewer } from '@/components/JsonViewer'
 import { AddressChip } from '@/components/AddressChip'
 import { EVMTransactionCard } from '@/components/EVMTransactionCard'
 import { EVMLogsCard } from '@/components/EVMLogsCard'
+import { IbcTransferCard } from '@/components/IbcTransferCard'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { css } from '@/styled-system/css'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 
 // Helper to group events by event_index, then by attributes
 function groupEvents(events: any[]) {
@@ -93,6 +95,7 @@ export default function TransactionDetailPage() {
   const params = useParams()
   const [searchParams] = useSearchParams()
   const { getDenomDisplay } = useDenom()
+  const { ibcEnabled } = useFeatureFlags()
 
   useEffect(() => {
     setMounted(true)
@@ -658,6 +661,11 @@ export default function TransactionDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* IBC Transfer info when IBC is enabled */}
+          {ibcEnabled && transaction.messages && (
+            <IbcTransferCard messages={transaction.messages} />
+          )}
 
           {/* EVM Data in sidebar when in Cosmos view */}
           {!evmView && transaction.evm_data && (

@@ -1,36 +1,79 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle, XCircle, AlertCircle, Link2 } from 'lucide-react'
+import { Link } from 'react-router'
+import {
+	CheckCircle,
+	XCircle,
+	AlertCircle,
+	Link2,
+	ArrowUpRight,
+	ArrowDownLeft,
+	Activity,
+	Globe,
+	Coins,
+	Clock,
+	Copy,
+	Check
+} from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { api, type IbcConnection, type IbcDenomTrace } from '@/lib/api'
+import {
+	api,
+	type IbcConnection,
+	type IbcDenomTrace,
+	type IbcStats,
+	type IbcTransfer,
+	type IbcChannelActivity
+} from '@/lib/api'
+import { formatTimeAgo, formatAddress, formatNumber } from '@/lib/utils'
 import { css } from '@/styled-system/css'
 import { IBCIcon } from '@/components/icons/icons'
 
 export default function IbcPage() {
+	const [transfersPage, setTransfersPage] = useState(0)
+	const [transferDirection, setTransferDirection] = useState<string>('all')
 	const [connectionsPage, setConnectionsPage] = useState(0)
 	const [denomsPage, setDenomsPage] = useState(0)
 	const limit = 20
 
+	const statsQuery = useQuery({
+		queryKey: ['ibc-stats'],
+		queryFn: () => api.getIbcStats(),
+		refetchInterval: 30000
+	})
+
+	const transfersQuery = useQuery({
+		queryKey: ['ibc-transfers', transfersPage, transferDirection],
+		queryFn: () =>
+			api.getIbcTransfers(
+				limit,
+				transfersPage * limit,
+				transferDirection === 'all' ? undefined : (transferDirection as 'outgoing' | 'incoming')
+			)
+	})
+
 	const connectionsQuery = useQuery({
 		queryKey: ['ibc-connections', connectionsPage],
-		queryFn: () => api.getIbcConnections(limit, connectionsPage * limit),
+		queryFn: () => api.getIbcConnections(limit, connectionsPage * limit)
 	})
 
 	const denomsQuery = useQuery({
 		queryKey: ['ibc-denom-traces', denomsPage],
-		queryFn: () => api.getIbcDenomTraces(limit, denomsPage * limit),
+		queryFn: () => api.getIbcDenomTraces(limit, denomsPage * limit)
 	})
 
-	const chainsQuery = useQuery({
-		queryKey: ['ibc-chains'],
-		queryFn: () => api.getIbcChains(),
+	const channelActivityQuery = useQuery({
+		queryKey: ['ibc-channel-activity'],
+		queryFn: () => api.getIbcChannelActivity()
 	})
+
+	const stats = statsQuery.data
 
 	return (
 		<div className={css(styles.container)}>
@@ -38,45 +81,145 @@ export default function IbcPage() {
 				<div>
 					<h1 className={css(styles.title)}>IBC</h1>
 					<p className={css(styles.subtitle)}>
-						Inter-Blockchain Communication channels and denom traces
+						Inter-Blockchain Communication transfers, channels, and denom traces
 					</p>
 				</div>
 			</div>
 
-			{/* Chain summary cards */}
-			{chainsQuery.data && chainsQuery.data.length > 0 && (
-				<div className={css(styles.chainGrid)}>
-					{chainsQuery.data.map((chain) => (
-						<Card key={chain.chain_id}>
-							<CardHeader className={css(styles.chainCardHeader)}>
-								<CardTitle className={css(styles.chainId)}>{chain.chain_id}</CardTitle>
-							</CardHeader>
-							<CardContent className={css(styles.chainStats)}>
-								<div className={css(styles.statItem)}>
-									<span className={css(styles.statValue)}>{chain.channel_count}</span>
-									<span className={css(styles.statLabel)}>Channels</span>
-								</div>
-								<div className={css(styles.statItem)}>
-									<span className={css(styles.statValue)}>{chain.open_channels}</span>
-									<span className={css(styles.statLabel)}>Open</span>
-								</div>
-								<div className={css(styles.statItem)}>
-									<span className={css(styles.statValue)}>{chain.active_channels}</span>
-									<span className={css(styles.statLabel)}>Active</span>
-								</div>
-							</CardContent>
-						</Card>
-					))}
-				</div>
-			)}
+			{/* Stats Cards */}
+			<div className={css(styles.statsGrid)}>
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>Outgoing Transfers</CardTitle>
+						<ArrowUpRight className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								formatNumber(stats?.outgoing_transfers || 0)
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Total sent via IBC</p>
+					</CardContent>
+				</Card>
 
-			<Tabs defaultValue="connections">
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>Incoming Transfers</CardTitle>
+						<ArrowDownLeft className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								formatNumber(stats?.incoming_transfers || 0)
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Total received via IBC</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>Active Channels</CardTitle>
+						<Activity className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								<>
+									{stats?.active_channels || 0}
+									<span className={css(styles.statSecondary)}>/ {stats?.total_channels || 0}</span>
+								</>
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Active / Total channels</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>Connected Chains</CardTitle>
+						<Globe className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								stats?.connected_chains || 0
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Unique counterparties</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>IBC Denoms</CardTitle>
+						<Coins className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								stats?.total_denoms || 0
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Traced denominations</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className={css(styles.statCardHeader)}>
+						<CardTitle className={css(styles.statCardTitle)}>Timed Out</CardTitle>
+						<Clock className={css(styles.statIcon)} />
+					</CardHeader>
+					<CardContent>
+						<div className={css(styles.statValue)}>
+							{statsQuery.isLoading ? (
+								<Skeleton className={css(styles.statSkeleton)} />
+							) : (
+								stats?.timed_out_transfers || 0
+							)}
+						</div>
+						<p className={css(styles.statHelper)}>Failed transfers</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Main Content Tabs */}
+			<Tabs defaultValue="transfers">
 				<TabsList>
-					<TabsTrigger value="connections">Connections</TabsTrigger>
+					<TabsTrigger value="transfers">Transfers</TabsTrigger>
+					<TabsTrigger value="channels">Channels</TabsTrigger>
 					<TabsTrigger value="denoms">Denom Traces</TabsTrigger>
+					<TabsTrigger value="activity">Channel Activity</TabsTrigger>
 				</TabsList>
 
-				<TabsContent value="connections">
+				<TabsContent value="transfers">
+					<TransfersTab
+						data={transfersQuery.data}
+						isLoading={transfersQuery.isLoading}
+						error={transfersQuery.error}
+						page={transfersPage}
+						setPage={setTransfersPage}
+						limit={limit}
+						direction={transferDirection}
+						setDirection={(d) => {
+							setTransferDirection(d)
+							setTransfersPage(0)
+						}}
+					/>
+				</TabsContent>
+
+				<TabsContent value="channels">
 					<ConnectionsTab
 						data={connectionsQuery.data}
 						isLoading={connectionsQuery.isLoading}
@@ -97,8 +240,211 @@ export default function IbcPage() {
 						limit={limit}
 					/>
 				</TabsContent>
+
+				<TabsContent value="activity">
+					<ChannelActivityTab
+						data={channelActivityQuery.data}
+						isLoading={channelActivityQuery.isLoading}
+						error={channelActivityQuery.error}
+					/>
+				</TabsContent>
 			</Tabs>
 		</div>
+	)
+}
+
+function TransfersTab({
+	data,
+	isLoading,
+	error,
+	page,
+	setPage,
+	limit,
+	direction,
+	setDirection
+}: {
+	data: { data: IbcTransfer[]; pagination: { total: number } } | undefined
+	isLoading: boolean
+	error: Error | null
+	page: number
+	setPage: (p: number | ((p: number) => number)) => void
+	limit: number
+	direction: string
+	setDirection: (d: string) => void
+}) {
+	const transfers = data?.data || []
+	const hasData = transfers.length > 0
+
+	return (
+		<Card>
+			<CardHeader className={css(styles.cardHeaderWithFilter)}>
+				<div>
+					<CardTitle>Recent IBC Transfers</CardTitle>
+					<CardDescription>
+						{data ? `${data.pagination.total.toLocaleString()} total transfers` : 'Loading...'}
+					</CardDescription>
+				</div>
+				<Select value={direction} onValueChange={setDirection}>
+					<SelectTrigger className={css(styles.filterSelect)}>
+						<SelectValue placeholder="Filter direction" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All Directions</SelectItem>
+						<SelectItem value="outgoing">Outgoing</SelectItem>
+						<SelectItem value="incoming">Incoming</SelectItem>
+					</SelectContent>
+				</Select>
+			</CardHeader>
+			<CardContent>
+				{isLoading ? (
+					<div className={css(styles.loadingContainer)}>
+						{Array.from({ length: 5 }).map((_, i) => (
+							<Skeleton key={i} className={css(styles.skeleton)} />
+						))}
+					</div>
+				) : error ? (
+					<div className={css(styles.emptyState)}>
+						<IBCIcon className={css(styles.emptyIcon)} />
+						<p>Error loading transfers</p>
+					</div>
+				) : !hasData ? (
+					<div className={css(styles.emptyState)}>
+						<IBCIcon className={css(styles.emptyIcon)} />
+						<h3 className={css(styles.emptyTitle)}>No IBC Transfers</h3>
+						<p className={css(styles.emptyText)}>
+							No IBC transfers have been recorded yet.
+						</p>
+					</div>
+				) : (
+					<>
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Direction</TableHead>
+									<TableHead>Tx Hash</TableHead>
+									<TableHead>From / To</TableHead>
+									<TableHead>Amount</TableHead>
+									<TableHead>Channel</TableHead>
+									<TableHead>Time</TableHead>
+									<TableHead>Status</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{transfers.map((transfer) => (
+									<TransferRow key={`${transfer.tx_hash}-${transfer.direction}`} transfer={transfer} />
+								))}
+							</TableBody>
+						</Table>
+
+						{data && data.pagination.total > limit && (
+							<div className={css(styles.pagination)}>
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={page === 0}
+									onClick={() => setPage((p) => p - 1)}
+								>
+									Previous
+								</Button>
+								<span className={css(styles.pageInfo)}>
+									Page {page + 1} of {Math.ceil(data.pagination.total / limit)}
+								</span>
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={(page + 1) * limit >= data.pagination.total}
+									onClick={() => setPage((p) => p + 1)}
+								>
+									Next
+								</Button>
+							</div>
+						)}
+					</>
+				)}
+			</CardContent>
+		</Card>
+	)
+}
+
+function TransferRow({ transfer }: { transfer: IbcTransfer }) {
+	const isOutgoing = transfer.direction === 'outgoing'
+
+	const formatAmount = () => {
+		if (!transfer.token_amount) return '-'
+		const amount = BigInt(transfer.token_amount)
+		const decimals = transfer.resolved_denom?.decimals || 6
+		const symbol = transfer.resolved_denom?.symbol || transfer.token_denom?.split('/').pop() || 'tokens'
+		const formatted = Number(amount) / Math.pow(10, decimals)
+		return `${formatted.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${symbol}`
+	}
+
+	return (
+		<TableRow>
+			<TableCell>
+				<Badge variant={isOutgoing ? 'default' : 'secondary'}>
+					{isOutgoing ? (
+						<ArrowUpRight className={css(styles.directionIcon)} />
+					) : (
+						<ArrowDownLeft className={css(styles.directionIcon)} />
+					)}
+					{isOutgoing ? 'Out' : 'In'}
+				</Badge>
+			</TableCell>
+			<TableCell>
+				<Link to={`/transactions/${transfer.tx_hash}`} className={css(styles.txLink)}>
+					{formatAddress(transfer.tx_hash, 8)}
+				</Link>
+			</TableCell>
+			<TableCell>
+				<div className={css(styles.addressColumn)}>
+					<div className={css(styles.addressRow)}>
+						<span className={css(styles.addressLabel)}>From:</span>
+						<Link to={`/addr/${transfer.sender}`} className={css(styles.addressLink)}>
+							{formatAddress(transfer.sender, 8)}
+						</Link>
+					</div>
+					{transfer.receiver && (
+						<div className={css(styles.addressRow)}>
+							<span className={css(styles.addressLabel)}>To:</span>
+							<span className={css(styles.receiverAddress)}>
+								{formatAddress(transfer.receiver, 8)}
+							</span>
+						</div>
+					)}
+				</div>
+			</TableCell>
+			<TableCell>
+				<span className={css(styles.amount)}>{formatAmount()}</span>
+			</TableCell>
+			<TableCell>
+				{transfer.source_channel ? (
+					<div className={css(styles.channelInfo)}>
+						<code className={css(styles.channelCode)}>{transfer.source_channel}</code>
+						{transfer.counterparty_chain && (
+							<span className={css(styles.counterpartyChain)}>{transfer.counterparty_chain}</span>
+						)}
+					</div>
+				) : (
+					<span className={css(styles.mutedText)}>-</span>
+				)}
+			</TableCell>
+			<TableCell>
+				<span className={css(styles.timeAgo)}>{formatTimeAgo(transfer.timestamp)}</span>
+			</TableCell>
+			<TableCell>
+				{transfer.success ? (
+					<Badge variant="success">
+						<CheckCircle className={css(styles.statusIcon)} />
+						Success
+					</Badge>
+				) : (
+					<Badge variant="destructive">
+						<XCircle className={css(styles.statusIcon)} />
+						Failed
+					</Badge>
+				)}
+			</TableCell>
+		</TableRow>
 	)
 }
 
@@ -108,7 +454,7 @@ function ConnectionsTab({
 	error,
 	page,
 	setPage,
-	limit,
+	limit
 }: {
 	data: { data: IbcConnection[]; pagination: { total: number } } | undefined
 	isLoading: boolean
@@ -206,13 +552,13 @@ function ConnectionRow({ conn }: { conn: IbcConnection }) {
 		counterparty_client_id: conn.counterparty_client_id,
 		counterparty_connection_id: conn.counterparty_connection_id,
 		channel_id: conn.channel_id,
-		counterparty_channel_id: conn.counterparty_channel_id,
+		counterparty_channel_id: conn.counterparty_channel_id
 	}
 
 	return (
 		<TableRow>
 			<TableCell>
-				<div className={css(styles.channelInfo)}>
+				<div className={css(styles.channelCell)}>
 					<code className={css(styles.channelId)}>{conn.channel_id}</code>
 					<span className={css(styles.portId)}>{conn.port_id}</span>
 				</div>
@@ -314,7 +660,7 @@ function DenomsTab({
 	error,
 	page,
 	setPage,
-	limit,
+	limit
 }: {
 	data: { data: IbcDenomTrace[]; pagination: { total: number } } | undefined
 	isLoading: boolean
@@ -359,10 +705,11 @@ function DenomsTab({
 						<Table>
 							<TableHeader>
 								<TableRow>
+									<TableHead>Symbol</TableHead>
 									<TableHead>IBC Denom</TableHead>
 									<TableHead>Base Denom</TableHead>
-									<TableHead>Source Chain</TableHead>
-									<TableHead>Path</TableHead>
+									<TableHead>Source</TableHead>
+									<TableHead>Decimals</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -403,37 +750,152 @@ function DenomsTab({
 }
 
 function DenomRow({ denom }: { denom: IbcDenomTrace }) {
+	const [copied, setCopied] = useState(false)
 	const ibcHash = denom.ibc_denom.replace('ibc/', '')
 	const truncatedHash = ibcHash.length > 16 ? `${ibcHash.slice(0, 8)}...${ibcHash.slice(-8)}` : ibcHash
+
+	const copyToClipboard = () => {
+		navigator.clipboard.writeText(denom.ibc_denom)
+		setCopied(true)
+		setTimeout(() => setCopied(false), 2000)
+	}
 
 	return (
 		<TableRow>
 			<TableCell>
-				<code className={css(styles.denomHash)} title={denom.ibc_denom}>
-					ibc/{truncatedHash}
-				</code>
+				<span className={css(styles.symbolBadge)}>
+					{denom.symbol || denom.base_denom.toUpperCase()}
+				</span>
 			</TableCell>
 			<TableCell>
-				<div className={css(styles.baseDenomInfo)}>
-					<span className={css(styles.baseDenom)}>
-						{denom.symbol || denom.base_denom}
-					</span>
-					{denom.decimals > 0 && (
-						<span className={css(styles.decimals)}>{denom.decimals} decimals</span>
+				<div className={css(styles.denomHashCell)}>
+					<code className={css(styles.denomHash)} title={denom.ibc_denom}>
+						ibc/{truncatedHash}
+					</code>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={copyToClipboard}
+						className={css(styles.copyButton)}
+					>
+						{copied ? (
+							<Check className={css(styles.copyIcon)} />
+						) : (
+							<Copy className={css(styles.copyIcon)} />
+						)}
+					</Button>
+				</div>
+			</TableCell>
+			<TableCell>
+				<code className={css(styles.baseDenom)}>{denom.base_denom}</code>
+			</TableCell>
+			<TableCell>
+				<div className={css(styles.sourceInfo)}>
+					{denom.source_chain_id ? (
+						<span className={css(styles.chainIdBadge)}>{denom.source_chain_id}</span>
+					) : denom.source_channel ? (
+						<code className={css(styles.channelCode)}>{denom.source_channel}</code>
+					) : (
+						<span className={css(styles.mutedText)}>Unknown</span>
 					)}
 				</div>
 			</TableCell>
 			<TableCell>
-				{denom.source_chain_id ? (
-					<span className={css(styles.chainIdBadge)}>{denom.source_chain_id}</span>
-				) : (
-					<span className={css(styles.mutedText)}>Unknown</span>
-				)}
-			</TableCell>
-			<TableCell>
-				<code className={css(styles.pathCode)}>{denom.path}</code>
+				<span className={css(styles.decimals)}>{denom.decimals}</span>
 			</TableCell>
 		</TableRow>
+	)
+}
+
+function ChannelActivityTab({
+	data,
+	isLoading,
+	error
+}: {
+	data: IbcChannelActivity[] | undefined
+	isLoading: boolean
+	error: Error | null
+}) {
+	const activities = data || []
+	const hasData = activities.length > 0
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>Channel Transfer Activity</CardTitle>
+				<CardDescription>Transfer volume by IBC channel</CardDescription>
+			</CardHeader>
+			<CardContent>
+				{isLoading ? (
+					<div className={css(styles.loadingContainer)}>
+						{Array.from({ length: 5 }).map((_, i) => (
+							<Skeleton key={i} className={css(styles.skeleton)} />
+						))}
+					</div>
+				) : error ? (
+					<div className={css(styles.emptyState)}>
+						<IBCIcon className={css(styles.emptyIcon)} />
+						<p>Error loading channel activity</p>
+					</div>
+				) : !hasData ? (
+					<div className={css(styles.emptyState)}>
+						<IBCIcon className={css(styles.emptyIcon)} />
+						<h3 className={css(styles.emptyTitle)}>No Activity Data</h3>
+						<p className={css(styles.emptyText)}>
+							No transfer activity has been recorded yet.
+						</p>
+					</div>
+				) : (
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Channel</TableHead>
+								<TableHead>Counterparty Chain</TableHead>
+								<TableHead>Total Transfers</TableHead>
+								<TableHead>Success Rate</TableHead>
+								<TableHead>Status</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{activities.map((activity) => (
+								<TableRow key={activity.channel_id}>
+									<TableCell>
+										<code className={css(styles.channelCode)}>{activity.channel_id}</code>
+									</TableCell>
+									<TableCell>
+										{activity.counterparty_chain_id ? (
+											<span className={css(styles.chainIdBadge)}>
+												{activity.counterparty_chain_id}
+											</span>
+										) : (
+											<span className={css(styles.mutedText)}>Unknown</span>
+										)}
+									</TableCell>
+									<TableCell>
+										<span className={css(styles.transferCount)}>
+											{activity.transfer_count.toLocaleString()}
+										</span>
+									</TableCell>
+									<TableCell>
+										<span className={css(styles.successRate)}>
+											{activity.transfer_count > 0
+												? `${((activity.successful_transfers / activity.transfer_count) * 100).toFixed(1)}%`
+												: '-'}
+										</span>
+									</TableCell>
+									<TableCell>
+										<ClientStatusBadge
+											status={activity.client_status}
+											isActive={activity.client_status === 'Active'}
+										/>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				)}
+			</CardContent>
+		</Card>
 	)
 }
 
@@ -441,127 +903,221 @@ const styles = {
 	container: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '6',
+		gap: '6'
 	},
 	header: {
 		display: 'flex',
 		alignItems: 'center',
-		justifyContent: 'space-between',
+		justifyContent: 'space-between'
 	},
 	title: {
 		fontSize: '3xl',
-		fontWeight: 'bold',
+		fontWeight: 'bold'
 	},
 	subtitle: {
 		color: 'fg.muted',
-		marginTop: '1',
+		marginTop: '1'
 	},
-	chainGrid: {
+	statsGrid: {
 		display: 'grid',
 		gap: '4',
 		gridTemplateColumns: {
-			base: '1fr',
-			sm: 'repeat(2, 1fr)',
-			lg: 'repeat(4, 1fr)',
-		},
+			base: 'repeat(2, 1fr)',
+			md: 'repeat(3, 1fr)',
+			lg: 'repeat(6, 1fr)'
+		}
 	},
-	chainCardHeader: {
-		pb: '2',
-	},
-	chainId: {
-		fontSize: 'sm',
-		fontFamily: 'mono',
-		truncate: true,
-	},
-	chainStats: {
+	statCardHeader: {
 		display: 'flex',
-		justifyContent: 'space-between',
-	},
-	statItem: {
-		display: 'flex',
-		flexDirection: 'column',
+		flexDirection: 'row',
 		alignItems: 'center',
+		justifyContent: 'space-between',
+		pb: '2'
+	},
+	statCardTitle: {
+		fontSize: 'xs',
+		fontWeight: 'medium',
+		color: 'fg.muted'
+	},
+	statIcon: {
+		height: '4',
+		width: '4',
+		color: 'fg.muted'
 	},
 	statValue: {
 		fontSize: 'xl',
-		fontWeight: 'bold',
+		fontWeight: 'bold'
 	},
-	statLabel: {
+	statSecondary: {
+		fontSize: 'sm',
+		fontWeight: 'normal',
+		color: 'fg.muted',
+		marginLeft: '1'
+	},
+	statHelper: {
 		fontSize: 'xs',
 		color: 'fg.muted',
+		marginTop: '1'
+	},
+	statSkeleton: {
+		height: '6',
+		width: '16'
+	},
+	cardHeaderWithFilter: {
+		display: 'flex',
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		justifyContent: 'space-between'
+	},
+	filterSelect: {
+		width: '40'
 	},
 	loadingContainer: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '3',
+		gap: '3'
 	},
 	skeleton: {
 		height: '12',
-		width: 'full',
+		width: 'full'
 	},
 	emptyState: {
 		textAlign: 'center',
 		py: '12',
-		color: 'fg.muted',
+		color: 'fg.muted'
 	},
 	emptyIcon: {
 		height: '12',
 		width: '12',
 		margin: '0 auto',
 		marginBottom: '4',
-		opacity: '0.5',
+		opacity: '0.5'
 	},
 	emptyTitle: {
 		fontSize: 'lg',
 		fontWeight: 'semibold',
 		color: 'fg.default',
-		marginBottom: '2',
+		marginBottom: '2'
 	},
 	emptyText: {
 		maxWidth: 'md',
-		margin: '0 auto',
+		margin: '0 auto'
+	},
+	pagination: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: '4',
+		marginTop: '4'
+	},
+	pageInfo: {
+		fontSize: 'sm',
+		color: 'fg.muted'
+	},
+	directionIcon: {
+		height: '3',
+		width: '3',
+		marginRight: '1'
+	},
+	txLink: {
+		fontFamily: 'mono',
+		fontSize: 'sm',
+		color: 'accent.default',
+		_hover: { textDecoration: 'underline' }
+	},
+	addressColumn: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1'
+	},
+	addressRow: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '2'
+	},
+	addressLabel: {
+		fontSize: 'xs',
+		color: 'fg.muted',
+		minWidth: '8'
+	},
+	addressLink: {
+		fontFamily: 'mono',
+		fontSize: 'xs',
+		color: 'accent.default',
+		_hover: { textDecoration: 'underline' }
+	},
+	receiverAddress: {
+		fontFamily: 'mono',
+		fontSize: 'xs',
+		color: 'fg.muted'
+	},
+	amount: {
+		fontWeight: 'medium'
 	},
 	channelInfo: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '1',
+		gap: '1'
+	},
+	channelCode: {
+		fontFamily: 'mono',
+		fontSize: 'xs',
+		color: 'accent.default'
+	},
+	counterpartyChain: {
+		fontSize: 'xs',
+		color: 'fg.muted'
+	},
+	timeAgo: {
+		fontSize: 'sm',
+		color: 'fg.muted'
+	},
+	statusIcon: {
+		height: '3',
+		width: '3',
+		marginRight: '1'
+	},
+	channelCell: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1'
 	},
 	channelId: {
 		fontFamily: 'mono',
 		fontSize: 'sm',
-		fontWeight: 'medium',
+		fontWeight: 'medium'
 	},
 	portId: {
 		fontSize: 'xs',
-		color: 'fg.muted',
+		color: 'fg.muted'
 	},
 	counterpartyInfo: {
 		display: 'flex',
 		flexDirection: 'column',
-		gap: '1',
+		gap: '1'
 	},
 	chainIdBadge: {
 		fontSize: 'sm',
 		fontWeight: 'medium',
-		color: 'accent.default',
+		color: 'accent.default'
 	},
 	counterpartyChannel: {
 		fontSize: 'xs',
 		color: 'fg.muted',
-		fontFamily: 'mono',
+		fontFamily: 'mono'
 	},
 	mutedText: {
-		color: 'fg.muted',
+		color: 'fg.muted'
 	},
 	badgeIcon: {
 		height: '3',
 		width: '3',
-		marginRight: '1',
+		marginRight: '1'
 	},
 	routeIcon: {
 		height: '4',
 		width: '4',
-		marginRight: '1',
+		marginRight: '1'
 	},
 	routeJson: {
 		fontSize: 'xs',
@@ -572,39 +1128,48 @@ const styles = {
 		mt: '2',
 		overflowX: 'auto',
 		whiteSpace: 'pre-wrap',
-		wordBreak: 'break-all',
+		wordBreak: 'break-all'
 	},
-	pagination: {
+	symbolBadge: {
+		fontWeight: 'bold',
+		color: 'accent.default'
+	},
+	denomHashCell: {
 		display: 'flex',
 		alignItems: 'center',
-		justifyContent: 'center',
-		gap: '4',
-		marginTop: '4',
-	},
-	pageInfo: {
-		fontSize: 'sm',
-		color: 'fg.muted',
+		gap: '1'
 	},
 	denomHash: {
 		fontFamily: 'mono',
 		fontSize: 'xs',
-		color: 'fg.muted',
+		color: 'fg.muted'
 	},
-	baseDenomInfo: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '1',
+	copyButton: {
+		padding: '1',
+		height: 'auto'
+	},
+	copyIcon: {
+		height: '3',
+		width: '3'
 	},
 	baseDenom: {
-		fontWeight: 'medium',
+		fontFamily: 'mono',
+		fontSize: 'sm'
+	},
+	sourceInfo: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1'
 	},
 	decimals: {
-		fontSize: 'xs',
-		color: 'fg.muted',
-	},
-	pathCode: {
-		fontSize: 'xs',
 		fontFamily: 'mono',
-		color: 'fg.muted',
+		color: 'fg.muted'
 	},
+	transferCount: {
+		fontWeight: 'medium'
+	},
+	successRate: {
+		color: 'success.default',
+		fontWeight: 'medium'
+	}
 }

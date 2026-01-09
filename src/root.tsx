@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { appConfig } from "@/config/app"
 import { DenomProvider } from "@/contexts/DenomContext"
+import { FeatureFlagsProvider } from "@/contexts/FeatureFlagsContext"
 import { ThemeProvider } from "@/contexts/ThemeContext"
 import { css } from "@/styled-system/css"
 
@@ -26,32 +27,34 @@ export default function Root() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider>
-				<DenomProvider>
-					<div
-						className={css({
-							minH: "100vh",
-							display: "flex",
-							flexDirection: "column",
-							bg: "bg.subtle",
-							color: "fg.default"
-						})}
-					>
-						<Header />
-						<main
+				<FeatureFlagsProvider>
+					<DenomProvider>
+						<div
 							className={css({
-								flex: "1",
-								maxW: "6xl",
-								mx: "auto",
-								w: "full",
-								px: { base: "4", md: "6" },
-								py: { base: "6", md: "8" }
+								minH: "100vh",
+								display: "flex",
+								flexDirection: "column",
+								bg: "bg.subtle",
+								color: "fg.default"
 							})}
 						>
-							<Outlet />
-						</main>
-						<Footer />
-					</div>
-				</DenomProvider>
+							<Header />
+							<main
+								className={css({
+									flex: "1",
+									maxW: "6xl",
+									mx: "auto",
+									w: "full",
+									px: { base: "4", md: "6" },
+									py: { base: "6", md: "8" }
+								})}
+							>
+								<Outlet />
+							</main>
+							<Footer />
+						</div>
+					</DenomProvider>
+				</FeatureFlagsProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	)

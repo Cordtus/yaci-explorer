@@ -1,11 +1,10 @@
 {
-  "apiUrl": "https://indexer.manifest.network",
-  "chainRestEndpoint": "https://manifest-api.liftedinit.app",
+  "apiUrl": "http://localhost:3000",
   "evmEnabled": false,
   "ibcEnabled": true,
   "wasmEnabled": true,
-  "appName": "Manifest Explorer",
-  "appNameShort": "Manifest",
+  "appName": "Juno Explorer (Test)",
+  "appNameShort": "Juno",
   "queries": {
     "staleTimeMs": 10000,
     "gcTimeMs": 300000
@@ -45,11 +44,11 @@
     "enabled": false
   },
   "branding": {
-    "footerText": "Manifest Network Explorer"
+    "footerText": "Juno Test Explorer"
   },
   "links": {
-    "website": "https://liftedinit.org",
-    "docs": "https://docs.liftedinit.org",
-    "github": "https://github.com/liftedinit"
+    "website": "https://junonetwork.io",
+    "docs": "https://docs.junonetwork.io",
+    "github": "https://github.com/CosmosContracts"
   }
 }
