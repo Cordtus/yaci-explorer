@@ -11,7 +11,7 @@ export function DailyActiveAddressesChart() {
     refetchInterval: 60000,
   })
 
-  if (isLoading || !data || data.length === 0) {
+  if (isLoading || !data || !Array.isArray(data) || data.length === 0) {
     return (
       <Card>
         <CardHeader>

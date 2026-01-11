@@ -20,7 +20,7 @@ export function IBCActivityChart() {
     return null
   }
 
-  if (isLoading || !data || data.timeseries.length === 0) {
+  if (isLoading || !data || !data.timeseries || data.timeseries.length === 0) {
     return (
       <Card>
         <CardHeader>
