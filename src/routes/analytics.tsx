@@ -1,8 +1,8 @@
 import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
 import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
 import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
-import { FeeRevenueChart } from '@/components/analytics/FeeRevenueChart'
-import { GasEfficiencyChart } from '@/components/analytics/GasEfficiencyChart'
+import { DailyActiveAddressesChart } from '@/components/analytics/DailyActiveAddressesChart'
+import { IBCActivityChart } from '@/components/analytics/IBCActivityChart'
 import { css } from '@/styled-system/css'
 
 export default function AnalyticsPage() {
@@ -19,10 +19,10 @@ export default function AnalyticsPage() {
         <BlockIntervalChart />
       </div>
 
-      {/* Additional charts */}
+      {/* Activity charts */}
       <div className={styles.gridTwo}>
-        <GasEfficiencyChart />
-        <FeeRevenueChart />
+        <DailyActiveAddressesChart />
+        <IBCActivityChart />
       </div>
     </div>
   )
