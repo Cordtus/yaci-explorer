@@ -778,6 +778,47 @@ async resolveIbcDenom(ibcDenom: string): Promise<IbcDenomResolution | null> {
 		return this.rpc('get_ibc_chains', {})
 	}
 
+	// Analytics - Daily Active Addresses
+
+	async getDailyActiveAddresses(limit = 30): Promise<Array<{ date: string; active_addresses: number }>> {
+		return this.query('daily_active_addresses', { order: 'date.desc', limit: String(limit) })
+	}
+
+	// IBC Activity Analytics
+
+	async getIbcChannelActivity(): Promise<Array<{
+		channel_id: string
+		counterparty_chain_id: string | null
+		total_transfers: number
+		outgoing_count: number
+		incoming_count: number
+		unique_denoms: number
+		last_transfer: string | null
+	}>> {
+		return this.rpc('get_ibc_channel_activity', {})
+	}
+
+	async getIbcVolumeTimeseries(hours = 24, channel?: string): Promise<{
+		timeseries: Array<{
+			hour: string
+			outgoing_count: number
+			incoming_count: number
+			total_count: number
+		}>
+		summary: {
+			total_outgoing: number
+			total_incoming: number
+			total_transfers: number
+			peak_hour: string | null
+			peak_count: number
+		}
+	}> {
+		return this.rpc('get_ibc_volume_timeseries', {
+			_hours: hours,
+			_channel: channel
+		})
+	}
+
 }
 
 // Factory function to create API client
