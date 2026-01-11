@@ -43,9 +43,9 @@ export default function Root() {
 							className={css({
 								flex: "1",
 								w: "full",
-								maxW: "8xl",
+								maxW: "7xl",
 								mx: "auto",
-								px: { base: "4", md: "6", lg: "8" },
+								px: { base: "4", md: "6" },
 								py: { base: "4", md: "6" }
 							})}
 						>
