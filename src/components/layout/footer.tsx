@@ -32,7 +32,9 @@ const styles = {
   }),
   container: css({
     w: 'full',
-    px: { base: '4', md: '8', lg: '12', xl: '16' },
+    maxW: '8xl',
+    mx: 'auto',
+    px: { base: '4', md: '6', lg: '8' },
     py: '6',
   }),
   content: css({
