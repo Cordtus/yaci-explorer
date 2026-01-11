@@ -5,6 +5,7 @@ import { Outlet } from "react-router"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { appConfig } from "@/config/app"
+import { ChainProvider } from "@/contexts/ChainContext"
 import { DenomProvider } from "@/contexts/DenomContext"
 import { ThemeProvider } from "@/contexts/ThemeContext"
 import { css } from "@/styled-system/css"
@@ -26,7 +27,8 @@ export default function Root() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider>
-				<DenomProvider>
+				<ChainProvider>
+					<DenomProvider>
 					<div
 						className={css({
 							minH: "100vh",
@@ -51,7 +53,8 @@ export default function Root() {
 						</main>
 						<Footer />
 					</div>
-				</DenomProvider>
+					</DenomProvider>
+				</ChainProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	)

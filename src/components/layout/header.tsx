@@ -3,15 +3,24 @@ import { Link, useLocation } from 'react-router'
 import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
+import type { ChainFeatures } from '@/config/chains'
+import { useChain } from '@/contexts/ChainContext'
 import { css, cx } from '@/styled-system/css'
 import { EthereumIcon, IBCIcon } from '@/components/icons/icons'
 
-const navigation = [
+interface NavItem {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  requiresFeature?: keyof ChainFeatures
+}
+
+const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Blocks', href: '/blocks', icon: Blocks },
   { name: 'Transactions', href: '/tx', icon: Activity },
-  { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon },
-  { name: 'IBC', href: '/ibc', icon: IBCIcon },
+  { name: 'EVM', href: '/evm/contracts', icon: EthereumIcon, requiresFeature: 'evm' },
+  { name: 'IBC', href: '/ibc', icon: IBCIcon, requiresFeature: 'ibc' },
   { name: 'Governance', href: '/governance', icon: Vote },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
@@ -20,6 +29,12 @@ export function Header() {
   const location = useLocation()
   const pathname = location.pathname
   const branding = getBrandingConfig()
+  const { hasFeature } = useChain()
+
+  const visibleNavigation = navigation.filter(item => {
+    if (!item.requiresFeature) return true
+    return hasFeature(item.requiresFeature)
+  })
 
   return (
     <header className={styles.header}>
@@ -37,7 +52,7 @@ export function Header() {
             </Link>
 
             <nav className={styles.nav}>
-              {navigation.map((item) => {
+              {visibleNavigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href ||
                   (item.href.startsWith('/evm') && pathname.startsWith('/evm')) ||
