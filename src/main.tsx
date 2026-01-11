@@ -16,6 +16,7 @@ import TransactionsPage from "./routes/transactions"
 import TransactionDetailPage from "./routes/transactions.$hash"
 import GovernancePage from "./routes/governance"
 import GovernanceDetailPage from "./routes/governance.$id"
+import IbcPage from "./routes/ibc"
 
 const router = createBrowserRouter([
 	{
@@ -53,7 +54,8 @@ const router = createBrowserRouter([
 					{ index: true, element: <GovernancePage /> },
 					{ path: ":id", element: <GovernanceDetailPage /> }
 				]
-			}
+			},
+			{ path: "ibc", element: <IbcPage /> }
 		]
 	}
 ])
