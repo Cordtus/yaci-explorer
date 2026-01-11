@@ -32,7 +32,7 @@ const styles = {
   container: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: '6',
+    gap: '5',
   }),
   title: css({
     fontSize: '3xl',
@@ -40,7 +40,7 @@ const styles = {
   }),
   gridTwo: css({
     display: 'grid',
-    gap: '6',
+    gap: '5',
     gridTemplateColumns: {
       base: '1fr',
       lg: 'repeat(2, 1fr)',

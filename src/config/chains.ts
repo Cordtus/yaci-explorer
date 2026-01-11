@@ -64,6 +64,19 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     rpcEndpoint: 'https://nodes.chandrastation.com/rpc/manifest/',
     restEndpoint: 'https://nodes.chandrastation.com/api/manifest/',
   },
+  'manifest-ledger-testnet': {
+    name: 'Manifest Testnet',
+    features: {
+      evm: false,
+      ibc: true,
+      wasm: false,
+    },
+    nativeDenom: 'umfx',
+    nativeSymbol: 'MFX',
+    decimals: 6,
+    rpcEndpoint: 'https://nodes.chandrastation.com/rpc/manifest/',
+    restEndpoint: 'https://nodes.chandrastation.com/api/manifest/',
+  },
   'juno-1': {
     name: 'Juno Network',
     features: {

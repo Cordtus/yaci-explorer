@@ -77,8 +77,8 @@ const TableHead = React.forwardRef<
     className={cx(
       slots.head,
       css({
-        h: '12',
-        px: '4',
+        h: '10',
+        px: '3',
         textAlign: 'left',
         verticalAlign: 'middle',
         fontWeight: 'medium',
@@ -97,7 +97,7 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cx(slots.cell, css({ p: '4', verticalAlign: 'middle' }), className)}
+    className={cx(slots.cell, css({ px: '3', py: '2.5', verticalAlign: 'middle' }), className)}
     {...props}
   />
 ))

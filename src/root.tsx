@@ -42,11 +42,11 @@ export default function Root() {
 						<main
 							className={css({
 								flex: "1",
-								maxW: "6xl",
+								maxW: "7xl",
 								mx: "auto",
 								w: "full",
 								px: { base: "4", md: "6" },
-								py: { base: "6", md: "8" }
+								py: { base: "4", md: "6" }
 							})}
 						>
 							<Outlet />

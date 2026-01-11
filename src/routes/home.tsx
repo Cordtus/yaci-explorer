@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
       <div className={css({
         display: 'grid',
-        gap: '8',
+        gap: '5',
         gridTemplateColumns: { base: '1fr', lg: 'repeat(2, 1fr)' }
       })}>
         <Card>
@@ -170,7 +170,7 @@ const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8',
+    gap: '5',
   },
   errorContainer: {
     display: 'flex',

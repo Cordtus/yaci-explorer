@@ -30,7 +30,7 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
       ref={ref}
       className={cx(
         slots.header,
-        css({ display: 'flex', flexDir: 'column', gap: '1.5', p: '6' }),
+        css({ display: 'flex', flexDir: 'column', gap: '1.5', p: '4' }),
         className
       )}
       {...props}
@@ -69,7 +69,7 @@ CardDescription.displayName = 'CardDescription'
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cx(slots.body, css({ p: '6', pt: '0' }), className)} {...props} />
+    <div ref={ref} className={cx(slots.body, css({ p: '4', pt: '0' }), className)} {...props} />
   )
 )
 CardContent.displayName = 'CardContent'
@@ -80,7 +80,7 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
       ref={ref}
       className={cx(
         slots.footer,
-        css({ display: 'flex', alignItems: 'center', p: '6', pt: '0' }),
+        css({ display: 'flex', alignItems: 'center', p: '4', pt: '0' }),
         className
       )}
       {...props}
