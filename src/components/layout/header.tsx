@@ -93,9 +93,8 @@ const styles = {
     backdropFilter: 'blur(8px)',
   }),
   container: css({
-    maxW: '7xl',
-    mx: 'auto',
-    px: '4',
+    w: 'full',
+    px: { base: '4', md: '8', lg: '12', xl: '16' },
   }),
   inner: css({
     display: 'flex',

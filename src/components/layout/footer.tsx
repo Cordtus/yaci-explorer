@@ -31,9 +31,8 @@ const styles = {
     mt: 'auto',
   }),
   container: css({
-    maxW: '7xl',
-    mx: 'auto',
-    px: '4',
+    w: 'full',
+    px: { base: '4', md: '8', lg: '12', xl: '16' },
     py: '6',
   }),
   content: css({
