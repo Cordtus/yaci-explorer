@@ -1,6 +1,5 @@
 import { Activity, BarChart3, Blocks, Home, Vote } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
-import { ResetNotice } from '@/components/common/reset-notice'
 import { SearchBar } from '@/components/common/search-bar'
 import { getBrandingConfig } from '@/config/branding'
 import type { ChainFeatures } from '@/config/chains'
@@ -77,7 +76,6 @@ export function Header() {
           </div>
         </div>
       </div>
-      <ResetNotice />
     </header>
   )
 }

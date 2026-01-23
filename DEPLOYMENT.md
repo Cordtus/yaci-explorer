@@ -207,21 +207,9 @@ SKIP_CONFIRM=1 ./scripts/reset-devnet.sh
 
 Bare metal:
 ```bash
-yarn reset:full
 # Full redeploy with rebuild:
 yarn redeploy:systemd
 ```
-
-### Automatic Reset Guard
-
-Set in .env:
-```bash
-ENABLE_CHAIN_RESET_GUARD=true
-CHAIN_RPC_ENDPOINT=http://localhost:26657
-RESET_GUARD_AUTO_TRUNCATE=true
-```
-
-Detects genesis hash change and height rewind, automatically truncates tables or warns for manual intervention.
 
 ## Database Schema
 

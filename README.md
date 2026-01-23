@@ -66,15 +66,13 @@ bun run lint                # Lint code
 | Variable | Purpose | Default |
 | -- | -- | -- |
 | `CHAIN_GRPC_ENDPOINT` | Chain gRPC endpoint | `localhost:9090` |
-| `CHAIN_RPC_ENDPOINT` | Tendermint RPC (used by reset guard/banner) | `http://localhost:26657` |
+| `CHAIN_RPC_ENDPOINT` | Tendermint RPC | `http://localhost:26657` |
 | `POSTGRES_USER` | Database role used by PostgREST/Yaci | `yaci` |
 | `POSTGRES_PASSWORD` | DB password | `changeme` |
 | `VITE_POSTGREST_URL` | PostgREST base URL for the UI | `http://localhost:3000` |
 | `VITE_CHAIN_REST_ENDPOINT` | REST endpoint for IBC denom traces | unset |
 | `CHAIN_ID`, `CHAIN_NAME` | Override auto-detection | auto |
 | `YACI_IMAGE` | Yaci image tag | `ghcr.io/cordtus/yaci:main` |
-| `ENABLE_CHAIN_RESET_GUARD` | Auto-wipe DB when chain restarts | `false` |
-| `RESET_GUARD_AUTO_TRUNCATE` | Whether the guard truncates automatically | `true` |
 
 ### Frontend config overrides (`VITE_*`)
 All UI timing/limit constants can be tuned via env vars (see `.env.example`). Highlights:
@@ -84,7 +82,6 @@ All UI timing/limit constants can be tuned via env vars (see `.env.example`). Hi
 | `VITE_TX_PAGE_SIZE` | Transactions per page | `20` |
 | `VITE_SEARCH_ADDRESS_LIMIT` | Max address results checked | `20` |
 | `VITE_ANALYTICS_*` | Lookbacks + refresh intervals for charts/cards | (various) |
-| `VITE_RESET_NOTICE_ENABLED` | Toggle the chain-reset banner | `true` |
 | `VITE_QUERY_*` | React Query cache timings | `10s` / `5m` |
 
 Multi-chain: run separate compose stacks with unique `POSTGRES_PORT`, `POSTGREST_PORT`, `EXPLORER_PORT`.
@@ -125,8 +122,6 @@ curl "http://localhost:3000/messages_main?mentions=cs.{ADDRESS}"
 **Single method:** `bun run reset:db` (or `./scripts/reset-database.sh`)
 - Docker: Stops services, removes postgres volume, restarts
 - Bare-metal: Truncates index tables via psql
-
-**Auto-detection:** Set `ENABLE_CHAIN_RESET_GUARD=true` + `CHAIN_RPC_ENDPOINT` for automatic reset on chain restart.
 
 ## License
 

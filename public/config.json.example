@@ -42,11 +42,6 @@
     "networkMessageWindow": 2000,
     "networkRefetchMs": 10000
   },
-  "resetNotice": {
-    "enabled": true,
-    "refetchIntervalMs": 30000,
-    "hashCheckHeight": 5
-  },
   "branding": {
     "logoUrl": "",
     "faviconUrl": "",

@@ -41,9 +41,6 @@
     "networkMessageWindow": 2000,
     "networkRefetchMs": 10000
   },
-  "resetNotice": {
-    "enabled": false
-  },
   "branding": {
     "footerText": "Manifest Network Explorer"
   },

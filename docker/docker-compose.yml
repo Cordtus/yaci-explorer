@@ -39,29 +39,6 @@ services:
     networks:
       - yaci-network
 
-  chain-reset-guard:
-    image: alpine:3.19
-    container_name: yaci-explorer-reset-guard
-    command: ["/bin/sh", "/scripts/chain-reset-guard.sh"]
-    environment:
-      ENABLE_CHAIN_RESET_GUARD: ${ENABLE_CHAIN_RESET_GUARD:-false}
-      CHAIN_RPC_ENDPOINT: ${CHAIN_RPC_ENDPOINT:-}
-      RESET_GUARD_RPC_ENDPOINT: ${RESET_GUARD_RPC_ENDPOINT:-}
-      RESET_GUARD_DB_URI: ${RESET_GUARD_DB_URI:-}
-      RESET_GUARD_AUTO_TRUNCATE: ${RESET_GUARD_AUTO_TRUNCATE:-true}
-      POSTGRES_USER: ${POSTGRES_USER:-yaci}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB:-yaci}
-      POSTGRES_HOST: postgres
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ../scripts/chain-reset-guard.sh:/scripts/chain-reset-guard.sh:ro
-    networks:
-      - yaci-network
-    restart: "no"
-
   yaci:
     image: ghcr.io/cordtus/yaci:main
     container_name: yaci-indexer
@@ -83,8 +60,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      chain-reset-guard:
-        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - yaci-network

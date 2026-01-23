@@ -48,8 +48,4 @@ interface RuntimeConfig {
 	readonly analyticsNetworkTxWindow?: number
 	readonly analyticsNetworkMsgWindow?: number
 	readonly analyticsNetworkRefreshMs?: number
-	// Reset notice
-	readonly resetNoticeEnabled?: boolean
-	readonly resetNoticeRefetchMs?: number
-	readonly resetNoticeHashCheckHeight?: number
 }

@@ -47,10 +47,6 @@ export interface AppConfig {
 	analyticsNetworkTxWindow?: number
 	analyticsNetworkMsgWindow?: number
 	analyticsNetworkRefreshMs?: number
-	// Reset notice
-	resetNoticeEnabled?: boolean
-	resetNoticeRefetchMs?: number
-	resetNoticeHashCheckHeight?: number
 }
 
 // Default configuration - used when config.json is not available
@@ -87,10 +83,6 @@ const defaultConfig: AppConfig = {
 	analyticsNetworkTxWindow: 1000,
 	analyticsNetworkMsgWindow: 2000,
 	analyticsNetworkRefreshMs: 10_000,
-	// Reset notice defaults
-	resetNoticeEnabled: true,
-	resetNoticeRefetchMs: 30_000,
-	resetNoticeHashCheckHeight: 5,
 }
 
 // Loaded configuration (populated at runtime)
@@ -183,10 +175,6 @@ export function getEnv(key: string, fallback?: string): string | undefined {
 		'VITE_ANALYTICS_NETWORK_TX_WINDOW': config.analyticsNetworkTxWindow,
 		'VITE_ANALYTICS_NETWORK_MSG_WINDOW': config.analyticsNetworkMsgWindow,
 		'VITE_ANALYTICS_NETWORK_REFRESH_MS': config.analyticsNetworkRefreshMs,
-		// Reset notice
-		'VITE_RESET_NOTICE_ENABLED': config.resetNoticeEnabled,
-		'VITE_RESET_NOTICE_REFETCH_MS': config.resetNoticeRefetchMs,
-		'VITE_RESET_NOTICE_HASH_CHECK_HEIGHT': config.resetNoticeHashCheckHeight,
 	}
 
 	const value = mapping[key]

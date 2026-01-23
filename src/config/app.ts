@@ -42,11 +42,6 @@ function buildAppConfig(): AppConfigType {
       networkMessageWindow: config.analyticsNetworkMsgWindow ?? 2000,
       networkRefetchMs: config.analyticsNetworkRefreshMs ?? 10_000,
     },
-    resetNotice: {
-      enabled: config.resetNoticeEnabled ?? true,
-      refetchIntervalMs: config.resetNoticeRefetchMs ?? 30_000,
-      hashCheckHeight: config.resetNoticeHashCheckHeight ?? 5,
-    },
   }
 }
 
@@ -86,11 +81,6 @@ interface AppConfigType {
     networkTxWindow: number
     networkMessageWindow: number
     networkRefetchMs: number
-  }
-  resetNotice: {
-    enabled: boolean
-    refetchIntervalMs: number
-    hashCheckHeight: number
   }
 }
 

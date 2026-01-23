@@ -95,9 +95,7 @@ pg_db="$(sanitize "$pg_db")"
 pg_host="$(sanitize "$pg_host")"
 pg_port="$(sanitize "$pg_port")"
 
-db_uri="postgres://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
-
-python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port" "$db_uri"
+python3 - <<'PY' "$ENV_FILE" "$pg_user" "$pg_password" "$pg_db" "$pg_host" "$pg_port"
 import pathlib, shlex, sys
 env_path = pathlib.Path(sys.argv[1])
 updates = {
@@ -106,7 +104,6 @@ updates = {
     "POSTGRES_DB": sys.argv[4],
     "POSTGRES_HOST": sys.argv[5],
     "POSTGRES_PORT": sys.argv[6],
-    "RESET_GUARD_DB_URI": sys.argv[7],
     "SKIP_ENV_PROMPTS": "true",
 }
 lines = env_path.read_text().splitlines()
@@ -133,4 +130,3 @@ echo "[configure-env] Updated .env with:"
 echo "  POSTGRES_USER=$pg_user"
 echo "  POSTGRES_DB=$pg_db"
 echo "  POSTGRES_PASSWORD=<hidden>"
-echo "  RESET_GUARD_DB_URI=$db_uri"
