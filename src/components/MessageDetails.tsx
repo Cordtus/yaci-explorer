@@ -89,6 +89,7 @@ interface MessageDetailsProps {
   metadata?: MessageMetadata
   events?: Array<{
     event_type: string
+    msg_index?: number | null
     attributes: Array<{ key: string; value: string }>
   }>
 }
@@ -140,9 +141,13 @@ function normalizeAmounts(amount?: CoinAmount | CoinAmount[]): CoinAmount[] {
   return Array.isArray(amount) ? amount : [amount]
 }
 
-function getEventAttribute(events: Array<{ event_type: string; attributes: Array<{ key: string; value: string }> }>, eventType: string, key: string): string | null {
-  const event = events?.find(e => e.event_type === eventType)
-  if (!event) return null
+function getEventAttribute(events: Array<{ event_type: string; msg_index?: number | null; attributes: Array<{ key: string; value: string }> }>, eventType: string, key: string): string | null {
+  const candidates = events?.filter(e => e.event_type === eventType) || []
+  if (candidates.length === 0) return null
+
+  // Prefer events with explicit msg_index over system events (null msg_index)
+  // to avoid picking up fee transfers instead of actual message transfers
+  const event = candidates.find(e => e.msg_index != null) || candidates[0]
 
   const attr = event.attributes.find(a => a.key === key)
   return attr?.value || null
