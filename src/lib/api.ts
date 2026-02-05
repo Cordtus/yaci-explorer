@@ -262,6 +262,7 @@ export interface DelegationEvent {
 export interface ValidatorStats {
 	total_validators: number
 	active_validators: number
+	inactive_validators: number
 	jailed_validators: number
 	total_bonded_tokens: number
 }

@@ -411,7 +411,15 @@ export default function ValidatorsPage() {
 							<CardContent className={css(styles.statCard)}>
 								<span className={css(styles.statLabel)}>Inactive</span>
 								<span className={css(styles.statValueMuted)}>
-									{stats.total_validators - stats.active_validators}
+									{stats.inactive_validators ?? (stats.total_validators - stats.active_validators - stats.jailed_validators)}
+								</span>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent className={css(styles.statCard)}>
+								<span className={css(styles.statLabel)}>Jailed</span>
+								<span className={css(styles.statValueDanger)}>
+									{stats.jailed_validators}
 								</span>
 							</CardContent>
 						</Card>
