@@ -330,6 +330,45 @@ export interface ValidatorPerformance {
 	delegation_rank: number | null
 }
 
+export interface ValidatorSigningStats {
+	total_blocks: number
+	blocks_signed: number
+	blocks_missed: number
+	signing_percentage: number
+	recent_missed_count: number
+	first_signed_height: number | null
+	last_signed_height: number | null
+}
+
+export interface ValidatorSigningInfo {
+	address: string
+	start_height: string
+	index_offset: string
+	jailed_until: string | null
+	tombstoned: boolean
+	missed_blocks_counter: string
+}
+
+export interface SlashingParams {
+	signed_blocks_window: string
+	min_signed_per_window: string
+	downtime_jail_duration: string
+	slash_fraction_double_sign: string
+	slash_fraction_downtime: string
+}
+
+export interface ValidatorWithSigningStats {
+	operator_address: string
+	moniker: string
+	status: string
+	jailed: boolean
+	tokens: string
+	voting_power_pct: number
+	commission_rate: number
+	signing_percentage: number
+	blocks_missed: number
+}
+
 export interface ValidatorLeaderboardEntry {
 	operator_address: string
 	moniker: string
@@ -341,6 +380,15 @@ export interface ValidatorLeaderboardEntry {
 	lifetime_commission: string
 	jail_count: number
 	last_jailed_height: number | null
+}
+
+export interface BlockSignature {
+	height: number
+	validator_index: number
+	consensus_address: string
+	signed: boolean
+	block_id_flag: number
+	block_time: string | null
 }
 
 export interface ValidatorEventSummary {
@@ -1118,6 +1166,113 @@ export class YaciClient {
 		})
 	}
 
+	/**
+	 * Get signing stats for a specific validator (from indexed block signatures)
+	 */
+	async getValidatorSigningStats(consensusAddress: string, windowSize = 10000): Promise<ValidatorSigningStats> {
+		const result = await this.rpc<ValidatorSigningStats[]>('get_validator_signing_stats', {
+			_consensus_address: consensusAddress,
+			_window_size: windowSize
+		})
+		return result[0]
+	}
+
+	/**
+	 * Get signing stats for all validators (from indexed block signatures)
+	 */
+	async getAllValidatorsSigningStats(windowSize = 10000): Promise<Array<{
+		consensus_address: string
+		total_blocks: number
+		blocks_signed: number
+		blocks_missed: number
+		signing_percentage: number
+	}>> {
+		return this.rpc('get_all_validators_signing_stats', {
+			_window_size: windowSize
+		})
+	}
+
+	/**
+	 * Get validators with signing stats for the list page
+	 */
+	async getValidatorsWithSigningStats(limit = 100, offset = 0): Promise<ValidatorWithSigningStats[]> {
+		return this.rpc('get_validators_with_signing_stats', {
+			_limit: limit,
+			_offset: offset
+		})
+	}
+
+	/**
+	 * Get recent block signatures for a validator (for signing history chart)
+	 */
+	async getValidatorBlockSignatures(consensusAddress: string, limit = 200): Promise<BlockSignature[]> {
+		return this.query('validator_block_signatures', {
+			consensus_address: `eq.${consensusAddress.toUpperCase()}`,
+			order: 'height.desc',
+			limit: String(limit)
+		})
+	}
+
+}
+
+/**
+ * Get live signing info from chain for a validator
+ */
+export async function getValidatorSigningInfoLive(consAddress: string): Promise<ValidatorSigningInfo | null> {
+	const config = getConfig()
+	const apiUrl = config.apiUrl
+
+	const controller = new AbortController()
+	const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+	try {
+		const response = await fetch(`${apiUrl}/chain/slashing/signing_info/${consAddress}`, {
+			signal: controller.signal
+		})
+		clearTimeout(timeoutId)
+
+		if (!response.ok) {
+			console.warn(`Failed to fetch signing info: ${response.status}`)
+			return null
+		}
+
+		const data = await response.json()
+		return data.val_signing_info || null
+	} catch (err) {
+		clearTimeout(timeoutId)
+		console.warn('Failed to fetch signing info:', err)
+		return null
+	}
+}
+
+/**
+ * Get slashing params from chain (includes signed_blocks_window)
+ */
+export async function getSlashingParams(): Promise<SlashingParams | null> {
+	const config = getConfig()
+	const apiUrl = config.apiUrl
+
+	const controller = new AbortController()
+	const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+	try {
+		const response = await fetch(`${apiUrl}/chain/slashing/params`, {
+			signal: controller.signal
+		})
+		clearTimeout(timeoutId)
+
+		if (!response.ok) {
+			console.warn(`Failed to fetch slashing params: ${response.status}`)
+			return null
+		}
+
+		const data = await response.json()
+		return data.params || null
+	} catch (err) {
+		clearTimeout(timeoutId)
+		console.warn('Failed to fetch slashing params:', err)
+		return null
+	}
 }
 
 import { getConfig } from './env'
@@ -1164,5 +1319,43 @@ export async function getAccountBalances(address: string): Promise<TokenBalance[
 			console.warn('Failed to fetch account balances:', error)
 		}
 		return []
+	}
+}
+
+/**
+ * Fetch native token balance via EVM JSON-RPC (fallback when chain-query-service unavailable)
+ * @param evmAddress - The 0x-prefixed EVM address
+ * @returns Token balance in base units (e.g., arai) or null on error
+ */
+export async function getEvmBalance(evmAddress: string): Promise<TokenBalance | null> {
+	try {
+		const { REPUBLIC_CHAIN_CONFIG } = await import('@/lib/chain-config')
+
+		const response = await fetch(REPUBLIC_CHAIN_CONFIG.endpoints.evmRpc, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				jsonrpc: '2.0',
+				method: 'eth_getBalance',
+				params: [evmAddress, 'latest'],
+				id: 1,
+			}),
+		})
+
+		if (!response.ok) return null
+
+		const result = await response.json()
+		if (result.error) return null
+
+		// Convert hex balance to decimal string
+		const balanceWei = BigInt(result.result)
+
+		return {
+			denom: REPUBLIC_CHAIN_CONFIG.nativeCurrency.denom, // 'arai'
+			amount: balanceWei.toString(),
+		}
+	} catch (error) {
+		console.warn('Failed to fetch EVM balance:', error)
+		return null
 	}
 }

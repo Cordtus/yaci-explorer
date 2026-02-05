@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
 import { appConfig } from '@/config/app'
-import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction, formatNativeFee } from '@/lib/utils'
+import { formatHash, formatTimeAgo, getTransactionStatus, getMessageTypeLabel, isEVMTransaction, formatNativeFee, getMessageActionSummary } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Pagination } from '@/components/ui/pagination'
@@ -383,6 +383,11 @@ export default function TransactionsPage() {
 														</Badge>
 													)}
 												</div>
+												{tx.messages.length > 0 && tx.messages[0].data && (
+													<div className={css(styles.actionSummary)}>
+														{getMessageActionSummary(tx.messages[0] as { type: string; data?: Record<string, unknown> })}
+													</div>
+												)}
 											</TableCell>
 											<TableCell>
 												{tx.height ? (
@@ -582,6 +587,12 @@ const styles = {
 	},
 	typeText: {
 		fontSize: '0.875rem'
+	},
+	actionSummary: {
+		fontSize: '0.75rem',
+		color: 'fg.muted',
+		mt: '0.5',
+		fontFamily: 'mono'
 	},
 	countBadge: {
 		fontSize: '0.75rem'

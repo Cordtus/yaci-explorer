@@ -17,10 +17,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AddressChip } from "@/components/AddressChip"
-import { api, } from "@/lib/api"
+import { api, getValidatorSigningInfoLive, getSlashingParams } from "@/lib/api"
 import { formatAddress, formatTimeAgo, fixBech32Address } from "@/lib/utils"
 import { formatDenomAmount } from "@/lib/denom"
 import { getChainInfo } from "@/lib/chain-info"
+import { ValidatorSigningChart } from "@/components/analytics/ValidatorSigningChart"
 import { css } from "@/styled-system/css"
 
 /**
@@ -72,6 +73,17 @@ function formatCommission(rate: number | null): string {
 	if (normalized > 1e6) normalized = normalized / 1e18
 	const pct = normalized > 1 ? normalized : normalized * 100
 	return `${pct.toFixed(2)}%`
+}
+
+/**
+ * Calculate liveness percentage from missed blocks counter and window size
+ */
+function calculateLivenessPercent(missedStr: string, windowStr: string): string {
+	const missed = Number(missedStr)
+	const window = Number(windowStr)
+	if (window === 0) return "100.0"
+	const signed = window - missed
+	return ((signed / window) * 100).toFixed(1)
 }
 
 export default function ValidatorDetailPage() {
@@ -141,6 +153,24 @@ export default function ValidatorDetailPage() {
 		queryFn: () => api.getValidatorTotalRewards(address),
 		enabled: !!address,
 		staleTime: 60000,
+		retry: 1,
+	})
+
+	// Live signing info from chain (Option A - real-time from slashing module)
+	const consensusAddr = validator?.consensus_address
+	const { data: liveSigningInfo, isLoading: liveSigningLoading } = useQuery({
+		queryKey: ["validator-live-signing-info", consensusAddr],
+		queryFn: () => consensusAddr ? getValidatorSigningInfoLive(consensusAddr) : null,
+		enabled: !!consensusAddr,
+		staleTime: 10000, // Refresh every 10 seconds
+		retry: 1,
+	})
+
+	// Slashing params (for context - signed_blocks_window)
+	const { data: slashingParams } = useQuery({
+		queryKey: ["slashing-params"],
+		queryFn: () => getSlashingParams(),
+		staleTime: 300000, // Cache for 5 minutes
 		retry: 1,
 	})
 
@@ -272,6 +302,9 @@ export default function ValidatorDetailPage() {
 							</div>
 						</CardContent>
 					</Card>
+
+					{/* Signing History Chart */}
+					<ValidatorSigningChart consensusAddress={validator.consensus_address} limit={200} />
 
 					{/* Delegation Events */}
 					<Card>
@@ -486,6 +519,22 @@ export default function ValidatorDetailPage() {
 											{performance.blocks_signed.toLocaleString()}
 										</span>
 									</div>
+									<div className={css(styles.sidebarRow)}>
+										<span className={css(styles.sidebarLabel)}>Blocks Missed</span>
+										<span className={css(styles.sidebarValue)} style={{
+											color: performance.blocks_missed > 0 ? "var(--colors-yellow-500)" : "var(--colors-green-500)"
+										}}>
+											{performance.blocks_missed.toLocaleString()}
+										</span>
+									</div>
+									{performance.total_jailing_events > 0 && (
+										<div className={css(styles.sidebarRow)}>
+											<span className={css(styles.sidebarLabel)}>Jailing Events</span>
+											<span className={css(styles.sidebarValue)} style={{ color: "var(--colors-red-500)" }}>
+												{performance.total_jailing_events}
+											</span>
+										</div>
+									)}
 									{performance.rewards_rank && (
 										<div className={css(styles.sidebarRow)}>
 											<span className={css(styles.sidebarLabel)}>Rewards Rank</span>
@@ -545,6 +594,83 @@ export default function ValidatorDetailPage() {
 								</div>
 							) : (
 								<p className={css(styles.mutedText)}>Rewards data not available</p>
+							)}
+						</CardContent>
+					</Card>
+
+					{/* Live Signing Status (from chain's slashing module) */}
+					<Card>
+						<CardHeader>
+							<CardTitle className={css(styles.stakingTitle)}>
+								<Activity className={css(styles.stakingIcon)} />
+								Live Signing Status
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							{liveSigningLoading ? (
+								<div className={css(styles.loadingContainer)}>
+									<Skeleton className={css(styles.skeleton)} />
+								</div>
+							) : liveSigningInfo ? (
+								<div className={css(styles.sidebarFields)}>
+									<div className={css(styles.sidebarRow)}>
+										<span className={css(styles.sidebarLabel)}>Missed Blocks</span>
+										<span
+											className={css(styles.sidebarValue)}
+											style={{
+												color: Number(liveSigningInfo.missed_blocks_counter) > 0
+													? "var(--colors-yellow-500)"
+													: "var(--colors-green-500)"
+											}}
+										>
+											{Number(liveSigningInfo.missed_blocks_counter).toLocaleString()}
+											{slashingParams && (
+												<span className={css(styles.signingWindow)}>
+													{" "}/ {Number(slashingParams.signed_blocks_window).toLocaleString()}
+												</span>
+											)}
+										</span>
+									</div>
+									{slashingParams && (
+										<div className={css(styles.sidebarRow)}>
+											<span className={css(styles.sidebarLabel)}>Current Window</span>
+											<span className={css(styles.sidebarValue)}>
+												{calculateLivenessPercent(
+													liveSigningInfo.missed_blocks_counter,
+													slashingParams.signed_blocks_window
+												)}%
+											</span>
+										</div>
+									)}
+									{liveSigningInfo.tombstoned && (
+										<div className={css(styles.sidebarRow)}>
+											<span className={css(styles.sidebarLabel)}>Status</span>
+											<Badge variant="destructive">Tombstoned</Badge>
+										</div>
+									)}
+									{liveSigningInfo.jailed_until && new Date(liveSigningInfo.jailed_until) > new Date() && (
+										<div className={css(styles.sidebarRow)}>
+											<span className={css(styles.sidebarLabel)}>Jailed Until</span>
+											<span className={css(styles.sidebarValue)}>
+												{formatTimeAgo(liveSigningInfo.jailed_until)}
+											</span>
+										</div>
+									)}
+									<div className={css(styles.sidebarRow)}>
+										<span className={css(styles.sidebarLabel)}>Start Height</span>
+										<span className={css(styles.sidebarValue)}>
+											{Number(liveSigningInfo.start_height).toLocaleString()}
+										</span>
+									</div>
+								</div>
+							) : !validator.consensus_address ? (
+								<p className={css(styles.mutedText)}>
+									No consensus address available
+								</p>
+							) : (
+								<p className={css(styles.mutedText)}>
+									Signing info not available
+								</p>
 							)}
 						</CardContent>
 					</Card>
@@ -877,6 +1003,10 @@ const styles = {
 	sidebarValue: {
 		fontSize: "sm",
 		fontWeight: "medium",
+	},
+	signingWindow: {
+		color: "fg.muted",
+		fontSize: "xs",
 	},
 	errorContent: {
 		pt: "6",

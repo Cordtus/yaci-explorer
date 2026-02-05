@@ -27,8 +27,14 @@ import { formatDenomAmount } from "@/lib/denom"
 import { getChainInfo } from "@/lib/chain-info"
 import { css } from "@/styled-system/css"
 
-type SortField = "tokens" | "moniker" | "commission" | "status" | "delegators"
+type SortField = "tokens" | "moniker" | "commission" | "status" | "delegators" | "uptime"
 type SortDir = "asc" | "desc"
+
+/** Extended validator with signing stats */
+interface ValidatorWithUptime extends Validator {
+	signing_percentage: number | null
+	blocks_missed: number | null
+}
 
 /** Checks if validator is active (bonded and not jailed) */
 function isActiveValidator(v: Validator): boolean {
@@ -41,10 +47,10 @@ function isActiveValidator(v: Validator): boolean {
  * Secondary: user-selected field and direction
  */
 function sortValidators(
-	validators: Validator[] | undefined,
+	validators: ValidatorWithUptime[] | undefined,
 	sortBy: SortField,
 	sortDir: SortDir
-): Validator[] {
+): ValidatorWithUptime[] {
 	if (!validators) return []
 	return [...validators].sort((a, b) => {
 		// Primary sort: active validators first
@@ -71,6 +77,9 @@ function sortValidators(
 				break
 			case "delegators":
 				cmp = (a.delegator_count || 0) - (b.delegator_count || 0)
+				break
+			case "uptime":
+				cmp = (a.signing_percentage ?? 100) - (b.signing_percentage ?? 100)
 				break
 		}
 		return sortDir === "desc" ? -cmp : cmp
@@ -106,6 +115,17 @@ function formatCommission(rate: number | null): string {
 	if (normalized > 1e6) normalized = normalized / 1e18
 	const pct = normalized > 1 ? normalized : normalized * 100
 	return `${pct.toFixed(2)}%`
+}
+
+/**
+ * Returns color style for uptime percentage:
+ * green (>=95%), yellow (>=80%), red (<80%)
+ */
+function getUptimeColor(pct: number | null): string {
+	if (pct === null) return "fg.muted"
+	if (pct >= 95) return "republicGreen.default"
+	if (pct >= 80) return "yellow.500"
+	return "red.500"
 }
 
 function ValidatorEvents() {
@@ -153,7 +173,7 @@ function ValidatorEvents() {
 					<div className={css(styles.eventsEmptyText)}>
 						<div className={css(styles.eventsEmptyTitle)}>No Recent Events</div>
 						<div className={css(styles.eventsEmptyDesc)}>
-							No slashing or jailing events have occurred recently.
+							No slashing or liveness events have occurred recently.
 						</div>
 					</div>
 				</CardContent>
@@ -164,9 +184,9 @@ function ValidatorEvents() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Recent Validator Events</CardTitle>
+				<CardTitle>Recent Liveness Events</CardTitle>
 				<CardDescription>
-					Slashing and jailing events from finalize_block_events
+					Slashing, jailing, and liveness fault events from finalize_block_events
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -184,13 +204,35 @@ function ValidatorEvents() {
 									<Badge variant={event.event_type === "slash" ? "destructive" : "outline"}>
 										{event.event_type.toUpperCase()}
 									</Badge>
-									<span className={css(styles.eventMoniker)}>
-										{event.moniker || formatAddress(event.validator_address, 8)}
-									</span>
+									{event.operator_address ? (
+										<Link
+											to={`/validators/${event.operator_address}`}
+											className={css(styles.eventMoniker)}
+										>
+											{event.moniker || "Unknown Validator"}
+										</Link>
+									) : (
+										<span className={css(styles.eventMoniker)}>
+											{event.moniker || "Unknown Validator"}
+										</span>
+									)}
 								</div>
-								<div className={css(styles.eventReason)}>
-									{event.reason || "No reason provided"}
-									{event.power && ` (Power: ${event.power})`}
+								<div className={css(styles.eventDetails)}>
+									<div className={css(styles.eventReason)}>
+										{formatEventReason(event.event_type, event.reason)}
+									</div>
+									<div className={css(styles.eventAddresses)}>
+										<span className={css(styles.eventAddressLabel)}>Consensus:</span>
+										<code className={css(styles.eventAddressValue)}>
+											{formatAddress(event.validator_address, 12)}
+										</code>
+										{event.power && (
+											<>
+												<span className={css(styles.eventAddressLabel)}>Power:</span>
+												<span className={css(styles.eventAddressValue)}>{event.power}</span>
+											</>
+										)}
+									</div>
 								</div>
 							</div>
 							<div className={css(styles.eventMeta)}>
@@ -210,6 +252,27 @@ function ValidatorEvents() {
 			</CardContent>
 		</Card>
 	)
+}
+
+/**
+ * Format event reason for better readability
+ */
+function formatEventReason(eventType: string, reason: string | null): string {
+	if (!reason) return "Event occurred"
+	// Clean up common reason formats
+	if (reason.includes("missing_signature")) {
+		return "Missed block signature (liveness fault)"
+	}
+	if (reason.includes("double_sign")) {
+		return "Double signing detected"
+	}
+	if (eventType === "jail") {
+		return `Jailed: ${reason}`
+	}
+	if (eventType === "liveness") {
+		return `Liveness fault: ${reason}`
+	}
+	return reason
 }
 
 export default function ValidatorsPage() {
@@ -244,10 +307,44 @@ export default function ValidatorsPage() {
 		staleTime: 15000,
 	})
 
+	// Fetch signing stats for all validators (indexed block signatures)
+	const { data: signingStats } = useQuery({
+		queryKey: ["validators-signing-stats"],
+		queryFn: () => api.getAllValidatorsSigningStats(10000),
+		staleTime: 30000,
+	})
+
+	// Create a map of consensus_address -> signing stats for quick lookup
+	const signingStatsMap = useMemo(() => {
+		const map = new Map<string, { signing_percentage: number; blocks_missed: number }>()
+		if (signingStats) {
+			for (const stat of signingStats) {
+				map.set(stat.consensus_address, {
+					signing_percentage: stat.signing_percentage,
+					blocks_missed: stat.blocks_missed,
+				})
+			}
+		}
+		return map
+	}, [signingStats])
+
+	// Merge validators with signing stats
+	const validatorsWithUptime = useMemo((): ValidatorWithUptime[] => {
+		if (!validatorsData?.data) return []
+		return validatorsData.data.map((v) => {
+			const stats = v.consensus_address ? signingStatsMap.get(v.consensus_address.toUpperCase()) : null
+			return {
+				...v,
+				signing_percentage: stats?.signing_percentage ?? null,
+				blocks_missed: stats?.blocks_missed ?? null,
+			}
+		})
+	}, [validatorsData, signingStatsMap])
+
 	// Sort validators: active first, then by user-selected secondary sort
 	const sortedValidators = useMemo(() => {
-		return sortValidators(validatorsData?.data, sortBy, sortDir)
-	}, [validatorsData, sortBy, sortDir])
+		return sortValidators(validatorsWithUptime, sortBy, sortDir)
+	}, [validatorsWithUptime, sortBy, sortDir])
 
 	// Paginate the sorted results
 	const paginatedValidators = useMemo(() => {
@@ -333,7 +430,7 @@ export default function ValidatorsPage() {
 			<Tabs defaultValue="validators" className={css(styles.tabs)}>
 				<TabsList>
 					<TabsTrigger value="validators">Validator Set</TabsTrigger>
-					<TabsTrigger value="events">Jailing Events</TabsTrigger>
+					<TabsTrigger value="events">Liveness Events</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="validators" className={css(styles.tabContent)}>
@@ -410,6 +507,12 @@ export default function ValidatorsPage() {
 										<TableHead>IPFS</TableHead>
 										<TableHead
 											className={css(styles.sortableHead)}
+											onClick={() => handleSort("uptime")}
+										>
+											Uptime{sortIndicator("uptime")}
+										</TableHead>
+										<TableHead
+											className={css(styles.sortableHead)}
 											onClick={() => handleSort("delegators")}
 										>
 											Delegators{sortIndicator("delegators")}
@@ -447,6 +550,17 @@ export default function ValidatorsPage() {
 											<TableCell>
 												{validatorStatusBadge(v.status, v.jailed)}
 											</TableCell>
+										<TableCell
+											className={css({
+												fontFamily: "mono",
+												fontSize: "sm",
+												color: getUptimeColor(v.signing_percentage),
+											})}
+										>
+											{v.signing_percentage !== null
+												? `${v.signing_percentage.toFixed(1)}%`
+												: "-"}
+										</TableCell>
 											<TableCell className={css(styles.monoSmall)}>
 												{v.ipfs_peer_id
 													? `${v.ipfs_peer_id.slice(0, 16)}...`
@@ -687,10 +801,32 @@ const styles = {
 	},
 	eventMoniker: {
 		fontWeight: "medium",
+		color: "accent.default",
+		_hover: { textDecoration: "underline" },
 	},
 	eventReason: {
 		fontSize: "sm",
 		color: "fg.muted",
+	},
+	eventDetails: {
+		display: "flex",
+		flexDirection: "column",
+		gap: "1",
+		marginTop: "1",
+	},
+	eventAddresses: {
+		display: "flex",
+		alignItems: "center",
+		gap: "2",
+		fontSize: "xs",
+		flexWrap: "wrap",
+	},
+	eventAddressLabel: {
+		color: "fg.muted",
+	},
+	eventAddressValue: {
+		fontFamily: "mono",
+		color: "fg.subtle",
 	},
 	eventMeta: {
 		textAlign: "right",

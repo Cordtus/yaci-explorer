@@ -406,3 +406,103 @@ export function formatRawFee(amount: string, denom: string): string {
   if (!amount || amount === '0') return `0 ${denom}`
   return `${BigInt(amount).toLocaleString()} ${denom}`
 }
+
+interface MessageData {
+  type: string
+  data?: {
+    from_address?: string
+    to_address?: string
+    amount?: { denom: string; amount: string }[] | { denom: string; amount: string }
+    token?: { denom: string; amount: string }
+    validator_address?: string
+    delegator_address?: string
+    src_validator_address?: string
+    dst_validator_address?: string
+    [key: string]: unknown
+  }
+}
+
+/**
+ * Get a short action summary for a transaction message
+ * Returns a human-readable string like "Sent 100 RAI" or "Delegated to cosmos1..."
+ */
+export function getMessageActionSummary(message: MessageData): string | null {
+  if (!message.type) return null
+
+  const msgType = getMessageTypeLabel(message.type)
+  const data = message.data
+
+  if (!data) return null
+
+  // Extract amount if available
+  let amountStr: string | null = null
+  const rawAmount = data.amount
+  if (rawAmount) {
+    if (Array.isArray(rawAmount) && rawAmount.length > 0) {
+      const { amount, denom } = rawAmount[0]
+      if (amount && denom) {
+        amountStr = formatNativeFee(amount, denom)
+      }
+    } else if (typeof rawAmount === 'object' && 'amount' in rawAmount && 'denom' in rawAmount) {
+      amountStr = formatNativeFee(rawAmount.amount, rawAmount.denom)
+    }
+  }
+
+  // Handle different message types
+  switch (msgType) {
+    case 'Send':
+      if (amountStr && data.to_address) {
+        return `${amountStr} to ${formatAddress(data.to_address, 6)}`
+      }
+      if (amountStr) return amountStr
+      break
+
+    case 'Delegate':
+      if (amountStr && data.validator_address) {
+        return `${amountStr}`
+      }
+      if (amountStr) return amountStr
+      break
+
+    case 'Undelegate':
+      if (amountStr) return `${amountStr}`
+      break
+
+    case 'BeginRedelegate':
+      if (amountStr) return `${amountStr}`
+      break
+
+    case 'WithdrawDelegatorReward':
+      if (data.validator_address) {
+        return `from ${formatAddress(data.validator_address, 6)}`
+      }
+      break
+
+    case 'Vote':
+      if (data.proposal_id) {
+        return `on proposal #${data.proposal_id}`
+      }
+      break
+
+    case 'EthereumTx':
+      if (data.value && typeof data.value === 'string') {
+        const value = BigInt(data.value)
+        if (value > 0) {
+          return `${(Number(value) / 1e18).toFixed(4)} ETH`
+        }
+      }
+      break
+
+    case 'MultiSend':
+      return 'multi-recipient'
+
+    case 'CreateValidator':
+    case 'EditValidator':
+      if (data.moniker) {
+        return String(data.moniker)
+      }
+      break
+  }
+
+  return null
+}

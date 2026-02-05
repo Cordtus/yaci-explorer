@@ -5,7 +5,7 @@ import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activi
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { api, getAccountBalances, type EnhancedTransaction, type TokenBalance } from '@/lib/api'
+import { api, getAccountBalances, getEvmBalance, type EnhancedTransaction, type TokenBalance } from '@/lib/api'
 import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
 import { formatDenomAmount, getDenomMetadata } from '@/lib/denom'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,7 +24,8 @@ import { grid, hstack, center, statRow } from '@/styled-system/patterns'
 
 export default function AddressDetailPage() {
 	const [mounted, setMounted] = useState(false)
-	const [copied, setCopied] = useState(false)
+	const [copiedHex, setCopiedHex] = useState(false)
+	const [copiedBech32, setCopiedBech32] = useState(false)
 	const [page, setPage] = useState(0)
 	const params = useParams()
 	const pageSize = 20
@@ -72,19 +73,42 @@ export default function AddressDetailPage() {
 	})
 
 	const { data: balances, isLoading: balancesLoading } = useQuery({
-		queryKey: ['account-balances', bech32Addr],
+		queryKey: ['account-balances', bech32Addr, hexAddr],
 		queryFn: async () => {
 			if (!bech32Addr) return []
-			return await getAccountBalances(bech32Addr)
+
+			// Try API first (chain-query-service)
+			const apiBalances = await getAccountBalances(bech32Addr)
+			if (apiBalances.length > 0) return apiBalances
+
+			// Fallback to EVM RPC for native balance
+			if (hexAddr) {
+				const evmBalance = await getEvmBalance(hexAddr)
+				if (evmBalance && BigInt(evmBalance.amount) > 0n) {
+					return [evmBalance]
+				}
+			}
+
+			return []
 		},
-		enabled: mounted && !!bech32Addr, // balances require bech32 (REST API)
+		enabled: mounted && !!bech32Addr,
 		staleTime: 30000,
 	})
 
-	const copyToClipboard = (text: string) => {
-		navigator.clipboard.writeText(text)
-		setCopied(true)
-		setTimeout(() => setCopied(false), 2000)
+	const copyHex = () => {
+		if (hexAddr) {
+			navigator.clipboard.writeText(hexAddr)
+			setCopiedHex(true)
+			setTimeout(() => setCopiedHex(false), 2000)
+		}
+	}
+
+	const copyBech32 = () => {
+		if (bech32Addr) {
+			navigator.clipboard.writeText(bech32Addr)
+			setCopiedBech32(true)
+			setTimeout(() => setCopiedBech32(false), 2000)
+		}
 	}
 
 	const isSender = (tx: EnhancedTransaction): boolean => {
@@ -184,8 +208,8 @@ export default function AddressDetailPage() {
 						<p className={css({ fontFamily: 'mono', fontSize: 'sm', wordBreak: 'break-all', flex: '1', fontWeight: isEvmFocused ? 'semibold' : 'normal' })}>
 							{hexAddr}
 						</p>
-						<Button variant="ghost" size="icon" className={css({ w: '8', h: '8', flexShrink: '0' })} onClick={() => hexAddr && copyToClipboard(hexAddr)}>
-							{copied ? <CheckCircle className={css({ w: 'icon.sm', h: 'icon.sm' })} /> : <Copy className={css({ w: 'icon.sm', h: 'icon.sm' })} />}
+						<Button variant="ghost" size="icon" className={css({ w: '8', h: '8', flexShrink: '0' })} onClick={copyHex}>
+							{copiedHex ? <CheckCircle className={css({ w: 'icon.sm', h: 'icon.sm', color: 'green.500' })} /> : <Copy className={css({ w: 'icon.sm', h: 'icon.sm' })} />}
 						</Button>
 					</div>
 					{!isContract && (
@@ -196,8 +220,8 @@ export default function AddressDetailPage() {
 							<p className={css({ fontFamily: 'mono', fontSize: 'sm', wordBreak: 'break-all', flex: '1', fontWeight: !isEvmFocused ? 'semibold' : 'normal' })}>
 								{bech32Addr}
 							</p>
-							<Button variant="ghost" size="icon" className={css({ w: '8', h: '8', flexShrink: '0' })} onClick={() => bech32Addr && copyToClipboard(bech32Addr)}>
-								<Copy className={css({ w: 'icon.sm', h: 'icon.sm' })} />
+							<Button variant="ghost" size="icon" className={css({ w: '8', h: '8', flexShrink: '0' })} onClick={copyBech32}>
+								{copiedBech32 ? <CheckCircle className={css({ w: 'icon.sm', h: 'icon.sm', color: 'green.500' })} /> : <Copy className={css({ w: 'icon.sm', h: 'icon.sm' })} />}
 							</Button>
 						</div>
 					)}

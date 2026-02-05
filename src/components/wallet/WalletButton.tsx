@@ -26,7 +26,7 @@ import { getChainBaseDenom, getChainDisplayDenom } from '@/lib/chain-info'
 import { css, cx } from '@/styled-system/css'
 
 export function WalletButton() {
-	const { isConnected, isConnecting, walletType, evmAddress, cosmosAddress, disconnect } = useWallet()
+	const { isConnected, isConnecting, walletType, evmAddress, cosmosAddress, disconnect, balance: contextBalance, isLoadingBalance: contextBalanceLoading } = useWallet()
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 	const [isDelegationsExpanded, setIsDelegationsExpanded] = useState(false)
@@ -98,11 +98,14 @@ export function WalletButton() {
 	// Connected - show address and dropdown
 	const displayAddress = walletType === 'keplr' ? cosmosAddress : evmAddress
 
-	// Get native balance
+	// Get native balance - prefer API balances, fall back to context balance from EVM RPC
 	const nativeBalance = balances?.find(b => b.denom === baseDenom)
 	const formattedBalance = nativeBalance
 		? formatDenomAmount(nativeBalance.amount, baseDenom, { maxDecimals: 4 })
-		: '0'
+		: contextBalance || '0'
+
+	// Use context loading state when API balances haven't loaded
+	const isBalanceLoading = balancesLoading || (!balances?.length && contextBalanceLoading)
 
 	// Get total staked
 	const totalStaked = delegationsData?.delegations?.reduce(
@@ -172,7 +175,7 @@ export function WalletButton() {
 							<Coins size={14} className={styles.sectionIcon} />
 							<span className={styles.sectionTitle}>Balance</span>
 						</div>
-						{balancesLoading ? (
+						{isBalanceLoading ? (
 							<div className={styles.loadingRow}>
 								<Loader2 size={14} className={styles.spinner} />
 								<span>Loading...</span>
