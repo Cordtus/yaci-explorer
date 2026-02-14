@@ -3,10 +3,12 @@ import { ActiveAddressesChart } from "@/components/analytics/ActiveAddressesChar
 import { BlockIntervalChart } from "@/components/analytics/BlockIntervalChart"
 import { GasUsageChart } from "@/components/analytics/GasUsageChart"
 import { NetworkMetricsCard } from "@/components/analytics/NetworkMetricsCard"
+import { HourlyRewardsChart, DailyRewardsChart } from "@/components/analytics/RewardCharts"
 import { TopEventTypesCard } from "@/components/analytics/TopEventTypesCard"
 import { TopMessageTypesCard } from "@/components/analytics/TopMessageTypesCard"
 import { TransactionVolumeChart } from "@/components/analytics/TransactionVolumeChart"
 import { TxTypeBreakdown } from "@/components/analytics/TxTypeBreakdown"
+import { ValidatorEventsCard } from "@/components/analytics/ValidatorEventsCard"
 import { css } from "../../styled-system/css"
 
 export const AnalyticsPage = () => {
@@ -24,6 +26,10 @@ export const AnalyticsPage = () => {
 				<BlockIntervalChart />
 			</div>
 			<div className={styles.chartGrid}>
+				<HourlyRewardsChart />
+				<DailyRewardsChart />
+			</div>
+			<div className={styles.chartGrid}>
 				<TxTypeBreakdown />
 				<GasUsageChart />
 				<ActiveAddressesChart />
@@ -32,6 +38,7 @@ export const AnalyticsPage = () => {
 				<TopMessageTypesCard />
 				<TopEventTypesCard />
 			</div>
+			<ValidatorEventsCard />
 		</div>
 	)
 }
