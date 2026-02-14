@@ -23,6 +23,8 @@ import {
 	TableRow
 } from "@/components/ui/table"
 import { api } from "@/lib/api"
+import { useChain } from "@/contexts/ChainContext"
+import { ContractDetails } from "@/components/ContractDetails"
 import { formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 import type { EnhancedTransaction } from "@/types/blockchain"
@@ -37,6 +39,16 @@ export const AddressPage = () => {
 	const [page, setPage] = useState(0)
 	const params = useParams()
 	const pageSize = 20
+
+	const { api: chainApi, chainInfo } = useChain()
+
+	// Detect if address is an EVM contract
+	const { data: isContract } = useQuery({
+		queryKey: ["is-evm-contract", chainInfo.chainId, params.id],
+		queryFn: () => params.id ? chainApi.isEvmContract(params.id) : false,
+		enabled: !!params.id && chainInfo.features.evm,
+		staleTime: 60_000,
+	})
 
 	useEffect(() => {
 		setMounted(true)
@@ -368,6 +380,11 @@ export const AddressPage = () => {
 					)}
 				</CardContent>
 			</Card>
+
+			{/* EVM Contract Details */}
+			{isContract && params.id && (
+				<ContractDetails address={params.id} />
+			)}
 		</div>
 	)
 }
