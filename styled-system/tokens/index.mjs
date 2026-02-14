@@ -1451,6 +1451,18 @@ const tokens = {
     "value": "var(--radii-lg)",
     "variable": "var(--radii-l3)"
   },
+  "colors.chain.accent": {
+    "value": "var(--chain-accent, #3b82f6)",
+    "variable": "var(--colors-chain-accent)"
+  },
+  "colors.chain.accent.fg": {
+    "value": "var(--chain-accent-fg, #ffffff)",
+    "variable": "var(--colors-chain-accent\\.fg)"
+  },
+  "colors.chain.accent.subtle": {
+    "value": "var(--chain-accent-subtle, #dbeafe)",
+    "variable": "var(--colors-chain-accent\\.subtle)"
+  },
   "colors.chart.transactions": {
     "value": "var(--colors-chart-transactions)",
     "variable": "var(--colors-chart-transactions)"
@@ -2362,6 +2374,18 @@ const tokens = {
   "colors.colorPalette.text": {
     "value": "var(--colors-color-palette-text)",
     "variable": "var(--colors-color-palette-text)"
+  },
+  "colors.colorPalette.accent": {
+    "value": "var(--colors-color-palette-accent)",
+    "variable": "var(--colors-color-palette-accent)"
+  },
+  "colors.colorPalette.accent.fg": {
+    "value": "var(--colors-color-palette-accent\\.fg)",
+    "variable": "var(--colors-color-palette-accent\\.fg)"
+  },
+  "colors.colorPalette.accent.subtle": {
+    "value": "var(--colors-color-palette-accent\\.subtle)",
+    "variable": "var(--colors-color-palette-accent\\.subtle)"
   },
   "colors.colorPalette.transactions": {
     "value": "var(--colors-color-palette-transactions)",

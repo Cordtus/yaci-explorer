@@ -50,3 +50,12 @@ docs/
 packages/database-client/dist/
 test-results/
 SYSTEM_OVERVIEW.md
+PROJECT_BLUEPRINT.md
+DATA_REPORT.*
+
+# Screenshots (dev artifacts)
+*.png
+
+# Tool configs
+.playwright-mcp/
+.serena/

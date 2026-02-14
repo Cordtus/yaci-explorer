@@ -31,6 +31,8 @@ export interface ChainConfig {
   restEndpoint?: string
   /** Optional: Block explorer URL pattern */
   explorerUrl?: string
+  /** Bech32 address prefix (e.g., 'cosmos', 'osmo', 'manifest') */
+  bech32Prefix: string
 }
 
 /**
@@ -48,6 +50,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'umfx',
     nativeSymbol: 'MFX',
     decimals: 6,
+    bech32Prefix: 'manifest',
     rpcEndpoint: 'https://rpc.manifest.nodestake.top',
     restEndpoint: 'https://api.manifest.nodestake.top',
   },
@@ -61,6 +64,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'ujuno',
     nativeSymbol: 'JUNO',
     decimals: 6,
+    bech32Prefix: 'juno',
     rpcEndpoint: 'https://rpc.juno.strange.love',
     restEndpoint: 'https://api.juno.strange.love',
   },
@@ -75,6 +79,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'uosmo',
     nativeSymbol: 'OSMO',
     decimals: 6,
+    bech32Prefix: 'osmo',
     rpcEndpoint: 'https://rpc.osmosis.zone',
     restEndpoint: 'https://lcd.osmosis.zone',
   },
@@ -88,6 +93,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'uatom',
     nativeSymbol: 'ATOM',
     decimals: 6,
+    bech32Prefix: 'cosmos',
     rpcEndpoint: 'https://rpc.cosmos.network',
     restEndpoint: 'https://api.cosmos.network',
   },
@@ -102,6 +108,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'ustars',
     nativeSymbol: 'STARS',
     decimals: 6,
+    bech32Prefix: 'stars',
     rpcEndpoint: 'https://rpc.stargaze-apis.com',
     restEndpoint: 'https://rest.stargaze-apis.com',
   },
@@ -116,6 +123,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'aevmos',
     nativeSymbol: 'EVMOS',
     decimals: 18,
+    bech32Prefix: 'evmos',
     rpcEndpoint: 'https://evmos-rpc.polkachu.com',
     restEndpoint: 'https://evmos-api.polkachu.com',
   },
@@ -130,6 +138,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'untrn',
     nativeSymbol: 'NTRN',
     decimals: 6,
+    bech32Prefix: 'neutron',
     rpcEndpoint: 'https://rpc.neutron.strange.love',
     restEndpoint: 'https://api.neutron.strange.love',
   },
@@ -143,6 +152,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'atest',
     nativeSymbol: 'TEST',
     decimals: 18,
+    bech32Prefix: 'rai',
   },
   'republic_77701-1': {
     name: 'Republic AI',
@@ -154,6 +164,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeDenom: 'arai',
     nativeSymbol: 'RAI',
     decimals: 18,
+    bech32Prefix: 'rai',
     rpcEndpoint: 'https://rpc.republicai.io',
     restEndpoint: 'https://api.republicai.io',
   },
@@ -181,6 +192,7 @@ export function getChainConfig(chainId: string): ChainConfig {
     nativeDenom: 'unknown',
     nativeSymbol: 'UNKNOWN',
     decimals: 6,
+    bech32Prefix: 'cosmos',
   }
 }
 

@@ -1,3 +1,9 @@
+/**
+ * Application configuration
+ * Reads from runtime config.json (via getConfig) with env var fallbacks
+ */
+import { getConfig } from '@/lib/env'
+
 const toNumber = (value: string | undefined, fallback: number): number => {
   if (value === undefined || value === null || value === '') {
     return fallback
@@ -13,12 +19,14 @@ const toBoolean = (value: string | undefined, fallback: boolean): boolean => {
   return ['true', '1', 'yes', 'on'].includes(value.toLowerCase())
 }
 
-const env = import.meta.env
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
 
-export const appConfig = {
+function buildAppConfig() {
+  const runtime = getConfig()
+  return {
   queries: {
-    staleTimeMs: toNumber(env.VITE_QUERY_STALE_MS, 10_000),
-    gcTimeMs: toNumber(env.VITE_QUERY_GC_MS, 300_000),
+    staleTimeMs: runtime.queries?.staleTimeMs ?? toNumber(env.VITE_QUERY_STALE_MS, 10_000),
+    gcTimeMs: runtime.queries?.gcTimeMs ?? toNumber(env.VITE_QUERY_GC_MS, 300_000),
   },
   transactions: {
     pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 20),
@@ -50,5 +58,8 @@ export const appConfig = {
     hashCheckHeight: toNumber(env.VITE_RESET_NOTICE_HASH_CHECK_HEIGHT, 5),
   },
 } as const
+}
 
-export type AppConfig = typeof appConfig
+export const appConfig = buildAppConfig()
+
+export type AppConfig = ReturnType<typeof buildAppConfig>

@@ -5,9 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun ./index.html --console",
-    "build": "bun build ./index.html --outdir ./build --minify --env PUBLIC_* --target browser --format esm",
-    "start": "bun serve ./build",
+    "dev": "panda codegen && bun ./dev.ts",
+    "build": "panda codegen && NODE_ENV=production bun ./build.ts",
+    "start": "bun serve ./dist",
     "preview": "bun run build && bun run start",
     "prepare": "panda codegen",
     "typecheck": "tsc --noEmit",
@@ -28,6 +28,8 @@
     "lucide-react": "0.554.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "@tanstack/react-table": "^8.21.3",
+    "bech32": "^2.0.0",
     "react-router": "7.9.6"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 import { createBrowserRouter, RouterProvider } from "react-router"
+import { loadConfig } from "@/lib/env"
 import { loggingMiddleware } from "./lib/middleware/logging"
 import Root from "./root"
 import { AddressPage } from "./routes/addr.$id"
@@ -12,6 +13,11 @@ import GovernanceProposalDetailPage from "./routes/governance.$id"
 import HomeRoute from "./routes/home"
 import TransactionsRoute from "./routes/transactions"
 import TransactionDetailRoute from "./routes/transactions.$hash"
+import ValidatorsPage from "./routes/validators"
+import ValidatorDetailPage from "./routes/validators.$address"
+import EvmContractsPage from "./routes/evm-contracts"
+import EvmTokensPage from "./routes/evm-tokens"
+import IbcPage from "./routes/ibc"
 
 const router = createBrowserRouter([
 	{
@@ -37,24 +43,44 @@ const router = createBrowserRouter([
 			{ path: "analytics", element: <AnalyticsPage /> },
 			{ path: "addr/:id", element: <AddressPage /> },
 			{
+				path: "validators",
+				children: [
+					{ index: true, element: <ValidatorsPage /> },
+					{ path: ":address", element: <ValidatorDetailPage /> }
+				]
+			},
+			{
 				path: "governance",
 				children: [
 					{ index: true, element: <GovernancePage /> },
 					{ path: ":id", element: <GovernanceProposalDetailPage /> }
 				]
-			}
+			},
+			{
+				path: "evm",
+				children: [
+					{ path: "contracts", element: <EvmContractsPage /> },
+					{ path: "tokens", element: <EvmTokensPage /> }
+				]
+			},
+			{ path: "ibc", element: <IbcPage /> }
 		]
 	}
 ])
 
-const rootElement = document.getElementById("root")
+async function bootstrap() {
+	await loadConfig()
 
-if (!rootElement) {
-	throw new Error("Root element #root not found")
+	const rootElement = document.getElementById("root")
+	if (!rootElement) {
+		throw new Error("Root element #root not found")
+	}
+
+	ReactDOM.createRoot(rootElement).render(
+		<React.StrictMode>
+			<RouterProvider router={router} />
+		</React.StrictMode>
+	)
 }
 
-ReactDOM.createRoot(rootElement).render(
-	<React.StrictMode>
-		<RouterProvider router={router} />
-	</React.StrictMode>
-)
+bootstrap()

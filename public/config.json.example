@@ -1,0 +1,37 @@
+{
+  "defaultChainId": "manifest-1",
+  "chains": {
+    "manifest-1": {
+      "name": "Manifest Network",
+      "apiUrl": "https://manifest-api.example.com",
+      "chainRestEndpoint": "https://rest.manifest.example.com",
+      "features": { "evm": true, "ibc": true, "wasm": false },
+      "theme": {
+        "accentColor": "#3b82f6",
+        "accentColorFg": "#ffffff",
+        "accentColorSubtle": "#dbeafe",
+        "logo": "/logos/manifest.svg"
+      }
+    },
+    "republic_77701-1": {
+      "name": "Republic AI",
+      "apiUrl": "https://republic-api.example.com",
+      "chainRestEndpoint": "https://rest.republic.example.com",
+      "features": { "evm": true, "ibc": true, "wasm": false },
+      "theme": {
+        "accentColor": "#30FF6E",
+        "accentColorFg": "#052e16",
+        "accentColorSubtle": "#dcfce7",
+        "logo": "/logos/republic.svg"
+      }
+    }
+  },
+  "branding": {
+    "appName": "Yaci Explorer",
+    "footerText": ""
+  },
+  "queries": {
+    "staleTimeMs": 10000,
+    "gcTimeMs": 300000
+  }
+}

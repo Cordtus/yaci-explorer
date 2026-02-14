@@ -10,6 +10,7 @@ export default defineConfig({
   exclude: [
     './node_modules/**/*',
     './build/**/*',
+    './dist/**/*',
   ],
   outdir: 'styled-system',
 
@@ -37,6 +38,17 @@ export default defineConfig({
     extend: {
       semanticTokens: {
         colors: {
+          chain: {
+            accent: {
+              value: 'var(--chain-accent, #3b82f6)',
+            },
+            'accent.fg': {
+              value: 'var(--chain-accent-fg, #ffffff)',
+            },
+            'accent.subtle': {
+              value: 'var(--chain-accent-subtle, #dbeafe)',
+            },
+          },
           chart: {
             transactions: {
               value: { base: '#3b82f6', _dark: '#60a5fa' },
