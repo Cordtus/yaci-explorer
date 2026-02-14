@@ -188,29 +188,3 @@ export function SearchBar() {
 		</div>
 	)
 }
-						</>
-					)}
-				</div>
-			</div>
-
-			{isOpen && query && (
-				<div
-					className={css({
-						position: "absolute",
-						top: "10",
-						w: "full",
-						rounded: "md",
-						borderWidth: "1px",
-						bg: "bg.default",
-						p: "2",
-						boxShadow: "md"
-					})}
-				>
-					<div className={css({ fontSize: "xs", color: "fg.muted" })}>
-						Press Enter to search
-					</div>
-				</div>
-			)}
-		</div>
-	)
-}
