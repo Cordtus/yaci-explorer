@@ -4,7 +4,7 @@
     "manifest-1": {
       "name": "Manifest Network",
       "apiUrl": "https://manifest-api.example.com",
-      "chainRestEndpoint": "https://rest.manifest.example.com",
+      "chainQueryUrl": "https://shared-gateway.example.com/chain/manifest-1",
       "features": { "evm": true, "ibc": true, "wasm": false },
       "theme": {
         "accentColor": "#3b82f6",
@@ -16,7 +16,7 @@
     "republic_77701-1": {
       "name": "Republic AI",
       "apiUrl": "https://republic-api.example.com",
-      "chainRestEndpoint": "https://rest.republic.example.com",
+      "chainQueryUrl": "https://shared-gateway.example.com/chain/republic_77701-1",
       "features": { "evm": true, "ibc": true, "wasm": false },
       "theme": {
         "accentColor": "#30FF6E",

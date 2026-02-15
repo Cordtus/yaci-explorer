@@ -30,6 +30,8 @@ interface ChainContextValue {
 	chainConfig: ChainConfig
 	chainInfo: ChainInfo
 	api: YaciClient
+	/** Base URL for chain query service gRPC proxy (e.g. "/api/chain" or "https://shared.example.com/chain/manifest-1") */
+	chainQueryBaseUrl: string
 	switchChain: (chainId: string) => void
 	availableChains: Array<{ id: string; name: string }>
 }
@@ -48,13 +50,22 @@ function resolveApiUrl(chainId: string): string {
 	return env.VITE_POSTGREST_URL || '/api'
 }
 
-/** Resolve the REST endpoint for a chain */
-function resolveRestEndpoint(chainId: string): string | undefined {
+/**
+ * Resolve the chain query base URL for gRPC proxy calls.
+ * If chainQueryUrl is set in runtime config, use it directly (shared model).
+ * Otherwise, derive from apiUrl (per-deployment model): {apiUrl}/chain
+ */
+function resolveChainQueryBaseUrl(chainId: string): string {
 	const runtimeChain = getRuntimeChainConfig(chainId)
-	if (runtimeChain?.chainRestEndpoint) return runtimeChain.chainRestEndpoint
 
-	const staticConfig = getChainConfig(chainId)
-	return staticConfig.restEndpoint
+	// Shared chain query service: URL already includes chain ID
+	if (runtimeChain?.chainQueryUrl) {
+		return runtimeChain.chainQueryUrl.replace(/\/$/, '')
+	}
+
+	// Per-deployment model: chain query is at {apiUrl}/chain
+	const apiUrl = resolveApiUrl(chainId)
+	return `${apiUrl}/chain`
 }
 
 /** Merge runtime chain config with compile-time defaults */
@@ -71,7 +82,6 @@ function mergeChainConfig(chainId: string): ChainConfig {
 			...staticConfig.features,
 			...runtimeChain.features,
 		},
-		restEndpoint: runtimeChain.chainRestEndpoint || staticConfig.restEndpoint,
 	}
 }
 
@@ -113,6 +123,8 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 		const apiUrl = resolveApiUrl(selectedChainId)
 		return new YaciClient({ baseUrl: apiUrl })
 	}, [selectedChainId])
+
+	const chainQueryBaseUrl = useMemo(() => resolveChainQueryBaseUrl(selectedChainId), [selectedChainId])
 
 	const availableChains = useMemo(() => {
 		const runtimeConfig = getConfig()
@@ -160,9 +172,10 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 		chainConfig,
 		chainInfo,
 		api,
+		chainQueryBaseUrl,
 		switchChain,
 		availableChains,
-	}), [selectedChainId, chainConfig, chainInfo, api, switchChain, availableChains])
+	}), [selectedChainId, chainConfig, chainInfo, api, chainQueryBaseUrl, switchChain, availableChains])
 
 	return (
 		<ChainContext.Provider value={value}>

@@ -19,7 +19,7 @@ export interface ChainFeatureFlags {
 export interface RuntimeChainConfig {
 	name: string
 	apiUrl: string
-	chainRestEndpoint?: string
+	chainQueryUrl?: string
 	features?: ChainFeatureFlags
 	theme?: ChainTheme
 }

@@ -25,10 +25,6 @@ export interface ChainConfig {
   nativeSymbol: string
   /** Number of decimal places */
   decimals: number
-  /** Optional: RPC endpoint for additional queries */
-  rpcEndpoint?: string
-  /** Optional: REST API endpoint */
-  restEndpoint?: string
   /** Optional: Block explorer URL pattern */
   explorerUrl?: string
   /** Bech32 address prefix (e.g., 'cosmos', 'osmo', 'manifest') */
@@ -51,8 +47,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'MFX',
     decimals: 6,
     bech32Prefix: 'manifest',
-    rpcEndpoint: 'https://rpc.manifest.nodestake.top',
-    restEndpoint: 'https://api.manifest.nodestake.top',
   },
   'juno-1': {
     name: 'Juno Network',
@@ -65,8 +59,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'JUNO',
     decimals: 6,
     bech32Prefix: 'juno',
-    rpcEndpoint: 'https://rpc.juno.strange.love',
-    restEndpoint: 'https://api.juno.strange.love',
   },
   'osmosis-1': {
     name: 'Osmosis',
@@ -80,8 +72,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'OSMO',
     decimals: 6,
     bech32Prefix: 'osmo',
-    rpcEndpoint: 'https://rpc.osmosis.zone',
-    restEndpoint: 'https://lcd.osmosis.zone',
   },
   'cosmoshub-4': {
     name: 'Cosmos Hub',
@@ -94,8 +84,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'ATOM',
     decimals: 6,
     bech32Prefix: 'cosmos',
-    rpcEndpoint: 'https://rpc.cosmos.network',
-    restEndpoint: 'https://api.cosmos.network',
   },
   'stargaze-1': {
     name: 'Stargaze',
@@ -109,8 +97,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'STARS',
     decimals: 6,
     bech32Prefix: 'stars',
-    rpcEndpoint: 'https://rpc.stargaze-apis.com',
-    restEndpoint: 'https://rest.stargaze-apis.com',
   },
   'evmos_9001-2': {
     name: 'Evmos',
@@ -124,8 +110,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'EVMOS',
     decimals: 18,
     bech32Prefix: 'evmos',
-    rpcEndpoint: 'https://evmos-rpc.polkachu.com',
-    restEndpoint: 'https://evmos-api.polkachu.com',
   },
   'neutron-1': {
     name: 'Neutron',
@@ -139,8 +123,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'NTRN',
     decimals: 6,
     bech32Prefix: 'neutron',
-    rpcEndpoint: 'https://rpc.neutron.strange.love',
-    restEndpoint: 'https://api.neutron.strange.love',
   },
   'republic_9001-1': {
     name: 'Republic Devnet',
@@ -165,8 +147,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     nativeSymbol: 'RAI',
     decimals: 18,
     bech32Prefix: 'rai',
-    rpcEndpoint: 'https://rpc.republicai.io',
-    restEndpoint: 'https://api.republicai.io',
   },
 }
 

@@ -1187,14 +1187,14 @@ export class YaciClient {
 
 /**
  * Fetch account balances from the chain query service
- * @param chainApiUrl - The API base URL (includes /chain/ proxy)
+ * @param chainQueryBaseUrl - Chain query base URL (e.g. "/api/chain" or "https://shared.example.com/chain/manifest-1")
  * @param address - The bech32 account address
  */
-export async function getAccountBalances(chainApiUrl: string, address: string): Promise<TokenBalance[]> {
+export async function getAccountBalances(chainQueryBaseUrl: string, address: string): Promise<TokenBalance[]> {
 	try {
 		const controller = new AbortController()
 		const timeoutId = setTimeout(() => controller.abort(), 5000)
-		const response = await fetch(`${chainApiUrl}/chain/balances/${address}`, {
+		const response = await fetch(`${chainQueryBaseUrl}/balances/${address}`, {
 			signal: controller.signal,
 		})
 		clearTimeout(timeoutId)
@@ -1208,17 +1208,17 @@ export async function getAccountBalances(chainApiUrl: string, address: string): 
 
 /**
  * Fetch live signing info for a validator from the chain query service
- * @param chainApiUrl - The API base URL
+ * @param chainQueryBaseUrl - Chain query base URL
  * @param consAddress - The consensus address (bech32 cons prefix)
  */
 export async function getValidatorSigningInfoLive(
-	chainApiUrl: string,
+	chainQueryBaseUrl: string,
 	consAddress: string,
 ): Promise<ValidatorSigningInfo | null> {
 	try {
 		const controller = new AbortController()
 		const timeoutId = setTimeout(() => controller.abort(), 5000)
-		const response = await fetch(`${chainApiUrl}/chain/slashing/signing_info/${consAddress}`, {
+		const response = await fetch(`${chainQueryBaseUrl}/slashing/signing_info/${consAddress}`, {
 			signal: controller.signal,
 		})
 		clearTimeout(timeoutId)
@@ -1232,13 +1232,13 @@ export async function getValidatorSigningInfoLive(
 
 /**
  * Fetch slashing parameters from the chain query service
- * @param chainApiUrl - The API base URL
+ * @param chainQueryBaseUrl - Chain query base URL
  */
-export async function getSlashingParams(chainApiUrl: string): Promise<SlashingParams | null> {
+export async function getSlashingParams(chainQueryBaseUrl: string): Promise<SlashingParams | null> {
 	try {
 		const controller = new AbortController()
 		const timeoutId = setTimeout(() => controller.abort(), 5000)
-		const response = await fetch(`${chainApiUrl}/chain/slashing/params`, {
+		const response = await fetch(`${chainQueryBaseUrl}/slashing/params`, {
 			signal: controller.signal,
 		})
 		clearTimeout(timeoutId)
