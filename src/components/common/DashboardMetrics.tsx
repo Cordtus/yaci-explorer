@@ -11,7 +11,7 @@ import { useEffect, useState } from "react"
 import { DenomDisplay } from "@/components/common/DenomDisplay"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { YaciAPIClient } from "@/lib/api/client"
+import { api } from "@/lib/api"
 import { formatDenomAmount } from "@/lib/denom"
 import { getOverviewMetrics } from "@/lib/metrics"
 import { formatNumber } from "@/lib/utils"
@@ -67,7 +67,7 @@ export function DashboardMetrics() {
 							{statsLoading ? (
 								<Skeleton className={styles.skeletonValue} />
 							) : (
-								formatNumber(stats?.latest_block || 0)
+								formatNumber(stats?.latestBlock || 0)
 							)}
 						</div>
 						<p className="text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export function DashboardMetrics() {
 							{statsLoading ? (
 								<Skeleton className={styles.skeletonValue} />
 							) : (
-								formatNumber(stats?.total_transactions || 0)
+								formatNumber(stats?.totalTransactions || 0)
 							)}
 						</div>
 						<p className={styles.subdued}>
@@ -129,14 +129,14 @@ export function DashboardMetrics() {
 						<div className="text-2xl font-bold">
 							{statsLoading ? (
 								<Skeleton className={styles.skeletonValue} />
-							) : stats?.total_supply && stats.total_supply !== "0" ? (
-								formatNumber(stats.total_supply)
+							) : stats?.totalSupply && stats.totalSupply !== "0" ? (
+								formatNumber(stats.totalSupply)
 							) : (
 								<span className="text-muted-foreground text-base">-</span>
 							)}
 						</div>
 						<p className={styles.subdued}>
-							{stats?.total_supply && stats.total_supply !== "0"
+							{stats?.totalSupply && stats.totalSupply !== "0"
 								? "Native Token"
 								: "Requires gRPC query"}
 						</p>
@@ -160,7 +160,7 @@ export function DashboardMetrics() {
 							) : (
 								<div className={styles.revenueWrap}>
 									{Object.entries(feeRevenue).map(([denom, amount]) => {
-										const formatted = formatDenomAmount(amount, denom, {
+										const formatted = formatDenomAmount(String(amount), denom, {
 											maxDecimals: 2
 										})
 										return (
@@ -197,4 +197,50 @@ export function DashboardMetrics() {
 			</div>
 		</>
 	)
+}
+
+const styles = {
+	statCard: css({}),
+	cardHeader: css({
+		display: "flex",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		spaceY: "0",
+		pb: "2"
+	}),
+	cardTitle: css({
+		fontSize: "sm",
+		fontWeight: "medium"
+	}),
+	cardContent: css({}),
+	value: css({
+		fontSize: "2xl",
+		fontWeight: "bold"
+	}),
+	valuePlaceholder: css({
+		fontSize: "base",
+		color: "fg.muted"
+	}),
+	subdued: css({
+		fontSize: "xs",
+		color: "fg.muted"
+	}),
+	icon: css({
+		h: "4",
+		w: "4",
+		color: "fg.muted"
+	}),
+	skeletonValue: css({
+		h: "8",
+		w: "24"
+	}),
+	revenueWrap: css({
+		display: "flex",
+		flexDirection: "column",
+		gap: "1"
+	}),
+	revenueItem: css({
+		fontSize: "sm"
+	})
 }

@@ -10,6 +10,14 @@ import { api } from "@/lib/api"
 import { formatHash, formatTimeAgo, getTransactionStatus } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 
+const latestTransactionSkeletonKeys = [
+	"latest-tx-skeleton-1",
+	"latest-tx-skeleton-2",
+	"latest-tx-skeleton-3",
+	"latest-tx-skeleton-4",
+	"latest-tx-skeleton-5"
+]
+
 export default function DashboardPage() {
 	const [mounted, setMounted] = useState(false)
 
@@ -60,7 +68,7 @@ export default function DashboardPage() {
 						Transactions error: {String(txError)}
 					</p>
 				)}
-				<p className={styles.errorMeta}>API URL: {api.baseUrl}</p>
+				<p className={styles.errorMeta}>API URL: {api.getBaseUrl()}</p>
 			</div>
 		)
 	}
@@ -133,7 +141,7 @@ export default function DashboardPage() {
 					<CardHeader className="flex flex-row items-center justify-between">
 						<CardTitle>Latest Transactions</CardTitle>
 						<Link
-							to="/transactions"
+							to="/tx"
 							className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
 						>
 							View all <ArrowRight className="h-4 w-4" />
@@ -142,8 +150,8 @@ export default function DashboardPage() {
 					<CardContent>
 						<div className="space-y-4">
 							{txLoading
-								? Array.from({ length: 5 }).map((_, i) => (
-										<Skeleton key={i} className="h-16 w-full" />
+								? latestTransactionSkeletonKeys.map((key) => (
+										<Skeleton key={key} className="h-16 w-full" />
 									))
 								: transactions?.data.map((tx) => {
 										const status = getTransactionStatus(tx.error)
@@ -158,7 +166,7 @@ export default function DashboardPage() {
 													</div>
 													<div>
 														<Link
-															to={`/transactions/${tx.id}`}
+															to={`/tx/${tx.id}`}
 															className="font-medium hover:text-primary"
 														>
 															{formatHash(tx.id, 8)}

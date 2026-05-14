@@ -1,5 +1,5 @@
-import { createContext, type ReactNode, useContext, useState } from "react"
-import { extractIBCHash, getDenomMetadata } from "@/lib/denom"
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react"
+import { getDenomMetadata } from "@/lib/denom"
 
 interface DenomContextType {
 	getDenomDisplay: (denom: string) => string
@@ -24,9 +24,9 @@ export function DenomProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		const loadDenomMetadata = async () => {
 			try {
-				const postgrestUrl = import.meta.env.VITE_POSTGREST_URL
+				const postgrestUrl = import.meta.env.VITE_POSTGREST_URL || import.meta.env.POSTGREST_URL
 				if (!postgrestUrl) {
-					throw new Error("VITE_POSTGREST_URL environment variable is not set")
+					throw new Error("VITE_POSTGREST_URL or POSTGREST_URL environment variable is not set")
 				}
 				const response = await fetch(
 					`${postgrestUrl}/denom_metadata?select=denom,symbol`
@@ -59,8 +59,9 @@ export function DenomProvider({ children }: { children: ReactNode }) {
 
 	const getDenomDisplay = (denom: string): string => {
 		// Check cache first
-		if (denomCache.has(denom)) {
-			return denomCache.get(denom)!
+		const cachedDenom = denomCache.get(denom)
+		if (cachedDenom !== undefined) {
+			return cachedDenom
 		}
 
 		// For IBC denoms, return as-is if not in cache (will be truncated by UI)

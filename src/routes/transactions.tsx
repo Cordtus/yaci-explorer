@@ -45,6 +45,29 @@ import {
 } from "@/lib/utils"
 import { css } from "../../styled-system/css"
 
+interface TransactionFilters {
+	status?: "success" | "failed"
+	block_height?: number
+	block_height_min?: number
+	block_height_max?: number
+	timestamp_min?: string
+	timestamp_max?: string
+	message_type?: string
+}
+
+const transactionSkeletonKeys = [
+	"transaction-skeleton-1",
+	"transaction-skeleton-2",
+	"transaction-skeleton-3",
+	"transaction-skeleton-4",
+	"transaction-skeleton-5",
+	"transaction-skeleton-6",
+	"transaction-skeleton-7",
+	"transaction-skeleton-8",
+	"transaction-skeleton-9",
+	"transaction-skeleton-10"
+]
+
 export default function TransactionsPage() {
 	const [page, setPage] = useState(0)
 	const [filterOpen, setFilterOpen] = useState(false)
@@ -71,7 +94,7 @@ export default function TransactionsPage() {
 
 	// Build filters object
 	const buildFilters = () => {
-		const filters: any = {}
+		const filters: TransactionFilters = {}
 
 		// Status filter
 		if (statusFilters.has("success") && !statusFilters.has("failed")) {
@@ -82,20 +105,20 @@ export default function TransactionsPage() {
 
 		// Block filters
 		if (blockFilter) {
-			const parsed = parseInt(blockFilter)
-			if (!isNaN(parsed)) {
+			const parsed = Number.parseInt(blockFilter, 10)
+			if (!Number.isNaN(parsed)) {
 				filters.block_height = parsed
 			}
 		} else {
 			if (blockRangeMin) {
-				const parsed = parseInt(blockRangeMin)
-				if (!isNaN(parsed)) {
+				const parsed = Number.parseInt(blockRangeMin, 10)
+				if (!Number.isNaN(parsed)) {
 					filters.block_height_min = parsed
 				}
 			}
 			if (blockRangeMax) {
-				const parsed = parseInt(blockRangeMax)
-				if (!isNaN(parsed)) {
+				const parsed = Number.parseInt(blockRangeMax, 10)
+				if (!Number.isNaN(parsed)) {
 					filters.block_height_max = parsed
 				}
 			}
@@ -163,14 +186,6 @@ export default function TransactionsPage() {
 		setMessageTypeFilters(newFilters)
 	}
 
-	const hasActiveFilters =
-		statusFilters.size > 0 ||
-		messageTypeFilters.size > 0 ||
-		blockFilter ||
-		blockRangeMin ||
-		blockRangeMax ||
-		timeRangeMin ||
-		timeRangeMax
 	const activeFilterCount =
 		statusFilters.size +
 		messageTypeFilters.size +
@@ -213,7 +228,7 @@ export default function TransactionsPage() {
 										<Checkbox
 											id="status-success"
 											checked={statusFilters.has("success")}
-											onCheckedChange={() => handleStatusToggle("success")}
+											onChange={() => handleStatusToggle("success")}
 										/>
 										<label
 											htmlFor="status-success"
@@ -226,7 +241,7 @@ export default function TransactionsPage() {
 										<Checkbox
 											id="status-failed"
 											checked={statusFilters.has("failed")}
-											onCheckedChange={() => handleStatusToggle("failed")}
+											onChange={() => handleStatusToggle("failed")}
 										/>
 										<label
 											htmlFor="status-failed"
@@ -254,7 +269,7 @@ export default function TransactionsPage() {
 												<Checkbox
 													id={`type-${type}`}
 													checked={messageTypeFilters.has(type)}
-													onCheckedChange={() => handleMessageTypeToggle(type)}
+													onChange={() => handleMessageTypeToggle(type)}
 												/>
 												<label
 													htmlFor={`type-${type}`}
@@ -401,8 +416,8 @@ export default function TransactionsPage() {
 						</TableHeader>
 						<TableBody>
 							{isLoading ? (
-								Array.from({ length: 10 }).map((_, i) => (
-									<TableRow key={i}>
+								transactionSkeletonKeys.map((key) => (
+									<TableRow key={key}>
 										<TableCell colSpan={6}>
 											<Skeleton className={css({ h: "12", w: "full" })} />
 										</TableCell>
@@ -429,7 +444,7 @@ export default function TransactionsPage() {
 										<TableRow key={tx.id}>
 											<TableCell>
 												<Link
-													to={`/transactions/${tx.id}`}
+													to={`/tx/${tx.id}`}
 													className="flex items-center gap-2 font-medium hover:text-primary"
 												>
 													<Activity className="h-4 w-4" />

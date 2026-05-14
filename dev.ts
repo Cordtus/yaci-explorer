@@ -1,10 +1,68 @@
-import { watch } from 'fs'
+import { copyFileSync, existsSync, readdirSync, watch } from 'fs'
 import { join, extname } from 'path'
 import postcss from 'postcss'
 import autoprefixer from 'autoprefixer'
 import pandacss from '@pandacss/dev/postcss'
 
 const PORT = parseInt(process.env.PORT || '5173')
+const browserEnv: Record<string, string> = Object.fromEntries(
+	Object.entries(process.env).filter(([key]) => key.startsWith('VITE_') || key === 'POSTGREST_URL'),
+) as Record<string, string>
+if (!browserEnv.VITE_POSTGREST_URL && process.env.POSTGREST_URL) {
+	browserEnv.VITE_POSTGREST_URL = process.env.POSTGREST_URL
+}
+
+function envFlag(name: string, fallback: boolean): boolean {
+	const value = process.env[name]
+	if (value === undefined) return fallback
+	return value !== 'false' && value !== '0'
+}
+
+function envInt(name: string, fallback: number): number {
+	const value = Number.parseInt(process.env[name] || '', 10)
+	return Number.isFinite(value) ? value : fallback
+}
+
+function buildRuntimeConfig() {
+	const apiUrl = process.env.VITE_POSTGREST_URL || process.env.POSTGREST_URL
+	const chainId = process.env.VITE_DEFAULT_CHAIN_ID || process.env.CHAIN_ID
+	if (!apiUrl || !chainId) return null
+
+	const chainQueryUrl = process.env.VITE_CHAIN_QUERY_URL
+	const chainConfig: Record<string, unknown> = {
+		name: process.env.VITE_CHAIN_NAME || process.env.CHAIN_NAME || chainId,
+		apiUrl,
+		features: {
+			evm: envFlag('VITE_FEATURE_EVM', true),
+			ibc: envFlag('VITE_FEATURE_IBC', true),
+			wasm: envFlag('VITE_FEATURE_WASM', true),
+		},
+		theme: {
+			accentColor: process.env.VITE_ACCENT_COLOR || '#2563eb',
+			accentColorFg: process.env.VITE_ACCENT_COLOR_FG || '#ffffff',
+			accentColorSubtle: process.env.VITE_ACCENT_COLOR_SUBTLE || '#dbeafe',
+		},
+	}
+
+	if (chainQueryUrl) {
+		chainConfig.chainQueryUrl = chainQueryUrl
+	}
+
+	return {
+		defaultChainId: chainId,
+		chains: {
+			[chainId]: chainConfig,
+		},
+		branding: {
+			appName: process.env.VITE_APP_NAME || 'Yaci Explorer',
+			footerText: process.env.VITE_FOOTER_TEXT || '',
+		},
+		queries: {
+			staleTimeMs: envInt('VITE_QUERY_STALE_TIME_MS', 5000),
+			gcTimeMs: envInt('VITE_QUERY_GC_TIME_MS', 300000),
+		},
+	}
+}
 
 const mimeTypes: Record<string, string> = {
 	'.html': 'text/html',
@@ -40,6 +98,7 @@ async function build() {
 		},
 		define: {
 			'process.env.NODE_ENV': JSON.stringify('development'),
+			'import.meta.env': JSON.stringify(browserEnv),
 		},
 	})
 
@@ -83,10 +142,28 @@ async function generateHTML() {
 	await Bun.write('./dist/index.html', html)
 }
 
+async function syncPublicAssets() {
+	const publicDir = './public'
+	if (!existsSync(publicDir)) return
+
+	for (const file of readdirSync(publicDir)) {
+		copyFileSync(join(publicDir, file), join('./dist', file))
+	}
+}
+
+async function generateRuntimeConfig() {
+	const runtimeConfig = buildRuntimeConfig()
+	if (runtimeConfig) {
+		await Bun.write('./dist/config.json', `${JSON.stringify(runtimeConfig, null, 2)}\n`)
+	}
+}
+
 // Initial build
 console.log('Building...')
 const cssOk = await processCSS()
 const buildOk = await build()
+await syncPublicAssets()
+await generateRuntimeConfig()
 await generateHTML()
 
 if (!cssOk || !buildOk) {
@@ -105,6 +182,9 @@ function scheduleRebuild() {
 		console.log('Rebuilding...')
 		await processCSS()
 		await build()
+		await syncPublicAssets()
+		await generateRuntimeConfig()
+		await generateHTML()
 		console.log('Rebuild complete')
 	}, 100)
 }

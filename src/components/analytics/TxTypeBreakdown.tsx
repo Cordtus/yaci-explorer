@@ -21,7 +21,8 @@ async function getTxTypeBreakdown(): Promise<TxBreakdown> {
   let cosmos = 0
 
   stats.forEach((stat) => {
-    if (stat.type?.includes('MsgEthereumTx') || stat.type?.includes('evm')) {
+    const type = stat.message_type || ''
+    if (type.includes('MsgEthereumTx') || type.includes('evm')) {
       evm += stat.count
     } else {
       cosmos += stat.count

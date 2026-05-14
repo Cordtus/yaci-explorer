@@ -25,9 +25,12 @@ import {
 import { api } from "@/lib/api"
 import { useChain } from "@/contexts/ChainContext"
 import { ContractDetails } from "@/components/ContractDetails"
-import { formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
+import { cn, formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
 import { css } from "@/styled-system/css"
-import type { EnhancedTransaction } from "@/types/blockchain"
+
+interface SenderTransaction {
+	messages?: Array<{ sender: string | null }>
+}
 
 /**
  * Address detail page component
@@ -97,7 +100,7 @@ export const AddressPage = () => {
 	 * @param tx - Transaction to check
 	 * @returns True if the address is the sender
 	 */
-	const isSender = (tx: EnhancedTransaction): boolean => {
+	const isSender = (tx: SenderTransaction): boolean => {
 		return tx.messages?.some((msg) => msg.sender === params.id) ?? false
 	}
 
@@ -295,7 +298,7 @@ export const AddressPage = () => {
 													</TableCell>
 													<TableCell>
 														<Link
-															to={`/transactions/${tx.id}`}
+															to={`/tx/${tx.id}`}
 															className="font-mono text-sm text-primary hover:text-primary/80"
 														>
 															{formatHash(tx.id, 8)}

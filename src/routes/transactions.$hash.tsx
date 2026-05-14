@@ -7,13 +7,13 @@ import {
 	Code,
 	Copy,
 	Eye,
+	Loader2,
+	ToggleLeft,
+	ToggleRight,
 	XCircle
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Link, useParams } from "react-router"
-import { AddressChip } from "@/components/AddressChip"
-import { EVMLogsCard } from "@/components/EVMLogsCard"
-import { EVMTransactionCard } from "@/components/EVMTransactionCard"
+import { Link, useParams, useSearchParams } from "react-router"
 import { JsonViewer } from "@/components/JsonViewer"
 import { MessageDetails } from "@/components/MessageDetails"
 import { Badge } from "@/components/ui/badge"
@@ -24,22 +24,13 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger
 } from "@/components/ui/collapsible"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from "@/components/ui/table"
-import { YaciAPIClient } from "@/lib/api/client"
+import { api, type Event } from "@/lib/api"
 import { formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 
 // Helper to group events by event_index, then by attributes
-function groupEvents(events: any[]) {
+function groupEvents(events: Event[]) {
 	const grouped = new Map<
 		number,
 		{
@@ -57,7 +48,8 @@ function groupEvents(events: any[]) {
 				attributes: new Map()
 			})
 		}
-		const eventGroup = grouped.get(event.event_index)!
+		const eventGroup = grouped.get(event.event_index)
+		if (!eventGroup) return
 		if (event.attr_key && event.attr_value !== null) {
 			eventGroup.attributes.set(event.attr_key, event.attr_value)
 		}
@@ -103,10 +95,7 @@ export default function TransactionDetailPage() {
 	const [expandedMessages, setExpandedMessages] = useState<
 		Record<number, boolean>
 	>({})
-	const [expandedEventTypes, setExpandedEventTypes] = useState<
-		Record<string, boolean>
-	>({})
-	const [eventFilter, setEventFilter] = useState("")
+	const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
 	const [evmView, setEvmView] = useState(false)
 	const [isDecodingEVM, setIsDecodingEVM] = useState(false)
 	const [decodeAttempted, setDecodeAttempted] = useState(false)
@@ -129,7 +118,11 @@ export default function TransactionDetailPage() {
 	} = useQuery({
 		queryKey: ["transaction", params.hash],
 		queryFn: async () => {
-			const result = await api.getTransaction(params.hash!)
+			const hash = params.hash
+			if (!hash) {
+				throw new Error("Transaction hash is required")
+			}
+			const result = await api.getTransaction(hash)
 			return result
 		},
 		enabled: mounted && !!params.hash,
@@ -193,7 +186,7 @@ export default function TransactionDetailPage() {
 	if (mounted && error) {
 		return (
 			<div className={styles.stack4}>
-				<Link to="/transactions" className={styles.backLink}>
+				<Link to="/tx" className={styles.backLink}>
 					<ArrowLeft className={styles.iconSm} />
 					Back to Transactions
 				</Link>
@@ -229,13 +222,12 @@ export default function TransactionDetailPage() {
 
 	const isSuccess = !transaction.error
 	const feeAmounts = transaction.fee?.amount ?? []
-	const groupedEvents = groupEvents(transaction.events || [])
 
 	return (
 		<div className={styles.page}>
 			{/* Header */}
 			<div>
-				<Link to="/transactions" className={styles.backLink}>
+				<Link to="/tx" className={styles.backLink}>
 					<ArrowLeft className={styles.iconSm} />
 					Back to Transactions
 				</Link>
@@ -328,7 +320,7 @@ export default function TransactionDetailPage() {
 						<CardContent>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
-									<label className={styles.label}>Block Height</label>
+									<div className={styles.label}>Block Height</div>
 									<p className={styles.valueLg}>
 										<Link
 											to={`/blocks/${transaction.height}`}
@@ -339,7 +331,7 @@ export default function TransactionDetailPage() {
 									</p>
 								</div>
 								<div>
-									<label className={styles.label}>Timestamp</label>
+									<div className={styles.label}>Timestamp</div>
 									{transaction.timestamp ? (
 										<>
 											<p className={styles.textSm}>
@@ -354,22 +346,19 @@ export default function TransactionDetailPage() {
 									)}
 								</div>
 								<div>
-									<label className={styles.label}>Fee</label>
+									<div className={styles.label}>Fee</div>
 									<p className={styles.textSm}>
 										{feeAmounts.length > 0
-											? feeAmounts.map((fee: any, idx: number) => (
-													<span key={idx}>
-														{formatNumber(fee.amount)} {fee.denom}
-														{idx < feeAmounts.length - 1 && ", "}
-													</span>
-												))
+											? feeAmounts
+													.map((fee) => `${formatNumber(fee.amount)} ${fee.denom}`)
+													.join(", ")
 											: "N/A"}
 									</p>
 								</div>
 								<div>
-									<label className="text-sm font-medium text-muted-foreground">
+									<div className="text-sm font-medium text-muted-foreground">
 										Gas Limit
-									</label>
+									</div>
 									<p className="text-sm">
 										{transaction.fee?.gasLimit
 											? formatNumber(transaction.fee.gasLimit)
@@ -380,14 +369,14 @@ export default function TransactionDetailPage() {
 
 							{transaction.memo && (
 								<div className={styles.memo}>
-									<label className={styles.label}>Memo</label>
+									<div className={styles.label}>Memo</div>
 									<p className={styles.memoText}>{transaction.memo}</p>
 								</div>
 							)}
 
 							{transaction.error && (
 								<div className={styles.errorBox}>
-									<label className={styles.label}>Error</label>
+									<div className={styles.label}>Error</div>
 									<p className={styles.errorPill}>{transaction.error}</p>
 								</div>
 							)}
@@ -397,7 +386,7 @@ export default function TransactionDetailPage() {
 								<div className={styles.stack4}>
 									<div className={styles.topDivider}>
 										<p className={styles.label}>Transaction Details</p>
-										{transaction.messages.map((message) => {
+										{transaction.messages.map((message, msgIdx) => {
 											const messageEvents =
 												transaction.events?.filter(
 													(e) =>
@@ -407,7 +396,7 @@ export default function TransactionDetailPage() {
 											const groupedEvents = groupEvents(messageEvents)
 
 											return (
-												<div key={msgIdx} className={styles.messageBlock}>
+												<div key={message.id} className={styles.messageBlock}>
 													{msgIdx > 0 && <div className={styles.divider} />}
 													<MessageDetails
 														type={message.type ?? "Unknown"}
@@ -446,7 +435,7 @@ export default function TransactionDetailPage() {
 
 										return (
 											<Collapsible
-												key={msgIdx}
+												key={message.id}
 												open={isExpanded}
 												onOpenChange={() =>
 													setExpandedMessages((prev) => ({
@@ -521,8 +510,8 @@ export default function TransactionDetailPage() {
 																	<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
 																		Events
 																	</p>
-																	{groupedEvents.map((event, evtIdx) => {
-																		const eventKey = `${msgIdx}-${event.event_index}`
+																	{groupedEvents.map((event) => {
+																		const eventKey = `${message.id}-${event.event_index}`
 																		const isEventExpanded =
 																			expandedEvents[eventKey]
 
@@ -705,27 +694,27 @@ export default function TransactionDetailPage() {
 											</p>
 										</div>
 									)}
-									{transaction.evm_data.from_address && (
+									{transaction.evm_data.from && (
 										<div>
 											<p className="text-muted-foreground">From</p>
 											<p className="font-mono text-xs">
-												{formatHash(transaction.evm_data.from_address, 8)}
+												{formatHash(transaction.evm_data.from, 8)}
 											</p>
 										</div>
 									)}
-									{transaction.evm_data.to_address && (
+									{transaction.evm_data.to && (
 										<div>
 											<p className="text-muted-foreground">To</p>
 											<p className="font-mono text-xs">
-												{formatHash(transaction.evm_data.to_address, 8)}
+												{formatHash(transaction.evm_data.to, 8)}
 											</p>
 										</div>
 									)}
-									{transaction.evm_data.gas_used && (
+									{transaction.evm_data.gasUsed !== null && (
 										<div>
 											<p className="text-muted-foreground">Gas Used</p>
 											<p className="font-mono text-xs">
-												{formatNumber(transaction.evm_data.gas_used)}
+												{formatNumber(transaction.evm_data.gasUsed)}
 											</p>
 										</div>
 									)}

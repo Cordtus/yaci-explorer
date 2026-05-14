@@ -21,11 +21,18 @@ import {
 } from "@/lib/utils"
 import { css } from "../../styled-system/css"
 
+const blockTransactionSkeletonKeys = [
+	"block-transaction-skeleton-1",
+	"block-transaction-skeleton-2",
+	"block-transaction-skeleton-3"
+]
+
 export default function BlockDetailPage() {
 	const [mounted, setMounted] = useState(false)
 	const [copied, setCopied] = useState(false)
 	const params = useParams()
-	const blockHeight = parseInt(params.id!)
+	const blockHeight = Number.parseInt(params.id || "", 10)
+	const hasValidBlockHeight = !Number.isNaN(blockHeight)
 
 	useEffect(() => {
 		setMounted(true)
@@ -41,7 +48,7 @@ export default function BlockDetailPage() {
 			const result = await api.getBlock(blockHeight)
 			return result
 		},
-		enabled: mounted && !isNaN(blockHeight)
+		enabled: mounted && hasValidBlockHeight
 	})
 
 	const { data: transactions, isLoading: txLoading } = useQuery({
@@ -52,7 +59,7 @@ export default function BlockDetailPage() {
 			})
 			return result
 		},
-		enabled: mounted && !isNaN(blockHeight)
+		enabled: mounted && hasValidBlockHeight
 	})
 
 	const copyToClipboard = (text: string) => {
@@ -104,9 +111,6 @@ export default function BlockDetailPage() {
 	const proposerAddress = block.data?.block?.header?.proposer_address || "N/A"
 	const timestamp = block.data?.block?.header?.time || null
 	const txCount = block.data?.txs?.length || 0
-	const ingestedTxCount = transactions?.data.length || 0
-	const missingTxCount = Math.max(txCount - ingestedTxCount, 0)
-	const hasMissingTxs = !txLoading && missingTxCount > 0
 
 	return (
 		<div className={styles.page}>
@@ -198,8 +202,8 @@ export default function BlockDetailPage() {
 						<CardContent>
 							{txLoading ? (
 								<div className="space-y-3">
-									{Array.from({ length: 3 }).map((_, i) => (
-										<Skeleton key={i} className="h-16 w-full" />
+									{blockTransactionSkeletonKeys.map((key) => (
+										<Skeleton key={key} className="h-16 w-full" />
 									))}
 								</div>
 							) : transactions && transactions.data.length > 0 ? (
@@ -217,7 +221,7 @@ export default function BlockDetailPage() {
 													</div>
 													<div>
 														<Link
-															to={`/transactions/${tx.id}`}
+															to={`/tx/${tx.id}`}
 															className="font-medium hover:text-primary font-mono text-sm"
 														>
 															{formatHash(tx.id, 12)}

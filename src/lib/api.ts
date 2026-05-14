@@ -627,11 +627,11 @@ export class YaciClient {
 		return this.query('tx_volume_hourly', params)
 	}
 
-	async getMessageTypeStats(): Promise<Array<{ type: string; count: number }>> {
+	async getMessageTypeStats(): Promise<Array<{ message_type: string; count: number }>> {
 		return this.query('message_type_stats')
 	}
 
-	async getTransactionTypeDistribution(): Promise<Array<{ type: string; count: number }>> {
+	async getTransactionTypeDistribution(): Promise<Array<{ message_type: string; count: number }>> {
 		return this.query('message_type_stats')
 	}
 
@@ -696,11 +696,11 @@ export class YaciClient {
 	}
 
 	async getDistinctMessageTypes(): Promise<string[]> {
-		const result = await this.query<Array<{ type: string }>>('message_type_stats', {
-			select: 'type',
+		const result = await this.query<Array<{ message_type: string }>>('message_type_stats', {
+			select: 'message_type',
 			order: 'count.desc'
 		})
-		return result.map(r => r.type)
+		return result.map(r => r.message_type)
 	}
 
 	async getBlockTimeAnalysis(limit = 100): Promise<{ avg: number; min: number; max: number }> {
@@ -1251,6 +1251,6 @@ export async function getSlashingParams(chainQueryBaseUrl: string): Promise<Slas
 }
 
 // Singleton instance (fallback for code not yet migrated to ChainContext)
-const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
-const baseUrl = env.VITE_POSTGREST_URL || '/api'
+const env = import.meta.env || {}
+const baseUrl = env.VITE_POSTGREST_URL || env.POSTGREST_URL || '/api'
 export const api = new YaciClient({ baseUrl })

@@ -136,6 +136,19 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     decimals: 18,
     bech32Prefix: 'rai',
   },
+  '9001': {
+    name: 'Local Cosmos EVM POC',
+    features: {
+      evm: true,
+      ibc: true,
+      wasm: true,
+      customModules: ['erc20', 'feemarket', 'ibc-go', '08-wasm'],
+    },
+    nativeDenom: 'atest',
+    nativeSymbol: 'TEST',
+    decimals: 18,
+    bech32Prefix: 'cosmos',
+  },
   'republic_77701-1': {
     name: 'Republic AI',
     features: {

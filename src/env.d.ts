@@ -6,6 +6,9 @@ declare module "*.css" {
 interface ImportMetaEnv {
   readonly PUBLIC_POSTGREST_URL?: string;
   readonly PUBLIC_CHAIN_REST_ENDPOINT?: string;
+  readonly POSTGREST_URL?: string;
+  readonly VITE_POSTGREST_URL?: string;
+  readonly VITE_CHAIN_REST_ENDPOINT?: string;
 }
 
 interface ImportMeta {
