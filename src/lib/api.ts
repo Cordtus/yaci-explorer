@@ -610,6 +610,19 @@ export class YaciClient {
 		return this.rpc('universal_search', { _query: query })
 	}
 
+	/**
+	 * Capability advertisement from the backend (`api.chain_features`).
+	 * Returns the module list this deployment serves, or null when unset.
+	 */
+	async getChainFeatures(chainId: string): Promise<string[] | null> {
+		const rows = await this.query<Array<{ features: string[] }>>('chain_features', {
+			chain_id: `eq.${chainId}`,
+			select: 'features',
+			limit: 1,
+		})
+		return rows[0]?.features ?? null
+	}
+
 	// Analytics endpoints
 
 	async getChainStats(): Promise<ChainStats> {

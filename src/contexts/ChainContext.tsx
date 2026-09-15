@@ -99,6 +99,26 @@ function buildChainInfo(chainId: string, config: ChainConfig): ChainInfo {
 	}
 }
 
+/**
+ * Overlay the backend's advertised modules (`api.chain_features`) onto config
+ * defaults. When the backend advertises a set, it is authoritative; when it has
+ * no row (or the fetch fails) the config.json/static flags stand.
+ */
+function applyServerFeatures(info: ChainInfo, serverFeatures: string[] | null): ChainInfo {
+	if (!serverFeatures) return info
+
+	const features: ChainFeatures = { ...info.features }
+	for (const key of Object.keys(features)) {
+		if (typeof features[key] === 'boolean') {
+			features[key] = serverFeatures.includes(key)
+		}
+	}
+	for (const feature of serverFeatures) {
+		if (typeof features[feature] === 'undefined') features[feature] = true
+	}
+	return { ...info, features }
+}
+
 /** Determine initial chain: localStorage > runtime default > first runtime chain */
 function getInitialChainId(): string {
 	const stored = localStorage.getItem(STORAGE_KEY)
@@ -119,12 +139,36 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 	const [selectedChainId, setSelectedChainId] = useState(getInitialChainId)
 
 	const chainConfig = useMemo(() => mergeChainConfig(selectedChainId), [selectedChainId])
-	const chainInfo = useMemo(() => buildChainInfo(selectedChainId, chainConfig), [selectedChainId, chainConfig])
+	const baseChainInfo = useMemo(() => buildChainInfo(selectedChainId, chainConfig), [selectedChainId, chainConfig])
 
 	const api = useMemo(() => {
 		const apiUrl = resolveApiUrl(selectedChainId)
 		return new YaciClient({ baseUrl: apiUrl })
 	}, [selectedChainId])
+
+	// Modules this deployment advertises via api.chain_features
+	const [serverFeatures, setServerFeatures] = useState<string[] | null>(null)
+
+	useEffect(() => {
+		let cancelled = false
+		setServerFeatures(null)
+		api
+			.getChainFeatures(selectedChainId)
+			.then(features => {
+				if (!cancelled) setServerFeatures(features)
+			})
+			.catch(() => {
+				if (!cancelled) setServerFeatures(null)
+			})
+		return () => {
+			cancelled = true
+		}
+	}, [api, selectedChainId])
+
+	const chainInfo = useMemo(
+		() => applyServerFeatures(baseChainInfo, serverFeatures),
+		[baseChainInfo, serverFeatures]
+	)
 
 	const chainQueryBaseUrl = useMemo(() => resolveChainQueryBaseUrl(selectedChainId), [selectedChainId])
 
