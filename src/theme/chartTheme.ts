@@ -7,7 +7,7 @@ const CHART_COLOR_VARS: Record<ChartColorKey, string> = {
   axis: '--colors-chart-axis',
 }
 
-// Fallbacks mirror panda.config.ts semantic tokens for SSR and safety
+// Fallbacks mirror panda.config.ts semantic tokens
 const CHART_FALLBACKS: Record<ChartColorKey, string> = {
   transactions: '#3b82f6',
   gas: '#10b981',
@@ -16,13 +16,11 @@ const CHART_FALLBACKS: Record<ChartColorKey, string> = {
 }
 
 function readCssVar(variable: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  const value = getComputedStyle(document.documentElement).getPropertyValue(variable)
-  return value?.trim() || fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback
 }
 
 /**
- * Retrieves theme-aware chart colors from Panda CSS variables with SSR fallbacks.
+ * Retrieves theme-aware chart colors from Panda CSS variables.
  */
 export function getChartColors(): Record<ChartColorKey, string> {
   return {

@@ -35,29 +35,13 @@ export function formatTimeAgo(timestamp: string): string {
 }
 
 export function formatHash(hash: string, length = 10): string {
-  if (!hash) return ''
-  if (hash.length <= length * 2) return hash
-  return `${hash.slice(0, length)}...${hash.slice(-length)}`
+  return formatAddress(hash, length)
 }
 
 export function formatAmount(amount: string, decimals = 6, symbol = ''): string {
   const value = BigInt(amount) / BigInt(10 ** decimals)
   const formatted = formatNumber(value.toString())
   return symbol ? `${formatted} ${symbol}` : formatted
-}
-
-export function isValidAddress(address: string): boolean {
-  // Check for Cosmos address (bech32)
-  if (address.match(/^[a-z]+1[a-z0-9]{38,}$/)) {
-    return true
-  }
-
-  // Check for EVM address
-  if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return true
-  }
-
-  return false
 }
 
 export function isValidTxHash(hash: string): boolean {

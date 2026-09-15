@@ -21,8 +21,3 @@ export function applyChainTheme(theme?: Partial<ChainTheme>) {
 	root.style.setProperty('--chain-accent-fg', t.accentColorFg)
 	root.style.setProperty('--chain-accent-subtle', t.accentColorSubtle)
 }
-
-/** Reset chain theme to defaults */
-export function resetChainTheme() {
-	applyChainTheme(DEFAULT_THEME)
-}
