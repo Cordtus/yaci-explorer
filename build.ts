@@ -36,6 +36,8 @@ function buildRuntimeConfig() {
 			evm: envFlag('VITE_FEATURE_EVM', true),
 			ibc: envFlag('VITE_FEATURE_IBC', true),
 			wasm: envFlag('VITE_FEATURE_WASM', true),
+			governance: envFlag('VITE_FEATURE_GOVERNANCE', true),
+			staking: envFlag('VITE_FEATURE_STAKING', true),
 		},
 		theme: {
 			accentColor: process.env.VITE_ACCENT_COLOR || '#2563eb',

@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { createBrowserRouter, RouterProvider } from "react-router"
 import { loadConfig } from "@/lib/env"
-import { loggingMiddleware } from "./lib/middleware/logging"
+import { FeatureGate } from "@/components/common/FeatureGate"
 import Root from "./root"
 import { AddressPage } from "./routes/addr.$id"
 import { AnalyticsPage } from "./routes/analytics"
@@ -23,7 +23,6 @@ const router = createBrowserRouter([
 	{
 		path: "/",
 		element: <Root />,
-		middleware: [loggingMiddleware],
 		children: [
 			{ index: true, element: <HomeRoute /> },
 			{
@@ -45,25 +44,25 @@ const router = createBrowserRouter([
 			{
 				path: "validators",
 				children: [
-					{ index: true, element: <ValidatorsPage /> },
-					{ path: ":address", element: <ValidatorDetailPage /> }
+					{ index: true, element: <FeatureGate feature="staking"><ValidatorsPage /></FeatureGate> },
+					{ path: ":address", element: <FeatureGate feature="staking"><ValidatorDetailPage /></FeatureGate> }
 				]
 			},
 			{
 				path: "governance",
 				children: [
-					{ index: true, element: <GovernancePage /> },
-					{ path: ":id", element: <GovernanceProposalDetailPage /> }
+					{ index: true, element: <FeatureGate feature="governance"><GovernancePage /></FeatureGate> },
+					{ path: ":id", element: <FeatureGate feature="governance"><GovernanceProposalDetailPage /></FeatureGate> }
 				]
 			},
 			{
 				path: "evm",
 				children: [
-					{ path: "contracts", element: <EvmContractsPage /> },
-					{ path: "tokens", element: <EvmTokensPage /> }
+					{ path: "contracts", element: <FeatureGate feature="evm"><EvmContractsPage /></FeatureGate> },
+					{ path: "tokens", element: <FeatureGate feature="evm"><EvmTokensPage /></FeatureGate> }
 				]
 			},
-			{ path: "ibc", element: <IbcPage /> }
+			{ path: "ibc", element: <FeatureGate feature="ibc"><IbcPage /></FeatureGate> }
 		]
 	}
 ])

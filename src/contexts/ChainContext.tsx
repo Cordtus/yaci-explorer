@@ -5,7 +5,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { getChainConfig, type ChainConfig, type ChainFeatures } from '@/config/chains'
+import { getChainConfig, resolveFeatures, type ChainConfig, type ChainFeatures } from '@/config/chains'
 import { YaciClient } from '@/lib/api'
 import {
 	getConfig,
@@ -34,6 +34,8 @@ interface ChainContextValue {
 	chainQueryBaseUrl: string
 	switchChain: (chainId: string) => void
 	availableChains: Array<{ id: string; name: string }>
+	/** Whether the selected chain enables a given feature flag (e.g. "evm", "governance") */
+	hasFeature: (feature: string) => boolean
 }
 
 const ChainContext = createContext<ChainContextValue | null>(null)
@@ -93,7 +95,7 @@ function buildChainInfo(chainId: string, config: ChainConfig): ChainInfo {
 		baseDenom: config.nativeDenom,
 		decimals: config.decimals,
 		bech32Prefix: config.bech32Prefix,
-		features: config.features,
+		features: resolveFeatures(config.features),
 	}
 }
 
@@ -143,6 +145,11 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 		}))
 	}, [])
 
+	const hasFeature = useCallback(
+		(feature: string) => Boolean(chainInfo.features[feature]),
+		[chainInfo.features]
+	)
+
 	const switchChain = useCallback((chainId: string) => {
 		if (chainId === selectedChainId) return
 
@@ -175,7 +182,8 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 		chainQueryBaseUrl,
 		switchChain,
 		availableChains,
-	}), [selectedChainId, chainConfig, chainInfo, api, chainQueryBaseUrl, switchChain, availableChains])
+		hasFeature,
+	}), [selectedChainId, chainConfig, chainInfo, api, chainQueryBaseUrl, switchChain, availableChains, hasFeature])
 
 	return (
 		<ChainContext.Provider value={value}>

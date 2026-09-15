@@ -7,23 +7,23 @@ import { SearchBar } from "@/components/common/search-bar"
 import { useChain } from "@/contexts/ChainContext"
 import { getBrandingConfig } from "@/config/branding"
 import { css, cx } from "@/styled-system/css"
-import type { ChainFeatures } from "@/config/chains"
+import type { FeatureKey } from "@/config/chains"
 import type { LucideIcon } from "lucide-react"
 
 interface NavItem {
 	name: string
 	href: string
 	icon: LucideIcon
-	requiresFeature?: keyof ChainFeatures
+	requiresFeature?: FeatureKey
 }
 
 const allNavItems: NavItem[] = [
 	{ name: "Dashboard", href: "/", icon: Home },
 	{ name: "Blocks", href: "/blocks", icon: Blocks },
 	{ name: "Transactions", href: "/tx", icon: Activity },
-	{ name: "Validators", href: "/validators", icon: Shield },
+	{ name: "Validators", href: "/validators", icon: Shield, requiresFeature: "staking" },
 	{ name: "Analytics", href: "/analytics", icon: BarChart3 },
-	{ name: "Governance", href: "/governance", icon: Vote },
+	{ name: "Governance", href: "/governance", icon: Vote, requiresFeature: "governance" },
 	{ name: "Contracts", href: "/evm/contracts", icon: Code, requiresFeature: "evm" },
 	{ name: "Tokens", href: "/evm/tokens", icon: Coins, requiresFeature: "evm" },
 	{ name: "IBC", href: "/ibc", icon: Link2, requiresFeature: "ibc" },
@@ -31,13 +31,13 @@ const allNavItems: NavItem[] = [
 
 /** Builds the visible nav items based on the selected chain's features */
 function useNavItems(): NavItem[] {
-	const { chainInfo } = useChain()
+	const { hasFeature } = useChain()
 	return useMemo(() =>
 		allNavItems.filter(item => {
 			if (!item.requiresFeature) return true
-			return chainInfo.features[item.requiresFeature]
+			return hasFeature(item.requiresFeature)
 		}),
-		[chainInfo.features]
+		[hasFeature]
 	)
 }
 

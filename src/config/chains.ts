@@ -3,22 +3,39 @@
  * Add your chain here to enable chain-specific features and optimizations
  */
 
-export interface ChainFeatures {
-  /** Chain has EVM module (MsgEthereumTx support) */
-  evm: boolean
-  /** Chain has IBC support */
-  ibc: boolean
-  /** Chain has CosmWasm support */
-  wasm: boolean
-  /** Chain has custom modules */
+export const FEATURE_DEFAULTS = {
+  evm: false,
+  ibc: true,
+  wasm: false,
+  governance: true,
+  staking: true,
+} as const
+
+/** Known per-chain feature flags. Add a key here to gate a new area. */
+export type FeatureKey = keyof typeof FEATURE_DEFAULTS
+
+export interface ChainFeatures extends Record<FeatureKey, boolean> {
+  /** Chain has custom modules (module names, not booleans) */
   customModules?: string[]
+  /** Allow per-chain flags beyond the known set (e.g. "compute") */
+  [feature: string]: boolean | string[] | undefined
+}
+
+/** Per-chain overrides; unset flags fall back to FEATURE_DEFAULTS */
+export type FeatureFlags = Partial<Record<FeatureKey, boolean>> & {
+  customModules?: string[]
+}
+
+/** Resolve a chain's partial flags against the defaults */
+export function resolveFeatures(flags?: FeatureFlags): ChainFeatures {
+  return { ...FEATURE_DEFAULTS, ...flags } as ChainFeatures
 }
 
 export interface ChainConfig {
   /** Human-readable chain name */
   name: string
   /** Chain features */
-  features: ChainFeatures
+  features: FeatureFlags
   /** Native base denomination (e.g., 'umfx', 'ujuno') */
   nativeDenom: string
   /** Display symbol (e.g., 'MFX', 'JUNO') */
@@ -194,13 +211,9 @@ export function getChainConfig(chainId: string): ChainConfig {
  */
 export function hasChainFeature(
   chainId: string,
-  feature: keyof ChainFeatures
+  feature: string
 ): boolean {
-  const config = getChainConfig(chainId)
-  if (feature === 'customModules') {
-    return Array.isArray(config.features.customModules) && config.features.customModules.length > 0
-  }
-  return config.features[feature] || false
+  return Boolean(resolveFeatures(getChainConfig(chainId).features)[feature])
 }
 
 /**

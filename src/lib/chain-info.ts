@@ -1,6 +1,6 @@
 // Dynamic chain information detected from blockchain data
 
-import { type ChainFeatures, getChainConfig } from "@/config/chains"
+import { type ChainFeatures, getChainConfig, resolveFeatures } from "@/config/chains"
 import type { YaciClient } from "@/lib/api"
 
 export interface ChainInfo {
@@ -58,7 +58,7 @@ export async function getChainInfo(api: YaciClient): Promise<ChainInfo> {
 			baseDenom,
 			displayDenom,
 			decimals,
-			features: config.features
+			features: resolveFeatures(config.features)
 		}
 
 		return cachedChainInfo
@@ -71,11 +71,7 @@ export async function getChainInfo(api: YaciClient): Promise<ChainInfo> {
 			baseDenom: "unknown",
 			displayDenom: "UNKNOWN",
 			decimals: 6,
-			features: {
-				evm: false,
-				ibc: true,
-				wasm: false
-			}
+			features: resolveFeatures({ evm: false, ibc: true, wasm: false })
 		}
 	}
 }
@@ -105,9 +101,6 @@ function autoDetectDecimals(baseDenom: string): number {
 /**
  * Clear cached chain info (useful for testing or chain switches)
  */
-export function clearChainInfoCache() {
-	cachedChainInfo = null
-}
 export function clearChainInfoCache() {
 	cachedChainInfo = null
 }

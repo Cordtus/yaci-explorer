@@ -14,6 +14,10 @@ export interface ChainFeatureFlags {
 	evm?: boolean
 	ibc?: boolean
 	wasm?: boolean
+	governance?: boolean
+	staking?: boolean
+	/** Any additional per-chain boolean flag (e.g. "compute") */
+	[feature: string]: boolean | undefined
 }
 
 export interface RuntimeChainConfig {
