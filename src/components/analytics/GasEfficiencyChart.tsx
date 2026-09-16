@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { css } from '@/styled-system/css'
 
 export function GasEfficiencyChart() {
   const { data: distribution, isLoading: loadingDist } = useQuery({
@@ -25,7 +24,7 @@ export function GasEfficiencyChart() {
           <CardDescription>Distribution and efficiency metrics</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className={styles.loadingContainer}>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             Loading...
           </div>
         </CardContent>
@@ -58,7 +57,7 @@ export function GasEfficiencyChart() {
     },
     xAxis: {
       type: 'category',
-      data: distribution.map((d) => d.gas_range),
+      data: distribution.map((d) => d.range),
       axisLabel: {
         rotate: 45,
       },
@@ -116,12 +115,8 @@ export function GasEfficiencyChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
+        <ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} />
       </CardContent>
     </Card>
   )
-}
-
-const styles = {
-  loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

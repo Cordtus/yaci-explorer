@@ -3,11 +3,11 @@
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
-		"useIgnoreFile": true
+		"useIgnoreFile": false
 	},
 	"files": {
-		"ignoreUnknown": true,
-		"includes": ["src/**"]
+		"ignoreUnknown": false,
+		"includes": ["src/**", ".react-router/**"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -18,20 +18,7 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noExplicitAny": "off",
-				"noArrayIndexKey": "off"
-			},
-			"complexity": {
-				"noBannedTypes": "off"
-			},
-			"a11y": {
-				"noLabelWithoutControl": "off",
-				"useSemanticElements": "warn",
-				"useFocusableInteractive": "warn",
-				"useAriaPropsSupportedByRole": "off"
-			},
-			"style": {
-				"noNonNullAssertion": "warn"
+				"noArrayIndexKey": "warn"
 			}
 		}
 	},

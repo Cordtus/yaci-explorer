@@ -1,10 +1,9 @@
 /**
  * IBC denom resolution utilities
- * Queries the chain's IBC module to resolve IBC denoms dynamically
+ * Queries the chain query service gRPC proxy to resolve IBC denoms
  */
 
 import { extractIBCHash } from './denom'
-import { getEnv } from './env'
 
 export interface IBCChannelInfo {
 	channelId: string
@@ -32,17 +31,11 @@ export const IBC_CACHE_KEY = 'yaci_ibc_denom_cache'
 export const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
 
 /**
- * Get the chain's REST API endpoint from environment
- */
-function getChainRestEndpoint(): string | undefined {
-	const endpoint = getEnv('VITE_CHAIN_REST_ENDPOINT')
-	return endpoint
-}
-
-/**
- * Query channel information from the chain's IBC module
+ * Query channel information via the chain query service gRPC proxy
+ * @param chainQueryBaseUrl - Base URL for chain query service (e.g. "/api/chain" or "https://shared.example.com/chain/example-1")
  */
 export async function queryChannelInfo(
+	chainQueryBaseUrl: string,
 	channelId: string,
 	portId: string = 'transfer'
 ): Promise<IBCChannelInfo> {
@@ -52,10 +45,8 @@ export async function queryChannelInfo(
 		return cached
 	}
 
-	const restEndpoint = getChainRestEndpoint()
-
-	// Query channel endpoint
-	const channelUrl = `${restEndpoint}/ibc/core/channel/v1/channels/${channelId}/ports/${portId}`
+	// Query channel via gRPC proxy
+	const channelUrl = `${chainQueryBaseUrl}/ibc/channel/${channelId}/${portId}`
 	const channelResp = await fetch(channelUrl)
 
 	if (!channelResp.ok) {
@@ -66,7 +57,7 @@ export async function queryChannelInfo(
 	const channel = channelData.channel
 
 	// Query client state to get counterparty chain ID
-	const clientStateUrl = `${restEndpoint}/ibc/core/channel/v1/channels/${channelId}/ports/${portId}/client_state`
+	const clientStateUrl = `${chainQueryBaseUrl}/ibc/channel/${channelId}/${portId}/client_state`
 	const clientResp = await fetch(clientStateUrl)
 
 	if (!clientResp.ok) {
@@ -122,8 +113,10 @@ export async function resolveIBCDenom(ibcDenom: string): Promise<IBCDenomInfo | 
 /**
  * Resolve IBC denom from transaction event data
  * Extracts channel ID and base denom from fungible_token_packet events
+ * @param chainQueryBaseUrl - Base URL for chain query service gRPC proxy
  */
 export async function resolveIBCDenomFromEvent(
+	chainQueryBaseUrl: string,
 	packetData: {
 		denom: string
 		amount: string
@@ -137,7 +130,7 @@ export async function resolveIBCDenomFromEvent(
 ): Promise<IBCDenomInfo | null> {
 	try {
 		// Get channel info for our receiving channel
-		const channelInfo = await queryChannelInfo(dstChannel, dstPort)
+		const channelInfo = await queryChannelInfo(chainQueryBaseUrl, dstChannel, dstPort)
 
 		// Calculate IBC denom hash
 		const path = `${srcPort}/${srcChannel}/${packetData.denom}`
@@ -197,7 +190,7 @@ function guessDecimals(baseDenom: string): number {
  * Get enhanced base denom info (optional)
  * This could query an external registry or local config
  */
-async function getBaseDenomInfo(_baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
+async function getBaseDenomInfo(baseDenom: string): Promise<{ displayName: string; symbol: string; decimals: number } | null> {
 	// Could query chain registry or other source
 	// For now, return null to use defaults
 	return null

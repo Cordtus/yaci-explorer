@@ -1,9 +1,9 @@
-import { env } from '@/lib/env'
-
 /**
  * Branding and visual identity configuration
- * Override these via environment variables for chain-specific deployments
+ * Reads from runtime config.json branding section, falls back to env vars
  */
+
+import { getConfig } from '@/lib/env'
 
 export interface BrandingConfig {
   /** Application name displayed in header and title */
@@ -34,20 +34,23 @@ export interface BrandingConfig {
  * Get branding configuration from environment variables or defaults
  */
 export function getBrandingConfig(): BrandingConfig {
+  const runtime = getConfig().branding
+  const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
+
   return {
-    appName: env.VITE_APP_NAME || 'Block Explorer',
+    appName: runtime?.appName || env.VITE_APP_NAME || 'Yaci Explorer',
     appNameShort: env.VITE_APP_NAME_SHORT || 'Explorer',
     logoUrl: env.VITE_LOGO_URL,
     faviconUrl: env.VITE_FAVICON_URL,
     primaryColor: env.VITE_PRIMARY_COLOR,
     accentColor: env.VITE_ACCENT_COLOR,
-    footerText: env.VITE_FOOTER_TEXT,
+    footerText: runtime?.footerText || env.VITE_FOOTER_TEXT,
     links: {
-      website: env.VITE_LINK_WEBSITE,
-      docs: env.VITE_LINK_DOCS,
-      github: env.VITE_LINK_GITHUB,
-      discord: env.VITE_LINK_DISCORD,
-      twitter: env.VITE_LINK_TWITTER,
+      website: runtime?.links?.website || env.VITE_LINK_WEBSITE,
+      docs: runtime?.links?.docs || env.VITE_LINK_DOCS,
+      github: runtime?.links?.github || env.VITE_LINK_GITHUB,
+      discord: runtime?.links?.discord || env.VITE_LINK_DISCORD,
+      twitter: runtime?.links?.twitter || env.VITE_LINK_TWITTER,
     },
   }
 }

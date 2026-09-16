@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ReactECharts from 'echarts-for-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { css } from '@/styled-system/css'
 
 export function FeeRevenueChart() {
   const { data, isLoading } = useQuery({
@@ -19,7 +18,7 @@ export function FeeRevenueChart() {
           <CardDescription>Total fee collection breakdown</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className={styles.loadingContainer}>
+          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
             Loading...
           </div>
         </CardContent>
@@ -119,12 +118,8 @@ export function FeeRevenueChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ReactECharts option={option} style={{ height: '400px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
+        <ReactECharts option={option} style={{ height: '400px' }} opts={{ renderer: 'canvas' }} />
       </CardContent>
     </Card>
   )
-}
-
-const styles = {
-  loadingContainer: css({ h: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

@@ -1,6 +1,7 @@
 import type * as React from 'react'
-import { cx, css } from '@/styled-system/css'
-import { badge, type BadgeVariantProps } from '@/styled-system/recipes'
+
+import { cx, css } from '../../../styled-system/css'
+import { badge as badgeRecipe, type BadgeVariantProps } from '../../../styled-system/recipes'
 
 type LegacyVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 
@@ -9,25 +10,37 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const mapVariant = (variant?: BadgeProps['variant']): BadgeVariantProps['variant'] => {
-  if (!variant || variant === 'default') return 'solid'
+  if (!variant || variant === 'default' || variant === 'success' || variant === 'warning') return 'solid'
   if (variant === 'secondary') return 'subtle'
-  if (variant === 'destructive' || variant === 'success' || variant === 'warning') return 'solid'
   return variant as BadgeVariantProps['variant']
 }
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  const recipeClass = badge({ variant: mapVariant(variant) })
+  const base = badgeRecipe({ variant: mapVariant(variant) })
 
-  const colorOverrides =
-    variant === 'success'
-      ? css({ bg: 'green.600', color: 'white' })
+  const overrides =
+    variant === 'destructive'
+      ? css({
+          bg: 'red.default',
+          color: 'red.fg',
+          borderColor: 'red.default',
+          _hover: { bg: 'red.emphasized' },
+        })
+      : variant === 'success'
+      ? css({
+          bg: 'green.3',
+          color: 'green.11',
+          borderColor: 'green.6',
+        })
       : variant === 'warning'
-        ? css({ bg: 'yellow.500', color: 'black' })
-        : variant === 'destructive'
-          ? css({ bg: 'red.600', color: 'white' })
-          : undefined
+      ? css({
+          bg: 'amber.3',
+          color: 'amber.11',
+          borderColor: 'amber.6',
+        })
+      : undefined
 
-  return <div className={cx(recipeClass, colorOverrides, className)} {...props} />
+  return <div className={cx(base, overrides, className)} {...props} />
 }
 
 export { Badge }

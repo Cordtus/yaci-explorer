@@ -1,49 +1,57 @@
-import { NetworkMetricsCard } from '@/components/analytics/NetworkMetricsCard'
-import { BlockIntervalChart } from '@/components/analytics/BlockIntervalChart'
-import { TransactionVolumeChart } from '@/components/analytics/TransactionVolumeChart'
-import { DailyActiveAddressesChart } from '@/components/analytics/DailyActiveAddressesChart'
-import { IBCActivityChart } from '@/components/analytics/IBCActivityChart'
-import { css } from '@/styled-system/css'
+import { Activity } from "lucide-react"
+import { ActiveAddressesChart } from "@/components/analytics/ActiveAddressesChart"
+import { BlockIntervalChart } from "@/components/analytics/BlockIntervalChart"
+import { GasUsageChart } from "@/components/analytics/GasUsageChart"
+import { NetworkMetricsCard } from "@/components/analytics/NetworkMetricsCard"
+import { HourlyRewardsChart, DailyRewardsChart } from "@/components/analytics/RewardCharts"
+import { TopEventTypesCard } from "@/components/analytics/TopEventTypesCard"
+import { TopMessageTypesCard } from "@/components/analytics/TopMessageTypesCard"
+import { TransactionVolumeChart } from "@/components/analytics/TransactionVolumeChart"
+import { TxTypeBreakdown } from "@/components/analytics/TxTypeBreakdown"
+import { ValidatorEventsCard } from "@/components/analytics/ValidatorEventsCard"
+import { css } from "../../styled-system/css"
 
-export default function AnalyticsPage() {
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Network Analytics</h1>
-
-      {/* Primary metrics card */}
-      <NetworkMetricsCard />
-
-      {/* Time series charts */}
-      <div className={styles.gridTwo}>
-        <TransactionVolumeChart />
-        <BlockIntervalChart />
-      </div>
-
-      {/* Activity charts */}
-      <div className={styles.gridTwo}>
-        <DailyActiveAddressesChart />
-        <IBCActivityChart />
-      </div>
-    </div>
-  )
+export const AnalyticsPage = () => {
+	return (
+		<div className={styles.page}>
+			<div className={styles.headerRow}>
+				<Activity className={styles.iconLg} />
+				<div>
+					<h1 className={styles.title}>Network Analytics</h1>
+				</div>
+			</div>
+			<NetworkMetricsCard />
+			<div className={styles.chartGrid}>
+				<TransactionVolumeChart />
+				<BlockIntervalChart />
+			</div>
+			<div className={styles.chartGrid}>
+				<HourlyRewardsChart />
+				<DailyRewardsChart />
+			</div>
+			<div className={styles.chartGrid}>
+				<TxTypeBreakdown />
+				<GasUsageChart />
+				<ActiveAddressesChart />
+			</div>
+			<div className={styles.chartGrid}>
+				<TopMessageTypesCard />
+				<TopEventTypesCard />
+			</div>
+			<ValidatorEventsCard />
+		</div>
+	)
 }
 
 const styles = {
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5',
-  }),
-  title: css({
-    fontSize: '3xl',
-    fontWeight: 'bold',
-  }),
-  gridTwo: css({
-    display: 'grid',
-    gap: '5',
-    gridTemplateColumns: {
-      base: '1fr',
-      lg: 'repeat(2, 1fr)',
-    },
-  }),
+	page: css({ display: "flex", flexDirection: "column", gap: "6" }),
+	headerRow: css({ display: "flex", alignItems: "center", gap: "3" }),
+	iconLg: css({ h: "8", w: "8", color: "colorPalette.default" }),
+	title: css({ fontSize: "3xl", fontWeight: "bold" }),
+	subtitle: css({ color: "fg.muted" }),
+	chartGrid: css({
+		display: "grid",
+		gap: "6",
+		gridTemplateColumns: { base: "1fr", lg: "repeat(2, minmax(0, 1fr))" }
+	})
 }

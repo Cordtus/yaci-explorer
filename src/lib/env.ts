@@ -1,18 +1,35 @@
 /**
- * Configuration system for the block explorer
- * Supports runtime config.json + build-time defaults
+ * Runtime configuration loader
+ * Fetches /config.json at startup and deep-merges with defaults
  */
 
-export interface AppConfig {
+export interface ChainTheme {
+	accentColor: string
+	accentColorFg: string
+	accentColorSubtle: string
+	logo?: string
+}
+
+export interface ChainFeatureFlags {
+	evm?: boolean
+	ibc?: boolean
+	wasm?: boolean
+	governance?: boolean
+	staking?: boolean
+	/** Any additional per-chain boolean flag (e.g. "compute") */
+	[feature: string]: boolean | undefined
+}
+
+export interface RuntimeChainConfig {
+	name: string
 	apiUrl: string
-	chainRestEndpoint?: string
-	evmRpcEndpoint?: string
+	chainQueryUrl?: string
+	features?: ChainFeatureFlags
+	theme?: ChainTheme
+}
+
+export interface BrandingConfig {
 	appName: string
-	appNameShort: string
-	logoUrl?: string
-	faviconUrl?: string
-	primaryColor?: string
-	accentColor?: string
 	footerText?: string
 	links?: {
 		website?: string
@@ -21,170 +38,106 @@ export interface AppConfig {
 		discord?: string
 		twitter?: string
 	}
-	// Query tuning
-	queryStaleMs?: number
-	queryGcMs?: number
-	txPageSize?: number
-	blocksPageSize?: number
-	dashboardRefreshMs?: number
-	dashboardItemCount?: number
-	// Search
-	searchAddressLimit?: number
-	searchAutoNavigateSingle?: boolean
-	// Analytics
-	analyticsVolumeHours?: number
-	analyticsVolumeRefreshMs?: number
-	analyticsMessageSampleLimit?: number
-	analyticsMessageTopN?: number
-	analyticsMessageRefreshMs?: number
-	analyticsEventSampleLimit?: number
-	analyticsEventTopN?: number
-	analyticsEventRefreshMs?: number
-	analyticsBlockIntervalLookback?: number
-	analyticsBlockIntervalRefreshMs?: number
-	analyticsBlockIntervalMaxSeconds?: number
-	analyticsNetworkBlockWindow?: number
-	analyticsNetworkTxWindow?: number
-	analyticsNetworkMsgWindow?: number
-	analyticsNetworkRefreshMs?: number
 }
 
-// Default configuration - used when config.json is not available
-// For Docker deployments, nginx proxies /api to PostgREST
-const defaultConfig: AppConfig = {
-	apiUrl: '/api',
-	chainRestEndpoint: undefined,
-	evmRpcEndpoint: undefined,
-	appName: 'Block Explorer',
-	appNameShort: 'Explorer',
-	// Query defaults
-	queryStaleMs: 10_000,
-	queryGcMs: 300_000,
-	txPageSize: 10,
-	blocksPageSize: 10,
-	dashboardRefreshMs: 6_000,
-	dashboardItemCount: 5,
-	// Search defaults
-	searchAddressLimit: 20,
-	searchAutoNavigateSingle: true,
-	// Analytics defaults
-	analyticsVolumeHours: 24,
-	analyticsVolumeRefreshMs: 60_000,
-	analyticsMessageSampleLimit: 10_000,
-	analyticsMessageTopN: 10,
-	analyticsMessageRefreshMs: 60_000,
-	analyticsEventSampleLimit: 10_000,
-	analyticsEventTopN: 10,
-	analyticsEventRefreshMs: 60_000,
-	analyticsBlockIntervalLookback: 100,
-	analyticsBlockIntervalRefreshMs: 30_000,
-	analyticsBlockIntervalMaxSeconds: 100,
-	analyticsNetworkBlockWindow: 100,
-	analyticsNetworkTxWindow: 1000,
-	analyticsNetworkMsgWindow: 2000,
-	analyticsNetworkRefreshMs: 10_000,
+export interface QueryConfig {
+	staleTimeMs: number
+	gcTimeMs: number
 }
 
-// Loaded configuration (populated at runtime)
-let loadedConfig: AppConfig | null = null
-let configPromise: Promise<AppConfig> | null = null
+export interface RuntimeConfig {
+	defaultChainId: string
+	chains: Record<string, RuntimeChainConfig>
+	branding: BrandingConfig
+	queries: QueryConfig
+}
+
+const DEFAULT_CONFIG: RuntimeConfig = {
+	defaultChainId: 'example-1',
+	chains: {},
+	branding: {
+		appName: 'Yaci Explorer',
+		footerText: '',
+	},
+	queries: {
+		staleTimeMs: 10_000,
+		gcTimeMs: 300_000,
+	},
+}
+
+let loadedConfig: RuntimeConfig | null = null
+
+/** Deep merge source into target (source values win) */
+function deepMerge(target: any, source: any): any {
+	if (!source || typeof source !== 'object') return target
+	const result = { ...target }
+	for (const key of Object.keys(source)) {
+		const srcVal = source[key]
+		const tgtVal = target[key]
+		if (
+			srcVal !== null &&
+			srcVal !== undefined &&
+			typeof srcVal === 'object' &&
+			!Array.isArray(srcVal) &&
+			typeof tgtVal === 'object' &&
+			tgtVal !== null &&
+			!Array.isArray(tgtVal)
+		) {
+			result[key] = deepMerge(tgtVal, srcVal)
+		} else if (srcVal !== undefined) {
+			result[key] = srcVal
+		}
+	}
+	return result
+}
 
 /**
- * Load configuration from /config.json or use defaults
+ * Load runtime config from /config.json
+ * Falls back gracefully to defaults if fetch fails
  */
-export async function loadConfig(): Promise<AppConfig> {
+export async function loadConfig(): Promise<RuntimeConfig> {
 	if (loadedConfig) return loadedConfig
 
-	if (configPromise) return configPromise
-
-	configPromise = (async () => {
-		try {
-			const res = await fetch('/config.json')
-			if (res.ok) {
-				const json = await res.json()
-				loadedConfig = { ...defaultConfig, ...json }
-			} else {
-				console.warn('config.json not found, using defaults')
-				loadedConfig = defaultConfig
-			}
-		} catch {
-			console.warn('Failed to load config.json, using defaults')
-			loadedConfig = defaultConfig
+	try {
+		const res = await fetch('/config.json')
+		if (res.ok) {
+			const userConfig = await res.json() as Partial<RuntimeConfig>
+			loadedConfig = deepMerge(DEFAULT_CONFIG, userConfig)
+		} else {
+			console.warn(`config.json returned ${res.status}, using defaults`)
+			loadedConfig = { ...DEFAULT_CONFIG }
 		}
-		return loadedConfig as AppConfig
-	})()
+	} catch {
+		console.warn('Failed to fetch config.json, using defaults')
+		loadedConfig = { ...DEFAULT_CONFIG }
+	}
 
-	return configPromise
+	return loadedConfig!
 }
 
 /**
- * Get config synchronously (returns defaults if not yet loaded)
+ * Synchronous accessor for already-loaded config
+ * Must call loadConfig() first during app bootstrap
  */
-export function getConfig(): AppConfig {
-	return loadedConfig || defaultConfig
+export function getConfig(): RuntimeConfig {
+	if (!loadedConfig) {
+		console.warn('getConfig() called before loadConfig() -- returning defaults')
+		return DEFAULT_CONFIG
+	}
+	return loadedConfig
 }
 
-/**
- * Legacy env getter for backward compatibility during migration
- * Maps old VITE_ keys to new config properties
- */
-export function getEnv(key: string, fallback?: string): string | undefined {
-	const config = getConfig()
-
-	const mapping: Record<string, string | number | boolean | undefined> = {
-		// Core
-		'VITE_POSTGREST_URL': config.apiUrl,
-		'VITE_CHAIN_REST_ENDPOINT': config.chainRestEndpoint,
-		'VITE_EVM_RPC_ENDPOINT': config.evmRpcEndpoint,
-		// Branding
-		'VITE_APP_NAME': config.appName,
-		'VITE_APP_NAME_SHORT': config.appNameShort,
-		'VITE_LOGO_URL': config.logoUrl,
-		'VITE_FAVICON_URL': config.faviconUrl,
-		'VITE_PRIMARY_COLOR': config.primaryColor,
-		'VITE_ACCENT_COLOR': config.accentColor,
-		'VITE_FOOTER_TEXT': config.footerText,
-		'VITE_LINK_WEBSITE': config.links?.website,
-		'VITE_LINK_DOCS': config.links?.docs,
-		'VITE_LINK_GITHUB': config.links?.github,
-		'VITE_LINK_DISCORD': config.links?.discord,
-		'VITE_LINK_TWITTER': config.links?.twitter,
-		// Query tuning
-		'VITE_QUERY_STALE_MS': config.queryStaleMs,
-		'VITE_QUERY_GC_MS': config.queryGcMs,
-		'VITE_TX_PAGE_SIZE': config.txPageSize,
-		'VITE_BLOCKS_PAGE_SIZE': config.blocksPageSize,
-		'VITE_DASHBOARD_REFRESH_MS': config.dashboardRefreshMs,
-		'VITE_DASHBOARD_ITEM_COUNT': config.dashboardItemCount,
-		// Search
-		'VITE_SEARCH_ADDRESS_LIMIT': config.searchAddressLimit,
-		'VITE_SEARCH_AUTO_NAVIGATE_SINGLE': config.searchAutoNavigateSingle,
-		// Analytics
-		'VITE_ANALYTICS_VOLUME_HOURS': config.analyticsVolumeHours,
-		'VITE_ANALYTICS_VOLUME_REFRESH_MS': config.analyticsVolumeRefreshMs,
-		'VITE_ANALYTICS_MESSAGE_SAMPLE_LIMIT': config.analyticsMessageSampleLimit,
-		'VITE_ANALYTICS_MESSAGE_TOPN': config.analyticsMessageTopN,
-		'VITE_ANALYTICS_MESSAGE_REFRESH_MS': config.analyticsMessageRefreshMs,
-		'VITE_ANALYTICS_EVENT_SAMPLE_LIMIT': config.analyticsEventSampleLimit,
-		'VITE_ANALYTICS_EVENT_TOPN': config.analyticsEventTopN,
-		'VITE_ANALYTICS_EVENT_REFRESH_MS': config.analyticsEventRefreshMs,
-		'VITE_ANALYTICS_BLOCK_INTERVAL_LOOKBACK': config.analyticsBlockIntervalLookback,
-		'VITE_ANALYTICS_BLOCK_INTERVAL_REFRESH_MS': config.analyticsBlockIntervalRefreshMs,
-		'VITE_ANALYTICS_BLOCK_INTERVAL_MAX_SECONDS': config.analyticsBlockIntervalMaxSeconds,
-		'VITE_ANALYTICS_NETWORK_BLOCK_WINDOW': config.analyticsNetworkBlockWindow,
-		'VITE_ANALYTICS_NETWORK_TX_WINDOW': config.analyticsNetworkTxWindow,
-		'VITE_ANALYTICS_NETWORK_MSG_WINDOW': config.analyticsNetworkMsgWindow,
-		'VITE_ANALYTICS_NETWORK_REFRESH_MS': config.analyticsNetworkRefreshMs,
-	}
-
-	const value = mapping[key]
-	if (value === undefined) return fallback
-	return String(value)
+/** Get the default chain ID from config */
+export function getDefaultChainId(): string {
+	return getConfig().defaultChainId
 }
 
-// Backward compat proxy - allows env.VITE_* syntax
-export const env = new Proxy({} as Record<string, string | undefined>, {
-	get(_, key: string) {
-		return getEnv(key)
-	}
-})
+/** Get all chain IDs defined in runtime config */
+export function getRuntimeChainIds(): string[] {
+	return Object.keys(getConfig().chains)
+}
+
+/** Get a specific chain's runtime config (if defined) */
+export function getRuntimeChainConfig(chainId: string): RuntimeChainConfig | undefined {
+	return getConfig().chains[chainId]
+}

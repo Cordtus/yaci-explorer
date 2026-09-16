@@ -1,703 +1,490 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, User, ArrowUpRight, ArrowDownLeft, Activity, FileCode, Wallet, AlertCircle, Coins } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { api, getAccountBalances, type EnhancedTransaction, type TokenBalance } from '@/lib/api'
-import { formatNumber, formatTimeAgo, formatHash, cn, getAddressType, getAlternateAddress, isValidAddress } from '@/lib/utils'
-import { formatDenomAmount, getDenomMetadata } from '@/lib/denom'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useQuery } from "@tanstack/react-query"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Pagination } from '@/components/ui/pagination'
-import { css, cx } from '@/styled-system/css'
+	Activity,
+	ArrowDownLeft,
+	ArrowLeft,
+	ArrowUpRight,
+	CheckCircle,
+	Copy,
+	User
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { Link, useParams } from "react-router"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow
+} from "@/components/ui/table"
+import { api } from "@/lib/api"
+import { useChain } from "@/contexts/ChainContext"
+import { ContractDetails } from "@/components/ContractDetails"
+import { cn, formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
+import { css } from "@/styled-system/css"
+
+interface SenderTransaction {
+	messages?: Array<{ sender: string | null }>
+}
 
 /**
  * Address detail page component
  * Displays address statistics and transaction history for a blockchain address
  */
-export default function AddressDetailPage() {
-  const [mounted, setMounted] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [page, setPage] = useState(0)
-  const params = useParams()
-  const pageSize = 20
+export const AddressPage = () => {
+	const [mounted, setMounted] = useState(false)
+	const [copied, setCopied] = useState(false)
+	const [page, setPage] = useState(0)
+	const params = useParams()
+	const pageSize = 20
 
-  // Validate the address format early
-  const isValidAddr = params.id ? isValidAddress(params.id) : false
+	const { api: chainApi, chainInfo } = useChain()
 
-  // Track how user arrived - this determines UX emphasis
-  const entryFormat = params.id ? getAddressType(params.id) : null
-  const isEvmFocused = entryFormat === 'evm'
+	// Detect if address is an EVM contract
+	const { data: isContract } = useQuery({
+		queryKey: ["is-evm-contract", chainInfo.chainId, params.id],
+		queryFn: () => params.id ? chainApi.isEvmContract(params.id) : false,
+		enabled: !!params.id && chainInfo.features.evm,
+		staleTime: 60_000,
+	})
 
-  const alternateAddr = params.id ? getAlternateAddress(params.id) : null
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
-  // Compute both address formats for display
-  const hexAddr = isEvmFocused ? params.id : alternateAddr
-  const bech32Addr = isEvmFocused ? alternateAddr : params.id
+	// Fetch address statistics
+	const { data: stats, isLoading: statsLoading } = useQuery({
+		queryKey: ["address-stats", params.id],
+		queryFn: async () => {
+			if (!params.id) {
+				throw new Error("param id not set")
+			}
+			return await api.getAddressStats(params.id)
+		},
+		enabled: mounted && !!params.id
+	})
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+	// Fetch transactions for this address
+	const { data: transactions, isLoading: txLoading } = useQuery({
+		queryKey: ["address-transactions", params.id, page],
+		queryFn: async () => {
+			if (!params.id) {
+				throw new Error("param id not set")
+			}
+			return await api.getTransactionsByAddress(
+				params.id,
+				pageSize,
+				page * pageSize
+			)
+		},
+		enabled: mounted && !!params.id
+	})
 
-  // Check if address is a contract by querying evm_contracts table
-  const { data: isContract } = useQuery({
-    queryKey: ['is-contract', hexAddr],
-    queryFn: async () => {
-      if (!hexAddr) return false
-      return await api.isEvmContract(hexAddr)
-    },
-    enabled: mounted && !!hexAddr,
-    staleTime: Infinity, // Contract status doesn't change
-  })
+	/**
+	 * Copies text to clipboard and shows confirmation
+	 * @param text - Text to copy to clipboard
+	 */
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text)
+		setCopied(true)
+		setTimeout(() => setCopied(false), 2000)
+	}
 
-  // Fetch address statistics (always use bech32 format for API queries)
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['address-stats', bech32Addr],
-    queryFn: async () => {
-      if (!bech32Addr) return null
-      return await api.getAddressStats(bech32Addr)
-    },
-    enabled: mounted && !!bech32Addr,
-  })
+	/**
+	 * Determines if the address is the sender in a transaction
+	 * @param tx - Transaction to check
+	 * @returns True if the address is the sender
+	 */
+	const isSender = (tx: SenderTransaction): boolean => {
+		return tx.messages?.some((msg) => msg.sender === params.id) ?? false
+	}
 
-  // Fetch transactions for this address (always use bech32 format for API queries)
-  const { data: transactions, isLoading: txLoading} = useQuery({
-    queryKey: ['address-transactions', bech32Addr, page],
-    queryFn: async () => {
-      if (!bech32Addr) return { data: [], pagination: { total: 0, limit: pageSize, offset: 0, has_next: false, has_prev: false } }
-      return await api.getTransactionsByAddress(bech32Addr, pageSize, page * pageSize)
-    },
-    enabled: mounted && !!bech32Addr,
-  })
+	if (!mounted || statsLoading) {
+		return (
+			<div className={styles.stack4}>
+				<Skeleton className={css({ h: "8", w: "48" })} />
+				<Skeleton className={css({ h: "32", w: "full" })} />
+				<Skeleton className={css({ h: "96", w: "full" })} />
+			</div>
+		)
+	}
 
-  // Fetch account balances
-  const { data: balances, isLoading: balancesLoading } = useQuery({
-    queryKey: ['account-balances', bech32Addr],
-    queryFn: async () => {
-      if (!bech32Addr) return []
-      return await getAccountBalances(bech32Addr)
-    },
-    enabled: mounted && !!bech32Addr,
-    staleTime: 30000,
-  })
+	if (!stats) {
+		return (
+			<div className={styles.stack4}>
+				<Link to="/" className={styles.backLink}>
+					<ArrowLeft className={styles.iconSm} />
+					Back to Home
+				</Link>
+				<Card>
+					<CardContent className={styles.cardPadTop}>
+						<div className={styles.centeredEmpty}>
+							<User className={styles.emptyIcon} />
+							<h2 className={styles.errorTitle}>Address Not Found</h2>
+							<p className={styles.mutedText}>
+								No transactions found for this address.
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		)
+	}
 
-  /**
-   * Copies text to clipboard and shows confirmation
-   * @param text - Text to copy to clipboard
-   */
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+	return (
+		<div className={styles.page}>
+			{/* Header */}
+			<div>
+				<Link to="/" className={styles.backLink}>
+					<ArrowLeft className={styles.iconSm} />
+					Back to Home
+				</Link>
+				<div className={styles.headerRow}>
+					<User className={styles.headerIcon} />
+					<h1 className={styles.title}>Address Details</h1>
+				</div>
+				<div className={styles.addressChip}>
+					<p className={styles.codeMono}>{params.id}</p>
+					<Button
+						variant="ghost"
+						size="icon"
+						className={styles.copyButton}
+						onClick={() => {
+							if (!params.id) {
+								throw new Error("param id not set")
+							}
+							copyToClipboard(params.id)
+						}}
+					>
+						{copied ? (
+							<CheckCircle className={styles.iconSm} />
+						) : (
+							<Copy className={styles.iconSm} />
+						)}
+					</Button>
+				</div>
+			</div>
 
-  /**
-   * Determines if the address is the sender in a transaction
-   * @param tx - Transaction to check
-   * @returns True if the address is the sender
-   */
-  const isSender = (tx: EnhancedTransaction): boolean => {
-    return tx.messages?.some(msg => msg.sender === params.id) ?? false
-  }
+			{/* Statistics Cards */}
+			<div className={styles.statsGrid}>
+				<Card>
+					<CardHeader className={styles.statHeader}>
+						<CardTitle className={styles.statTitle}>
+							Total Transactions
+						</CardTitle>
+						<Activity className={styles.iconSm} />
+					</CardHeader>
+					<CardContent>
+						<div className={styles.statValue}>
+							{formatNumber(stats.transaction_count)}
+						</div>
+						<p className={styles.statMeta}>
+							All transactions involving this address
+						</p>
+					</CardContent>
+				</Card>
 
-  if (!mounted || (isValidAddr && statsLoading)) {
-    return (
-      <div className={styles.pageContainer}>
-        <Skeleton className={styles.skeletonHeader} />
-        <Skeleton className={styles.skeletonCard} />
-        <Skeleton className={styles.skeletonTable} />
-      </div>
-    )
-  }
+				<Card>
+					<CardHeader className={styles.statHeader}>
+						<CardTitle className={styles.statTitle}>Messages Sent</CardTitle>
+						<ArrowUpRight className={styles.iconSm} />
+					</CardHeader>
+					<CardContent>
+						<div className={styles.statValue}>
+							{formatNumber(stats.total_sent)}
+						</div>
+						<p className={styles.statMeta}>
+							Messages originated from this address
+						</p>
+					</CardContent>
+				</Card>
 
-  // Show error for invalid address format
-  if (!isValidAddr) {
-    return (
-      <div className={styles.pageContainer}>
-        <Link to="/" className={styles.backLink}>
-          <ArrowLeft className={styles.backIcon} />
-          Back to Home
-        </Link>
-        <Card>
-          <CardContent className={styles.cardPadding}>
-            <div className={styles.notFoundContainer}>
-              <AlertCircle className={styles.invalidIcon} />
-              <h2 className={styles.notFoundTitle}>Invalid Address</h2>
-              <p className={styles.notFoundText}>
-                "{params.id}" is not a valid address format.
-              </p>
-              <p className={styles.invalidHint}>
-                Valid formats: bech32 (e.g. cosmos1...) or hex (0x...)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+				<Card>
+					<CardHeader className={styles.statHeader}>
+						<CardTitle className={styles.statTitle}>
+							Messages Received
+						</CardTitle>
+						<ArrowDownLeft className={styles.iconSm} />
+					</CardHeader>
+					<CardContent>
+						<div className={styles.statValue}>
+							{formatNumber(stats.total_received)}
+						</div>
+						<p className={styles.statMeta}>Messages mentioning this address</p>
+					</CardContent>
+				</Card>
 
-  if (!stats) {
-    return (
-      <div className={styles.pageContainer}>
-        <Link to="/" className={styles.backLink}>
-          <ArrowLeft className={styles.backIcon} />
-          Back to Home
-        </Link>
-        <Card>
-          <CardContent className={styles.cardPadding}>
-            <div className={styles.notFoundContainer}>
-              <User className={styles.notFoundIcon} />
-              <h2 className={styles.notFoundTitle}>Address Not Found</h2>
-              <p className={styles.notFoundText}>
-                No transactions found for this address.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+				<Card>
+					<CardHeader className={styles.statHeader}>
+						<CardTitle className={styles.statTitle}>First Seen</CardTitle>
+						<CheckCircle className={styles.iconSm} />
+					</CardHeader>
+					<CardContent>
+						<div className={styles.statValueLg}>
+							{stats.first_seen ? formatTimeAgo(stats.first_seen) : "N/A"}
+						</div>
+						<p className={styles.statMeta}>
+							{stats.first_seen
+								? new Date(stats.first_seen).toLocaleDateString()
+								: "No activity"}
+						</p>
+					</CardContent>
+				</Card>
+			</div>
 
-  return (
-    <div className={styles.pageContainerLarge}>
-      {/* Header */}
-      <div>
-        <Link to="/" className={styles.backLinkWithMargin}>
-          <ArrowLeft className={styles.backIcon} />
-          Back to Home
-        </Link>
-        <div className={styles.headerContent}>
-          {isContract ? (
-            <FileCode className={styles.headerIcon} />
-          ) : (
-            <Wallet className={styles.headerIcon} />
-          )}
-          <h1 className={styles.headerTitle}>
-            {isContract ? 'Contract' : 'Account'} Details
-          </h1>
-          <Badge variant="outline" className={css({ ml: '2' })}>
-            {isContract === undefined ? (isEvmFocused ? 'EVM' : 'Cosmos') : isContract ? 'Contract' : 'EOA'}
-          </Badge>
-        </div>
-        <div className={styles.addressContainer}>
-          <div className={css({ flex: '1' })}>
-            {/* Primary address - based on entry format */}
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: isContract ? '0' : '2' })}>
-              <Badge variant={isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
-                Hex
-              </Badge>
-              <p className={cx(styles.addressText, css({ fontWeight: isEvmFocused ? 'semibold' : 'normal' }))}>
-                {hexAddr}
-              </p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={styles.copyButton}
-                onClick={() => hexAddr && copyToClipboard(hexAddr)}
-              >
-                {copied ? <CheckCircle className={styles.copyIcon} /> : <Copy className={styles.copyIcon} />}
-              </Button>
-            </div>
-            {/* Secondary address - hide for contracts since bech32 is incorrect/irrelevant */}
-            {!isContract && (
-              <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-                <Badge variant={!isEvmFocused ? 'default' : 'outline'} className={css({ fontSize: 'xs', minW: '3.5rem', justifyContent: 'center' })}>
-                  Bech32
-                </Badge>
-                <p className={cx(styles.addressText, css({ fontWeight: !isEvmFocused ? 'semibold' : 'normal' }))}>
-                  {bech32Addr}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={styles.copyButton}
-                  onClick={() => bech32Addr && copyToClipboard(bech32Addr)}
-                >
-                  <Copy className={styles.copyIcon} />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+			{/* Transactions Table */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Transaction History</CardTitle>
+					<p className="text-sm text-muted-foreground">
+						All transactions involving this address
+					</p>
+				</CardHeader>
+				<CardContent>
+					{txLoading ? (
+						<div className={styles.stack3}>
+							<Skeleton className="h-12 w-full" />
+							<Skeleton className="h-12 w-full" />
+							<Skeleton className="h-12 w-full" />
+						</div>
+					) : transactions && transactions.data.length > 0 ? (
+						<>
+							<div className={styles.tableShell}>
+								<Table>
+									<TableHeader>
+										<TableRow>
+											<TableHead>Type</TableHead>
+											<TableHead>Tx Hash</TableHead>
+											<TableHead>Block</TableHead>
+											<TableHead>Messages</TableHead>
+											<TableHead>Status</TableHead>
+											<TableHead>Time</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{transactions.data.map((tx) => {
+											const isOut = isSender(tx)
+											const isSuccess = !tx.error
 
-      {/* Statistics Cards */}
-      <div className={styles.statsGrid}>
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>Total Transactions</CardTitle>
-            <Activity className={styles.statCardIcon} />
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValue}>{formatNumber(stats.transaction_count)}</div>
-          </CardContent>
-        </Card>
+											return (
+												<TableRow key={tx.id}>
+													<TableCell>
+														<Badge
+															variant={isOut ? "default" : "secondary"}
+															className={cn(
+																"font-medium",
+																isOut
+																	? "bg-blue-500 hover:bg-blue-600"
+																	: "bg-green-500 hover:bg-green-600"
+															)}
+														>
+															{isOut ? (
+																<>
+																	<ArrowUpRight className="h-3 w-3 mr-1" />
+																	OUT
+																</>
+															) : (
+																<>
+																	<ArrowDownLeft className="h-3 w-3 mr-1" />
+																	IN
+																</>
+															)}
+														</Badge>
+													</TableCell>
+													<TableCell>
+														<Link
+															to={`/tx/${tx.id}`}
+															className="font-mono text-sm text-primary hover:text-primary/80"
+														>
+															{formatHash(tx.id, 8)}
+														</Link>
+													</TableCell>
+													<TableCell>
+														<Link
+															to={`/blocks/${tx.height}`}
+															className={styles.blockLink}
+														>
+															{formatNumber(tx.height)}
+														</Link>
+													</TableCell>
+													<TableCell>
+														<Badge variant="outline">
+															{tx.messages?.length || 0}
+														</Badge>
+													</TableCell>
+													<TableCell>
+														<Badge
+															variant={isSuccess ? "success" : "destructive"}
+														>
+															{isSuccess ? (
+																<>
+																	<CheckCircle className="h-3 w-3 mr-1" />
+																	Success
+																</>
+															) : (
+																"Failed"
+															)}
+														</Badge>
+													</TableCell>
+													<TableCell className={styles.metaCell}>
+														{formatTimeAgo(tx.timestamp)}
+													</TableCell>
+												</TableRow>
+											)
+										})}
+									</TableBody>
+								</Table>
+							</div>
 
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>First Seen</CardTitle>
-            <ArrowDownLeft className={styles.statCardIconGreen} />
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValueSmall}>
-              {stats.first_seen ? formatTimeAgo(stats.first_seen) : 'N/A'}
-            </div>
-            <p className={styles.statDescription}>
-              {stats.first_seen ? new Date(stats.first_seen).toLocaleDateString() : 'No activity'}
-            </p>
-          </CardContent>
-        </Card>
+							{/* Pagination */}
+							{transactions.pagination.total > pageSize && (
+								<div className={styles.paginationRow}>
+									<div className={styles.metaText}>
+										Showing {page * pageSize + 1} to{" "}
+										{Math.min(
+											(page + 1) * pageSize,
+											transactions.pagination.total
+										)}{" "}
+										of {transactions.pagination.total} transactions
+									</div>
+									<div className={styles.rowGap2}>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => setPage((p) => Math.max(0, p - 1))}
+											disabled={!transactions.pagination.has_prev}
+										>
+											Previous
+										</Button>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => setPage((p) => p + 1)}
+											disabled={!transactions.pagination.has_next}
+										>
+											Next
+										</Button>
+									</div>
+								</div>
+							)}
+						</>
+					) : (
+						<div className={styles.centeredEmpty}>
+							<Activity className={styles.emptyIcon} />
+							<p className={styles.mutedText}>
+								No transactions found for this address
+							</p>
+						</div>
+					)}
+				</CardContent>
+			</Card>
 
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>Last Active</CardTitle>
-            <Activity className={styles.statCardIconBlue} />
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValueSmall}>
-              {stats.last_seen ? formatTimeAgo(stats.last_seen) : 'N/A'}
-            </div>
-            <p className={styles.statDescription}>
-              {stats.last_seen ? new Date(stats.last_seen).toLocaleDateString() : 'No activity'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={styles.statCardHeader}>
-            <CardTitle className={styles.statCardTitle}>Account Type</CardTitle>
-            {isContract ? <FileCode className={styles.statCardIcon} /> : <Wallet className={styles.statCardIcon} />}
-          </CardHeader>
-          <CardContent>
-            <div className={styles.statValueSmall}>
-              {isContract === undefined ? 'Loading...' : isContract ? 'Contract' : 'EOA'}
-            </div>
-            <p className={styles.statDescription}>
-              {isContract === undefined ? 'Checking...' : isContract ? 'Smart contract' : 'Externally owned account'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Token Balances */}
-      <Card>
-        <CardHeader className={styles.statCardHeader}>
-          <CardTitle className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-            <Coins className={css({ w: '5', h: '5' })} />
-            Token Balances
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {balancesLoading ? (
-            <div className={styles.skeletonList}>
-              <Skeleton className={css({ h: '10', w: 'full' })} />
-              <Skeleton className={css({ h: '10', w: 'full' })} />
-            </div>
-          ) : balances && balances.length > 0 ? (
-            <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
-              {balances.map((balance: TokenBalance) => {
-                const metadata = getDenomMetadata(balance.denom)
-                const formattedAmount = formatDenomAmount(balance.amount, balance.denom, { maxDecimals: 6 })
-                return (
-                  <div key={balance.denom} className={css({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '2',
-                    p: '2',
-                    borderRadius: 'md',
-                    border: '1px solid',
-                    borderColor: 'border.default',
-                    bg: 'bg.subtle',
-                  })}>
-                    <span className={css({ fontFamily: 'mono', fontWeight: 'bold', color: 'accent.default' })}>{formattedAmount}</span>
-                    <span className={css({ fontSize: 'sm', fontWeight: 'medium' })}>{metadata.symbol}</span>
-                    {metadata.isIBC && <Badge variant="outline" className={css({ fontSize: '10px', ml: 'auto' })}>IBC</Badge>}
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className={css({ textAlign: 'center', py: '4', color: 'fg.muted' })}>
-              No balances found
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Transactions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {txLoading ? (
-            <div className={styles.skeletonList}>
-              <Skeleton className={styles.skeletonRow} />
-              <Skeleton className={styles.skeletonRow} />
-              <Skeleton className={styles.skeletonRow} />
-            </div>
-          ) : transactions && transactions.data.length > 0 ? (
-            <>
-              <div className={styles.tableContainer}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Tx Hash</TableHead>
-                      <TableHead>Block</TableHead>
-                      <TableHead>Messages</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.data.map((tx) => {
-                      const isOut = isSender(tx)
-                      const isSuccess = !tx.error
-
-                      return (
-                        <TableRow key={tx.id}>
-                          <TableCell>
-                            <Badge
-                              variant={isOut ? 'default' : 'secondary'}
-                              className={cn(
-                                styles.typeBadge,
-                                isOut ? styles.typeBadgeOut : styles.typeBadgeIn
-                              )}
-                            >
-                              {isOut ? (
-                                <>
-                                  <ArrowUpRight className={styles.typeBadgeIcon} />
-                                  OUT
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDownLeft className={styles.typeBadgeIcon} />
-                                  IN
-                                </>
-                              )}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              to={`/tx/${tx.id}`}
-                              className={styles.txHashLink}
-                            >
-                              {formatHash(tx.id, 8)}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {tx.height ? (
-                              <Link
-                                to={`/blocks/${tx.height}`}
-                                className={styles.blockLink}
-                              >
-                                {formatNumber(tx.height)}
-                              </Link>
-                            ) : (
-                              <span className={styles.emptyValue}>—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {tx.messages?.length || 0}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={isSuccess ? 'success' : 'destructive'}>
-                              {isSuccess ? (
-                                <>
-                                  <CheckCircle className={styles.statusIcon} />
-                                  Success
-                                </>
-                              ) : (
-                                'Failed'
-                              )}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className={styles.timeCell}>
-                            {tx.timestamp ? formatTimeAgo(tx.timestamp) : 'Unavailable'}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {transactions.pagination.total > pageSize && (
-                <Pagination
-                  currentPage={page}
-                  totalPages={Math.ceil(transactions.pagination.total / pageSize)}
-                  onPageChange={setPage}
-                  isLoading={txLoading}
-                />
-              )}
-            </>
-          ) : (
-            <div className={styles.emptyState}>
-              <Activity className={styles.emptyStateIcon} />
-              <p className={styles.emptyStateText}>No transactions found for this address</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
+			{/* EVM Contract Details */}
+			{isContract && params.id && (
+				<ContractDetails address={params.id} />
+			)}
+		</div>
+	)
 }
 
 const styles = {
-  pageContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  }),
-  pageContainerLarge: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem',
-  }),
-  skeletonHeader: css({
-    height: '2rem',
-    width: '12rem',
-  }),
-  skeletonCard: css({
-    height: '8rem',
-    width: '100%',
-  }),
-  skeletonTable: css({
-    height: '24rem',
-    width: '100%',
-  }),
-  backLink: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: 'fg.muted',
-    _hover: {
-      color: 'fg.default',
-    },
-  }),
-  backLinkWithMargin: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: 'fg.muted',
-    marginBottom: '1rem',
-    _hover: {
-      color: 'fg.default',
-    },
-  }),
-  backIcon: css({
-    height: '1rem',
-    width: '1rem',
-  }),
-  cardPadding: css({
-    paddingTop: '1.5rem',
-  }),
-  notFoundContainer: css({
-    textAlign: 'center',
-    paddingY: '3rem',
-  }),
-  notFoundIcon: css({
-    height: '3rem',
-    width: '3rem',
-    color: 'fg.muted',
-    marginX: 'auto',
-    marginBottom: '1rem',
-  }),
-  notFoundTitle: css({
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: 'fg.muted',
-    marginBottom: '0.5rem',
-  }),
-  notFoundText: css({
-    color: 'fg.muted',
-  }),
-  invalidIcon: css({
-    height: '3rem',
-    width: '3rem',
-    color: 'red.500',
-    marginX: 'auto',
-    marginBottom: '1rem',
-  }),
-  invalidHint: css({
-    color: 'fg.muted',
-    fontSize: 'sm',
-    marginTop: '0.5rem',
-  }),
-  headerContent: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    marginBottom: '0.5rem',
-  }),
-  headerIcon: css({
-    height: '2rem',
-    width: '2rem',
-    color: 'accent.default',
-  }),
-  headerTitle: css({
-    fontSize: '1.875rem',
-    fontWeight: 'bold',
-  }),
-  addressContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    backgroundColor: 'bg.muted',
-    padding: '0.75rem',
-    borderRadius: 'lg',
-  }),
-  addressText: css({
-    fontFamily: 'mono',
-    fontSize: 'sm',
-    wordBreak: 'break-all',
-    flex: '1',
-  }),
-  copyButton: css({
-    height: '2rem',
-    width: '2rem',
-    flexShrink: '0',
-  }),
-  copyIcon: css({
-    height: '1rem',
-    width: '1rem',
-  }),
-  statsGrid: css({
-    display: 'grid',
-    gap: '1rem',
-    gridTemplateColumns: {
-      base: '1fr',
-      md: 'repeat(2, 1fr)',
-      lg: 'repeat(4, 1fr)',
-    },
-  }),
-  statCardHeader: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    spaceY: '0',
-    paddingBottom: '0.5rem',
-  }),
-  statCardTitle: css({
-    fontSize: 'sm',
-    fontWeight: 'medium',
-  }),
-  statCardIcon: css({
-    height: '1rem',
-    width: '1rem',
-    color: 'fg.muted',
-  }),
-  statCardIconBlue: css({
-    height: '1rem',
-    width: '1rem',
-    color: 'blue.500',
-  }),
-  statCardIconGreen: css({
-    height: '1rem',
-    width: '1rem',
-    color: 'green.500',
-  }),
-  statValue: css({
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-  }),
-  statValueSmall: css({
-    fontSize: '1.125rem',
-    fontWeight: 'bold',
-  }),
-  statDescription: css({
-    fontSize: 'xs',
-    color: 'fg.muted',
-    marginTop: '0.25rem',
-  }),
-  skeletonList: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  }),
-  skeletonRow: css({
-    height: '3rem',
-    width: '100%',
-  }),
-  tableContainer: css({
-    borderRadius: 'md',
-    border: '1px solid',
-    borderColor: 'border.default',
-    overflowX: 'auto',
-  }),
-  typeBadge: css({
-    fontWeight: 'medium',
-  }),
-  typeBadgeOut: css({
-    backgroundColor: 'blue.500',
-    _hover: {
-      backgroundColor: 'blue.600',
-    },
-  }),
-  typeBadgeIn: css({
-    backgroundColor: 'green.500',
-    _hover: {
-      backgroundColor: 'green.600',
-    },
-  }),
-  typeBadgeIcon: css({
-    height: '0.75rem',
-    width: '0.75rem',
-    marginRight: '0.25rem',
-  }),
-  txHashLink: css({
-    fontFamily: 'mono',
-    fontSize: 'sm',
-    color: 'accent.default',
-    _hover: {
-      color: 'accent.default/80',
-    },
-  }),
-  blockLink: css({
-    color: 'accent.default',
-    _hover: {
-      color: 'accent.default/80',
-    },
-  }),
-  emptyValue: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
-  }),
-  statusIcon: css({
-    height: '0.75rem',
-    width: '0.75rem',
-    marginRight: '0.25rem',
-  }),
-  timeCell: css({
-    fontSize: 'sm',
-    color: 'fg.muted',
-  }),
-  emptyState: css({
-    textAlign: 'center',
-    paddingY: '3rem',
-  }),
-  emptyStateIcon: css({
-    height: '3rem',
-    width: '3rem',
-    color: 'fg.muted',
-    marginX: 'auto',
-    marginBottom: '1rem',
-  }),
-  emptyStateText: css({
-    color: 'fg.muted',
-  }),
+	page: css({ display: "flex", flexDirection: "column", gap: "6" }),
+	stack4: css({ display: "flex", flexDirection: "column", gap: "4" }),
+	stack3: css({ display: "flex", flexDirection: "column", gap: "3" }),
+	rowGap2: css({ display: "flex", alignItems: "center", gap: "2" }),
+	backLink: css({
+		display: "inline-flex",
+		alignItems: "center",
+		gap: "2",
+		color: "fg.muted",
+		_hover: { color: "fg.default" },
+		mb: "4"
+	}),
+	cardPadTop: css({ pt: "6" }),
+	centeredEmpty: css({
+		textAlign: "center",
+		py: "12",
+		display: "flex",
+		flexDirection: "column",
+		gap: "3",
+		alignItems: "center"
+	}),
+	emptyIcon: css({ h: "12", w: "12", color: "fg.muted" }),
+	errorTitle: css({ fontSize: "2xl", fontWeight: "bold", color: "fg.muted" }),
+	mutedText: css({ color: "fg.muted" }),
+	iconSm: css({ h: "4", w: "4" }),
+	iconXs: css({ h: "3", w: "3", mr: "1" }),
+	headerRow: css({ display: "flex", alignItems: "center", gap: "3", mb: "2" }),
+	headerIcon: css({ h: "8", w: "8", color: "colorPalette.default" }),
+	title: css({ fontSize: "3xl", fontWeight: "bold" }),
+	addressChip: css({
+		display: "flex",
+		alignItems: "center",
+		gap: "2",
+		bg: "bg.muted",
+		p: "3",
+		rounded: "lg"
+	}),
+	codeMono: css({
+		fontFamily: "mono",
+		fontSize: "sm",
+		wordBreak: "break-all",
+		flex: "1"
+	}),
+	copyButton: css({ h: "8", w: "8", flexShrink: 0 }),
+	statsGrid: css({
+		display: "grid",
+		gap: "4",
+		gridTemplateColumns: {
+			base: "1fr",
+			md: "repeat(2, minmax(0, 1fr))",
+			lg: "repeat(4, minmax(0, 1fr))"
+		}
+	}),
+	statHeader: css({
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "space-between",
+		pb: "2"
+	}),
+	statTitle: css({ fontSize: "sm", fontWeight: "medium" }),
+	statValue: css({ fontSize: "2xl", fontWeight: "bold" }),
+	statValueLg: css({ fontSize: "lg", fontWeight: "bold" }),
+	statMeta: css({ fontSize: "xs", color: "fg.muted", mt: "1" }),
+	tableShell: css({ rounded: "md", borderWidth: "1px", overflowX: "auto" }),
+	badgeOut: css({
+		fontWeight: "medium",
+		bg: "blue.8",
+		color: "white",
+		_hover: { bg: "blue.9" }
+	}),
+	badgeIn: css({
+		fontWeight: "medium",
+		bg: "green.8",
+		color: "white",
+		_hover: { bg: "green.9" }
+	}),
+	txLink: css({
+		fontFamily: "mono",
+		fontSize: "sm",
+		color: "colorPalette.default",
+		_hover: { color: "colorPalette.emphasized" }
+	}),
+	blockLink: css({
+		color: "colorPalette.default",
+		_hover: { color: "colorPalette.emphasized" }
+	}),
+	metaCell: css({ fontSize: "sm", color: "fg.muted" }),
+	paginationRow: css({
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "space-between",
+		mt: "4"
+	}),
+	metaText: css({ color: "fg.muted" })
 }

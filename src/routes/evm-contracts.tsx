@@ -1,249 +1,128 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router'
-import { FileCode2, CheckCircle, XCircle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { EvmNav } from '@/components/common/evm-nav'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api'
-import { formatAddress } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
-import { css } from '@/styled-system/css'
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Link } from "react-router"
+import { Code } from "lucide-react"
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table"
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { DataTable } from "@/components/ui/data-table"
+import { useChain } from "@/contexts/ChainContext"
+import type { EvmContract } from "@/lib/api"
+import { truncateAddress } from "@/lib/address"
+import { css } from "@/styled-system/css"
 
-export default function EvmContractsPage() {
+const columnHelper = createColumnHelper<EvmContract>()
+
+const columns: ColumnDef<EvmContract, any>[] = [
+	columnHelper.accessor("address", {
+		header: "Address",
+		enableSorting: false,
+		cell: ({ getValue }) => (
+			<Link
+				to={`/addr/${getValue()}`}
+				className={css({ fontFamily: "mono", fontSize: "xs", color: "accent.default", _hover: { textDecoration: "underline" } })}
+			>
+				{truncateAddress(getValue(), 8)}
+			</Link>
+		),
+	}),
+	columnHelper.accessor("name", {
+		header: "Name",
+		cell: ({ getValue }) => (
+			<span className={css({ fontWeight: "medium" })}>
+				{getValue() || "-"}
+			</span>
+		),
+	}),
+	columnHelper.accessor("creator", {
+		header: "Creator",
+		enableSorting: false,
+		cell: ({ getValue }) => {
+			const addr = getValue()
+			if (!addr) return <span className={css({ color: "fg.muted" })}>-</span>
+			return (
+				<Link
+					to={`/addr/${addr}`}
+					className={css({ fontFamily: "mono", fontSize: "xs", color: "fg.muted", _hover: { color: "accent.default" } })}
+				>
+					{truncateAddress(addr, 6)}
+				</Link>
+			)
+		},
+	}),
+	columnHelper.accessor("creation_height", {
+		header: "Deploy Block",
+		cell: ({ getValue }) => (
+			<Link
+				to={`/blocks/${getValue()}`}
+				className={css({ fontFamily: "mono", fontSize: "sm", _hover: { color: "accent.default" } })}
+			>
+				{getValue().toLocaleString()}
+			</Link>
+		),
+	}),
+	columnHelper.accessor("is_verified", {
+		header: "Verified",
+		cell: ({ getValue }) => (
+			getValue()
+				? <Badge variant="success">Verified</Badge>
+				: <Badge variant="outline">Unverified</Badge>
+		),
+	}),
+]
+
+export function EvmContractsPage() {
+	const { api, chainInfo } = useChain()
 	const [page, setPage] = useState(0)
-	const limit = 20
+	const pageSize = 50
 
-	const { data, isLoading, error } = useQuery({
-		queryKey: ['evm-contracts', page],
-		queryFn: () => api.getEvmContracts(limit, page * limit),
+	const { data: contracts, isLoading } = useQuery({
+		queryKey: ["evm-contracts", chainInfo.chainId, page, pageSize],
+		queryFn: () => api.getEvmContracts(pageSize, page * pageSize),
+		staleTime: 15_000,
 	})
 
-	const hasData = data && data.length > 0
-
 	return (
-		<div className={css(styles.container)}>
-			<div className={css(styles.header)}>
-				<div>
-					<h1 className={css(styles.title)}>EVM</h1>
-					<p className={css(styles.subtitle)}>Smart contracts and tokens on the EVM</p>
-				</div>
+		<div className={css({ display: "flex", flexDir: "column", gap: "6", w: "full" })}>
+			<div>
+				<h1 className={css({ fontSize: "3xl", fontWeight: "bold" })}>EVM Contracts</h1>
+				<p className={css({ color: "fg.muted", mt: "1" })}>
+					Deployed smart contracts on {chainInfo.chainId}
+				</p>
 			</div>
-
-			<EvmNav />
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Deployed Contracts</CardTitle>
+					<CardTitle>Contract Registry</CardTitle>
 					<CardDescription>
-						{hasData ? `Showing ${data.length} contracts` : 'No contracts deployed yet'}
+						{contracts ? `${contracts.length} contracts loaded` : "Loading..."}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{isLoading ? (
-						<div className={css(styles.loadingContainer)}>
-							{Array.from({ length: 5 }).map((_, i) => (
-								<Skeleton key={i} className={css(styles.skeleton)} />
-							))}
-						</div>
-					) : error ? (
-						<div className={css(styles.emptyState)}>
-							<FileCode2 className={css(styles.emptyIcon)} />
-							<p>Error loading contracts</p>
-						</div>
-					) : !hasData ? (
-						<div className={css(styles.emptyState)}>
-							<FileCode2 className={css(styles.emptyIcon)} />
-							<h3 className={css(styles.emptyTitle)}>No Contracts Yet</h3>
-							<p className={css(styles.emptyText)}>
-								No smart contracts have been deployed to this chain yet.
-								Contracts will appear here once they are deployed.
-							</p>
-						</div>
-					) : (
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Address</TableHead>
-									<TableHead>Name</TableHead>
-									<TableHead>Creator</TableHead>
-									<TableHead>Verified</TableHead>
-									<TableHead>Created</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{data.map((contract) => (
-									<TableRow key={contract.address}>
-										<TableCell>
-											<Link
-												to={`/addr/${contract.address}`}
-												className={css(styles.addressLink)}
-											>
-												<FileCode2 className={css(styles.contractIcon)} />
-												<code>{formatAddress(contract.address, 8)}</code>
-											</Link>
-										</TableCell>
-										<TableCell>
-											{contract.name || (
-												<span className={css(styles.mutedText)}>Unknown</span>
-											)}
-										</TableCell>
-										<TableCell>
-											{contract.creator ? (
-												<Link
-													to={`/addr/${contract.creator}`}
-													className={css(styles.creatorLink)}
-												>
-													{formatAddress(contract.creator, 6)}
-												</Link>
-											) : (
-												<span className={css(styles.mutedText)}>-</span>
-											)}
-										</TableCell>
-										<TableCell>
-											{contract.verified ? (
-												<Badge variant="success">
-													<CheckCircle className={css(styles.badgeIcon)} />
-													Verified
-												</Badge>
-											) : (
-												<Badge variant="secondary">
-													<XCircle className={css(styles.badgeIcon)} />
-													Unverified
-												</Badge>
-											)}
-										</TableCell>
-										<TableCell>
-											<div className={css(styles.blockHeight)}>
-												Block #{contract.creation_height.toLocaleString()}
-											</div>
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					)}
-
-					{hasData && data.length >= limit && (
-						<div className={css(styles.pagination)}>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={page === 0}
-								onClick={() => setPage(p => p - 1)}
-							>
-								Previous
-							</Button>
-							<span className={css(styles.pageInfo)}>Page {page + 1}</span>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => setPage(p => p + 1)}
-							>
-								Next
-							</Button>
-						</div>
-					)}
+					<DataTable
+						columns={columns}
+						data={contracts ?? []}
+						isLoading={isLoading}
+						pageSize={pageSize}
+						getRowId={(c) => c.address}
+						emptyState={
+							<div className={css({ textAlign: "center", py: "12", color: "fg.muted" })}>
+								<Code className={css({ h: "12", w: "12", mx: "auto", mb: "4", opacity: "0.5" })} />
+								<h3 className={css({ fontSize: "lg", fontWeight: "semibold", color: "fg.default", mb: "2" })}>No Contracts</h3>
+								<p className={css({ maxW: "md", mx: "auto" })}>No EVM contracts have been deployed yet.</p>
+							</div>
+						}
+					/>
 				</CardContent>
 			</Card>
 		</div>
 	)
 }
 
-const styles = {
-	container: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '6',
-	},
-	header: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	title: {
-		fontSize: '3xl',
-		fontWeight: 'bold',
-	},
-	subtitle: {
-		color: 'fg.muted',
-		marginTop: '1',
-	},
-	loadingContainer: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '3',
-	},
-	skeleton: {
-		height: '12',
-		width: 'full',
-	},
-	emptyState: {
-		textAlign: 'center',
-		py: '12',
-		color: 'fg.muted',
-	},
-	emptyIcon: {
-		height: '12',
-		width: '12',
-		margin: '0 auto',
-		marginBottom: '4',
-		opacity: '0.5',
-	},
-	emptyTitle: {
-		fontSize: 'lg',
-		fontWeight: 'semibold',
-		color: 'fg.default',
-		marginBottom: '2',
-	},
-	emptyText: {
-		maxWidth: 'md',
-		margin: '0 auto',
-	},
-	addressLink: {
-		display: 'flex',
-		alignItems: 'center',
-		gap: '2',
-		fontFamily: 'mono',
-		fontSize: 'sm',
-		_hover: {
-			color: 'colorPalette',
-		},
-	},
-	contractIcon: {
-		height: '4',
-		width: '4',
-	},
-	mutedText: {
-		color: 'fg.muted',
-	},
-	creatorLink: {
-		fontFamily: 'mono',
-		fontSize: 'xs',
-		_hover: {
-			color: 'colorPalette',
-		},
-	},
-	badgeIcon: {
-		height: '3',
-		width: '3',
-		marginRight: '1',
-	},
-	blockHeight: {
-		fontSize: 'sm',
-		fontFamily: 'mono',
-	},
-	pagination: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: '4',
-		marginTop: '4',
-	},
-	pageInfo: {
-		fontSize: 'sm',
-		color: 'fg.muted',
-	},
-}
+export default EvmContractsPage

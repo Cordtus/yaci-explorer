@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router'
-import { Search, Loader2, Box, Hash, Wallet, FileCode } from 'lucide-react'
-import { css } from '@/styled-system/css'
-import { api } from '@/lib/api'
-import { detectSearchInputType, formatAddress, getAlternateAddress, type SearchInputType } from '@/lib/utils'
+import { Loader2, Search } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router"
+import { api } from "@/lib/api"
+import { css, cx } from "@/styled-system/css"
 
 /**
  * Universal search bar component for searching blocks, transactions, and addresses
@@ -14,342 +13,178 @@ import { detectSearchInputType, formatAddress, getAlternateAddress, type SearchI
  * <SearchBar />
  */
 export function SearchBar() {
-  const [query, setQuery] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isContract, setIsContract] = useState<boolean | null>(null)
-  const [checkingContract, setCheckingContract] = useState(false)
-  const navigate = useNavigate()
-  const inputRef = useRef<HTMLInputElement>(null)
+	const [query, setQuery] = useState("")
+	const [isSearching, setIsSearching] = useState(false)
+	const [isOpen, setIsOpen] = useState(false)
+	const navigate = useNavigate()
+	const inputRef = useRef<HTMLInputElement>(null)
 
-  // Detect input type as user types
-  const inputType = useMemo(() => detectSearchInputType(query), [query])
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+				e.preventDefault()
+				inputRef.current?.focus()
+				setIsOpen(true)
+			}
+		}
 
-  // Check if EVM address is a contract
-  const checkContract = useCallback(async (address: string) => {
-    setCheckingContract(true)
-    try {
-      // Get hex address for contract lookup
-      const hexAddr = address.startsWith('0x') ? address : getAlternateAddress(address)
-      if (hexAddr) {
-        const result = await api.isEvmContract(hexAddr)
-        setIsContract(result)
-      } else {
-        setIsContract(false)
-      }
-    } catch {
-      setIsContract(false)
-    } finally {
-      setCheckingContract(false)
-    }
-  }, [])
+		document.addEventListener("keydown", handleKeyDown)
+		return () => document.removeEventListener("keydown", handleKeyDown)
+	}, [])
 
-  // Trigger contract check when input is an EVM address
-  useEffect(() => {
-    if (inputType === 'evm_address' && query.trim()) {
-      checkContract(query.trim())
-    } else {
-      setIsContract(null)
-    }
-  }, [inputType, query, checkContract])
+	/**
+	 * Handles search execution when user submits a query
+	 * Determines query type (block, transaction, or address) and navigates to appropriate page
+	 */
+	const handleSearch = async () => {
+		if (!query.trim()) return
 
-  // Result item config for display - dynamically update for EVM addresses
-  const getResultConfig = (): Record<SearchInputType, { icon: typeof Search; label: string; format: (q: string) => string }> => ({
-    block_height: { icon: Box, label: 'Block', format: (q) => `#${q}` },
-    tx_hash: { icon: Hash, label: 'Transaction', format: (q) => formatAddress(q, 10) },
-    evm_tx_hash: { icon: Hash, label: 'EVM Transaction', format: (q) => formatAddress(q, 10) },
-    bech32_address: { icon: Wallet, label: 'Account', format: (q) => formatAddress(q, 10) },
-    evm_address: {
-      icon: isContract ? FileCode : Wallet,
-      label: checkingContract ? 'Checking...' : (isContract ? 'Contract' : 'Account'),
-      format: (q) => formatAddress(q, 10)
-    },
-    unknown: { icon: Search, label: 'Search', format: (q) => q }
-  })
+		setIsSearching(true)
+		try {
+			const results = await api.search(query)
 
-  const resultConfig = getResultConfig()
+			if (results.length === 0) {
+				console.log("No results found")
+				return
+			}
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        inputRef.current?.focus()
-        setIsOpen(true)
-      }
-    }
+			const result = results[0]
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+			switch (result.type) {
+				case "block":
+					navigate(`/blocks/${result.value.id}`)
+					break
+				case "transaction":
+					navigate(`/tx/${result.value.id}`)
+					break
+				case "evm_transaction":
+					// EVM hash search - navigate to tx with EVM view enabled
+					navigate(`/tx/${result.value.tx_id}?evm=true`)
+					break
+				case "address":
+					navigate(`/addr/${result.value.address}`)
+					break
+				default:
+					console.error("Unknown result type")
+			}
 
-  /**
-   * Handles search execution when user submits a query
-   * Uses client-side detection first, then falls back to API search
-   */
-  const handleSearch = async () => {
-    const trimmedQuery = query.trim()
-    if (!trimmedQuery) return
+			setQuery("")
+			setIsOpen(false)
+		} catch (error) {
+			console.error("Search failed:", error)
+		} finally {
+			setIsSearching(false)
+		}
+	}
 
-    setIsSearching(true)
-    setError(null)
+	return (
+		<div className={css({ position: "relative" })}>
+			<div className={css({ position: "relative" })}>
+				<input
+					ref={inputRef}
+					type="text"
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							handleSearch()
+						}
+					}}
+					onFocus={() => setIsOpen(true)}
+					onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+					placeholder="Search by block, tx, address..."
+					className={cx(
+						css({
+							h: "9",
+							w: { base: "200px", lg: "300px" },
+							rounded: "md",
+							borderWidth: "1px",
+							borderColor: "border.default",
+							bg: "bg.default",
+							px: "3",
+							py: "1",
+							fontSize: "sm",
+							boxShadow: "sm",
+							transitionProperty: "colors",
+							transitionDuration: "normal",
+							pr: "20",
+							_placeholder: { color: "fg.muted" },
+							_focusVisible: {
+								outline: "none",
+								ringWidth: "1px",
+								ringColor: "colorPalette.default"
+							},
+							_disabled: { cursor: "not-allowed", opacity: 0.5 }
+						})
+					)}
+				/>
+				<div
+					className={css({
+						position: "absolute",
+						right: "0",
+						top: "0",
+						display: "flex",
+						h: "9",
+						alignItems: "center",
+						pr: "3"
+					})}
+				>
+					{isSearching ? (
+						<Loader2
+							className={css({
+								h: "4",
+								w: "4",
+								color: "fg.muted",
+								animation: "spin 1s linear infinite"
+							})}
+						/>
+					) : (
+						<>
+							<Search
+								className={css({ h: "4", w: "4", color: "fg.muted", mr: "2" })}
+							/>
+							<kbd
+								className={css({
+									pointerEvents: "none",
+									display: "inline-flex",
+									h: "5",
+									alignItems: "center",
+									gap: "1",
+									rounded: "md",
+									borderWidth: "1px",
+									bg: "bg.muted",
+									px: "1.5",
+									fontFamily: "mono",
+									fontSize: "10px",
+									fontWeight: "medium",
+									color: "fg.muted"
+								})}
+							>
+								<span className={css({ fontSize: "xs" })}>⌘</span>K
+							</kbd>
+						</>
+					)}
+				</div>
+			</div>
 
-    try {
-      // Use client-side detection for direct navigation
-      switch (inputType) {
-        case 'block_height':
-          navigate(`/blocks/${trimmedQuery}`)
-          setQuery('')
-          setIsOpen(false)
-          return
-
-        case 'tx_hash':
-          navigate(`/tx/${trimmedQuery}`)
-          setQuery('')
-          setIsOpen(false)
-          return
-
-        case 'evm_tx_hash':
-          // For EVM tx hash, we need to find the cosmos tx id via API
-          break
-
-        case 'bech32_address':
-        case 'evm_address':
-          navigate(`/addr/${trimmedQuery}`)
-          setQuery('')
-          setIsOpen(false)
-          return
-
-        case 'unknown':
-          // Fall through to API search
-          break
-      }
-
-      // Fall back to API search for EVM tx hashes and unknown types
-      const results = await api.search(trimmedQuery)
-
-      if (results.length === 0) {
-        setError('No results found')
-        return
-      }
-
-      const result = results[0]
-
-      switch (result.type) {
-        case 'block':
-          navigate(`/blocks/${result.value.height || result.value.id}`)
-          break
-        case 'transaction':
-          navigate(`/tx/${result.value.id}`)
-          break
-        case 'evm_transaction':
-          navigate(`/tx/${result.value.tx_id}?evm=true`)
-          break
-        case 'address':
-        case 'evm_address':
-          navigate(`/addr/${result.value.address}`)
-          break
-        default:
-          setError('Unknown result type')
-          return
-      }
-
-      setQuery('')
-      setIsOpen(false)
-    } catch (err) {
-      console.error('Search failed:', err)
-      setError('Search failed')
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  return (
-    <div className={css(styles.container)}>
-      <div className={css(styles.inputWrapper)}>
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSearch()
-            }
-          }}
-          onFocus={() => setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-          placeholder="Search by block, tx, address..."
-          className={css(styles.input)}
-        />
-        <div className={css(styles.iconContainer)}>
-          {isSearching ? (
-            <Loader2 className={css(styles.spinner)} />
-          ) : (
-            <>
-              <Search className={css(styles.searchIcon)} />
-              <kbd className={css(styles.kbd)}>Ctrl+K</kbd>
-            </>
-          )}
-        </div>
-      </div>
-
-      {isOpen && query && (
-        <div className={css(styles.dropdown)}>
-          {error ? (
-            <div className={css(styles.errorText)}>{error}</div>
-          ) : inputType !== 'unknown' ? (
-            <button
-              type="button"
-              className={css(styles.resultItem)}
-              onClick={handleSearch}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              {(() => {
-                const config = resultConfig[inputType]
-                const Icon = config.icon
-                return (
-                  <>
-                    <Icon className={css(styles.resultIcon)} />
-                    <span className={css(styles.resultLabel)}>{config.label}</span>
-                    <span className={css(styles.resultValue)}>{config.format(query.trim())}</span>
-                  </>
-                )
-              })()}
-            </button>
-          ) : (
-            <div className={css(styles.dropdownText)}>
-              No match - try a block height, tx hash, or address
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-const styles = {
-  container: {
-    position: 'relative',
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  input: {
-    height: '2.25rem',
-    width: '200px',
-    lg: { width: '300px' },
-    borderRadius: 'md',
-    border: '1px solid',
-    borderColor: 'input',
-    backgroundColor: 'background',
-    paddingLeft: '0.75rem',
-    paddingRight: '5rem',
-    paddingTop: '0.25rem',
-    paddingBottom: '0.25rem',
-    fontSize: 'sm',
-    boxShadow: 'sm',
-    transitionProperty: 'colors',
-    transitionDuration: 'normal',
-    _placeholder: {
-      color: 'muted.foreground',
-    },
-    _focusVisible: {
-      outline: 'none',
-      ring: '1px',
-      ringColor: 'ring',
-    },
-    _disabled: {
-      cursor: 'not-allowed',
-      opacity: 0.5,
-    },
-  },
-  iconContainer: {
-    position: 'absolute',
-    right: '0',
-    top: '0',
-    display: 'flex',
-    height: '2.25rem',
-    alignItems: 'center',
-    paddingRight: '0.75rem',
-  },
-  spinner: {
-    height: '1rem',
-    width: '1rem',
-    animation: 'spin',
-    color: 'muted.foreground',
-  },
-  searchIcon: {
-    height: '1rem',
-    width: '1rem',
-    color: 'muted.foreground',
-    marginRight: '0.5rem',
-  },
-  kbd: {
-    pointerEvents: 'none',
-    display: 'inline-flex',
-    height: '1.25rem',
-    userSelect: 'none',
-    alignItems: 'center',
-    gap: '0.25rem',
-    borderRadius: 'sm',
-    border: '1px solid',
-    backgroundColor: 'muted',
-    paddingLeft: '0.375rem',
-    paddingRight: '0.375rem',
-    fontFamily: 'mono',
-    fontSize: '10px',
-    fontWeight: 'medium',
-    color: 'muted.foreground',
-  },
-  dropdown: {
-    position: 'absolute',
-    top: '2.5rem',
-    width: '100%',
-    borderRadius: 'md',
-    border: '1px solid',
-    backgroundColor: 'popover',
-    padding: '0.5rem',
-    boxShadow: 'md',
-  },
-  dropdownText: {
-    fontSize: 'xs',
-    color: 'muted.foreground',
-  },
-  errorText: {
-    fontSize: 'xs',
-    color: 'red.500',
-  },
-  resultItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    width: '100%',
-    padding: '0.375rem',
-    borderRadius: 'sm',
-    cursor: 'pointer',
-    backgroundColor: 'transparent',
-    border: 'none',
-    textAlign: 'left',
-    _hover: {
-      backgroundColor: 'muted',
-    },
-  },
-  resultIcon: {
-    height: '0.875rem',
-    width: '0.875rem',
-    color: 'muted.foreground',
-    flexShrink: 0,
-  },
-  resultLabel: {
-    fontSize: 'xs',
-    fontWeight: 'medium',
-    color: 'foreground',
-  },
-  resultValue: {
-    fontSize: 'xs',
-    fontFamily: 'mono',
-    color: 'muted.foreground',
-    marginLeft: 'auto',
-  },
+			{isOpen && query && (
+				<div
+					className={css({
+						position: "absolute",
+						top: "10",
+						w: "full",
+						rounded: "md",
+						borderWidth: "1px",
+						bg: "bg.default",
+						p: "2",
+						boxShadow: "md"
+					})}
+				>
+					<div className={css({ fontSize: "xs", color: "fg.muted" })}>
+						Press Enter to search
+					</div>
+				</div>
+			)}
+		</div>
+	)
 }

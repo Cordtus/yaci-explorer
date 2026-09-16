@@ -9,8 +9,6 @@ services:
       PGDATA: /var/lib/postgresql/18/docker
     volumes:
       - postgres-data:/var/lib/postgresql
-      # Minimal init - just create api schema, let yaci run its own migrations
-      - ./init-api-schema.sql:/docker-entrypoint-initdb.d/init-api-schema.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -39,27 +37,47 @@ services:
     networks:
       - yaci-network
 
+  chain-reset-guard:
+    image: alpine:3.19
+    container_name: yaci-explorer-reset-guard
+    command: ["/bin/sh", "/scripts/chain-reset-guard.sh"]
+    environment:
+      ENABLE_CHAIN_RESET_GUARD: ${ENABLE_CHAIN_RESET_GUARD:-false}
+      CHAIN_RPC_ENDPOINT: ${CHAIN_RPC_ENDPOINT:-}
+      RESET_GUARD_RPC_ENDPOINT: ${RESET_GUARD_RPC_ENDPOINT:-}
+      RESET_GUARD_DB_URI: ${RESET_GUARD_DB_URI:-}
+      RESET_GUARD_AUTO_TRUNCATE: ${RESET_GUARD_AUTO_TRUNCATE:-true}
+      POSTGRES_USER: ${POSTGRES_USER:-yaci}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-yaci}
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../scripts/chain-reset-guard.sh:/scripts/chain-reset-guard.sh:ro
+    networks:
+      - yaci-network
+    restart: "no"
+
   yaci:
     image: ghcr.io/cordtus/yaci:main
     container_name: yaci-indexer
     command: >
-      extract postgres
-      --postgres-conn postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
+      extract postgres ${CHAIN_GRPC_ENDPOINT}
+      -p postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
       --live
+      --max-concurrency ${YACI_MAX_CONCURRENCY:-100}
+      ${YACI_INSECURE:+-k}
       --enable-prometheus
-      --start ${YACI_START_HEIGHT:-1}
-      --max-concurrency ${YACI_MAX_CONCURRENCY:-5}
-      -k
-      ${CHAIN_GRPC_ENDPOINT}
-    environment:
-      YACI_GRPC_ENDPOINT: ${CHAIN_GRPC_ENDPOINT}
-      YACI_POSTGRES_DSN: postgres://${POSTGRES_USER:-yaci}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-yaci}
-      YACI_INSECURE: ${YACI_INSECURE:-false}
+      --prometheus-addr 0.0.0.0:2112
     ports:
       - "2112:2112"
     depends_on:
       postgres:
         condition: service_healthy
+      chain-reset-guard:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - yaci-network
@@ -72,7 +90,7 @@ services:
       dockerfile: docker/explorer/Dockerfile
     container_name: yaci-explorer
     ports:
-      - "3001:80"
+      - "${EXPLORER_PORT:-3000}:80"
     depends_on:
       - postgrest
     restart: unless-stopped
@@ -82,6 +100,5 @@ services:
 networks:
   yaci-network:
     driver: bridge
-
 volumes:
   postgres-data:

@@ -1,27 +1,58 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, TrendingUp, Clock, Database, Users, Zap, DollarSign } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { appConfig } from '@/config/app'
-import { css } from '@/styled-system/css'
-import { api } from '@/lib/api'
-import { formatDenomAmount } from '@/lib/denom'
-import { DenomDisplay } from '@/components/common/DenomDisplay'
-import { getNetworkMetrics } from '@/lib/metrics'
+import { useQuery } from "@tanstack/react-query"
+import { Activity, Clock, Database, Shield, TrendingUp, Users, Zap } from "lucide-react"
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle
+} from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useChain } from "@/contexts/ChainContext"
+import { css } from "@/styled-system/css"
+import type { LucideIcon } from "lucide-react"
+
+function formatNumber(num: number | string): string {
+	const value = typeof num === "string" ? Number(num) : num
+	if (!Number.isFinite(value)) return "0"
+	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`
+	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
+	return value.toLocaleString()
+}
+
+interface MetricItem {
+	icon: LucideIcon
+	label: string
+	value: string
+	subtext: string
+}
 
 export function NetworkMetricsCard() {
-	const { data: metrics, isLoading } = useQuery({
-		queryKey: ['network-metrics'],
-		queryFn: getNetworkMetrics,
-		refetchInterval: appConfig.analytics.networkRefetchMs,
+	const { api, chainInfo } = useChain()
+
+	const { data: chainStats, isLoading: statsLoading } = useQuery({
+		queryKey: ["chain-stats", chainInfo.chainId],
+		queryFn: () => api.getChainStats(),
+		staleTime: 10_000,
+		refetchInterval: 15_000,
 	})
 
-	const { data: feeRevenue } = useQuery({
-		queryKey: ['feeRevenue'],
-		queryFn: () => api.getTotalFeeRevenue(),
-		refetchInterval: 30000,
+	const { data: successRate } = useQuery({
+		queryKey: ["tx-success-rate", chainInfo.chainId],
+		queryFn: () => api.getTxSuccessRate(),
+		staleTime: 30_000,
 	})
 
-	if (isLoading || !metrics) {
+	const { data: networkOverview, isLoading: overviewLoading } = useQuery({
+		queryKey: ["network-overview", chainInfo.chainId],
+		queryFn: () => api.getNetworkOverview(),
+		staleTime: 15_000,
+		refetchInterval: 30_000,
+	})
+
+	const isLoading = statsLoading || overviewLoading
+
+	if (isLoading) {
 		return (
 			<Card>
 				<CardHeader>
@@ -29,143 +60,113 @@ export function NetworkMetricsCard() {
 					<CardDescription>Loading metrics...</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className={styles.animatePulse}>
-						<div className={styles.skeletonGrid}>
-							{[...Array(8)].map((_, i) => (
-								<div key={i} className={styles.skeletonItem}>
-									<div className={styles.skeletonBar}></div>
-									<div className={styles.skeletonText}></div>
-								</div>
-							))}
-						</div>
+					<div className={gridStyle}>
+						{Array.from({ length: 8 }).map((_, i) => (
+							<div key={i} className={css({ display: "flex", flexDir: "column", gap: "2" })}>
+								<Skeleton className={css({ h: "8", w: "full" })} />
+								<Skeleton className={css({ h: "4", w: "2/3" })} />
+							</div>
+						))}
 					</div>
 				</CardContent>
 			</Card>
 		)
 	}
 
-	// Calculate time since last block
-	const timeSinceLastBlock = Math.floor(
-		(Date.now() - new Date(metrics.lastBlockTime).getTime()) / 1000
-	)
+	const metrics: MetricItem[] = []
 
-	// Format large numbers
-	const formatNumber = (num: number) => {
-		if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`
-		if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-		return num.toString()
+	if (chainStats) {
+		metrics.push(
+			{
+				icon: Activity,
+				label: "Latest Block",
+				value: chainStats.latest_block.toLocaleString(),
+				subtext: `avg ${chainStats.avg_block_time.toFixed(2)}s block time`,
+			},
+			{
+				icon: Database,
+				label: "Total Transactions",
+				value: formatNumber(chainStats.total_transactions),
+				subtext: chainStats.latest_block > 0
+					? `~${Math.round(chainStats.total_transactions / chainStats.latest_block)} per block`
+					: "",
+			},
+			{
+				icon: Clock,
+				label: "Block Time",
+				value: `${chainStats.avg_block_time.toFixed(2)}s`,
+				subtext: `${chainStats.min_block_time.toFixed(1)}s - ${chainStats.max_block_time.toFixed(1)}s range`,
+			},
+		)
 	}
 
-	// Format fee revenue for display
-	const feeRevenueDisplay = feeRevenue
-		? Object.entries(feeRevenue).slice(0, 2).map(([denom, amount]) => ({
-				denom,
-				formatted: formatDenomAmount(amount, denom, { maxDecimals: 2 })
-			}))
-		: []
-
-	const metricsData = [
-		{
-			icon: Activity,
-			label: 'Latest Block',
-			value: metrics.latestHeight.toLocaleString(),
-			subtext: `${timeSinceLastBlock}s ago`,
-			color: 'blue.500'
-		},
-		{
-			icon: Database,
-			label: 'Total Transactions',
-			value: formatNumber(metrics.totalTransactions),
-			subtext: `${metrics.txPerBlock} per block`,
-			color: 'green.500'
-		},
-		{
-			icon: Clock,
-			label: 'Block Time',
-			value: `${metrics.avgBlockTime.toFixed(2)}s`,
-			subtext: 'average',
-			color: 'purple.500'
-		},
-		{
-			icon: Users,
-			label: 'Active Validators',
-			value: metrics.activeValidators.toString(),
-			subtext: 'participating',
-			color: 'orange.500'
-		},
-		{
+	if (successRate) {
+		metrics.push({
 			icon: TrendingUp,
-			label: 'Success Rate',
-			value: `${metrics.successRate.toFixed(1)}%`,
-			subtext: 'transactions',
-			color: 'emerald.500'
-		},
-		{
-			icon: Zap,
-			label: 'Avg Gas Limit',
-			value: formatNumber(metrics.avgGasLimit),
-			subtext: 'per transaction',
-			color: 'yellow.500'
-		},
-		{
-			icon: Database,
-			label: 'Total Blocks',
-			value: formatNumber(metrics.totalBlocks),
-			subtext: 'indexed',
-			color: 'indigo.500'
-		},
-		{
-			icon: Users,
-			label: 'Active Addresses',
-			value: metrics.uniqueAddresses?.toString() ?? '-',
-			subtext: 'unique senders',
-			color: 'pink.500'
-		},
-		{
-			icon: DollarSign,
-			label: 'Fee Revenue',
-			value: feeRevenueDisplay.length > 0 ? feeRevenueDisplay[0].formatted : '-',
-			subtext: feeRevenueDisplay.length > 0 ? 'total collected' : 'loading...',
-			color: 'cyan.500',
-			customRender: feeRevenueDisplay.length > 0 ? (
-				<div className={css({ display: 'flex', flexDir: 'column', gap: '1' })}>
-					{feeRevenueDisplay.map(({ denom, formatted }) => (
-						<span key={denom} className={css({ display: 'inline-flex', alignItems: 'center', gap: '1', fontSize: 'sm' })}>
-							{formatted} <DenomDisplay denom={denom} />
-						</span>
-					))}
-				</div>
-			) : null
+			label: "Success Rate",
+			value: `${successRate.success_rate_percent.toFixed(1)}%`,
+			subtext: `${formatNumber(successRate.successful)} / ${formatNumber(successRate.total)}`,
+		})
+	}
+
+	if (networkOverview) {
+		metrics.push(
+			{
+				icon: Shield,
+				label: "Validators",
+				value: `${networkOverview.active_validators}/${networkOverview.total_validators}`,
+				subtext: "active / total",
+			},
+			{
+				icon: Users,
+				label: "Total Bonded",
+				value: formatNumber(networkOverview.total_bonded_tokens ?? 0),
+				subtext: chainInfo.displayDenom,
+			},
+		)
+
+		if (networkOverview.jailed_validators > 0) {
+			metrics.push({
+				icon: Zap,
+				label: "Jailed",
+				value: networkOverview.jailed_validators.toString(),
+				subtext: "validators",
+			})
 		}
-	]
+	}
+
+	if (chainStats) {
+		metrics.push({
+			icon: Users,
+			label: "Unique Addresses",
+			value: formatNumber(chainStats.unique_addresses),
+			subtext: "indexed",
+		})
+	}
 
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className={styles.title}>Network Overview</CardTitle>
+				<CardTitle className={css({ fontSize: "2xl" })}>Network Overview</CardTitle>
 				<CardDescription>
-					Real-time metrics and statistics for the blockchain network
+					Real-time metrics and statistics for {chainInfo.chainId}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div className={styles.metricsGrid}>
-					{metricsData.map((metric, index) => {
+				<div className={gridStyle}>
+					{metrics.map((metric) => {
 						const Icon = metric.icon
 						return (
-							<div key={index} className={styles.metricItem}>
-								<div className={styles.metricHeader}>
-									<Icon className={css({ h: '5', w: '5', color: metric.color })} />
-									<span className={styles.metricLabel}>
+							<div key={metric.label} className={css({ display: "flex", flexDir: "column", gap: "2" })}>
+								<div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+									<Icon className={css({ h: "5", w: "5", color: "fg.muted" })} />
+									<span className={css({ fontSize: "sm", fontWeight: "medium", color: "fg.muted" })}>
 										{metric.label}
 									</span>
 								</div>
-								<div className={styles.metricValues}>
-									{'customRender' in metric && metric.customRender ? (
-										metric.customRender
-									) : (
-										<div className={styles.metricValue}>{metric.value}</div>
-									)}
-									<div className={styles.metricSubtext}>{metric.subtext}</div>
+								<div className={css({ display: "flex", flexDir: "column", gap: "0.5" })}>
+									<span className={css({ fontSize: "2xl", fontWeight: "bold" })}>{metric.value}</span>
+									<span className={css({ fontSize: "xs", color: "fg.muted" })}>{metric.subtext}</span>
 								</div>
 							</div>
 						)
@@ -176,18 +177,8 @@ export function NetworkMetricsCard() {
 	)
 }
 
-const styles = {
-	title: css({ fontSize: '2xl' }),
-	animatePulse: css({ animation: 'pulse', display: 'flex', flexDirection: 'column', gap: '4' }),
-	skeletonGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '4' }),
-	skeletonItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
-	skeletonBar: css({ h: '8', bg: 'muted', rounded: 'md' }),
-	skeletonText: css({ h: '4', bg: 'muted', rounded: 'md', w: '2/3' }),
-	metricsGrid: css({ display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, gap: '6' }),
-	metricItem: css({ display: 'flex', flexDirection: 'column', gap: '2' }),
-	metricHeader: css({ display: 'flex', alignItems: 'center', gap: '2' }),
-	metricLabel: css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.muted' }),
-	metricValues: css({ display: 'flex', flexDirection: 'column', gap: '1' }),
-	metricValue: css({ fontSize: '2xl', fontWeight: 'bold' }),
-	metricSubtext: css({ fontSize: 'xs', color: 'fg.muted' }),
-}
+const gridStyle = css({
+	display: "grid",
+	gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)" },
+	gap: "6",
+})

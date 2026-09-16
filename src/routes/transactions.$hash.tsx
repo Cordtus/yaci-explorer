@@ -1,1165 +1,885 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
-import { ArrowLeft, Copy, CheckCircle, XCircle, Code, Eye, ChevronDown, ChevronRight, Filter, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api'
-import { getEnv } from '@/lib/env'
-import { formatNumber, formatTimeAgo, formatNativeFee, formatRawFee } from '@/lib/utils'
-import { useDenom } from '@/contexts/DenomContext'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { MessageDetails } from '@/components/MessageDetails'
-import { JsonViewer } from '@/components/JsonViewer'
-import { AddressChip } from '@/components/AddressChip'
-import { EVMTransactionCard } from '@/components/EVMTransactionCard'
-import { EVMLogsCard } from '@/components/EVMLogsCard'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import { css } from '@/styled-system/css'
+import { useQuery } from "@tanstack/react-query"
+import {
+	ArrowLeft,
+	CheckCircle,
+	ChevronDown,
+	ChevronRight,
+	Code,
+	Copy,
+	Eye,
+	Loader2,
+	ToggleLeft,
+	ToggleRight,
+	XCircle
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { Link, useParams, useSearchParams } from "react-router"
+import { JsonViewer } from "@/components/JsonViewer"
+import { MessageDetails } from "@/components/MessageDetails"
+import { EVMLogsCard } from "@/components/EVMLogsCard"
+import { EVMTransactionCard } from "@/components/EVMTransactionCard"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger
+} from "@/components/ui/collapsible"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useChain } from "@/contexts/ChainContext"
+import { api, type Event } from "@/lib/api"
+import { formatNumber, formatTimeAgo } from "@/lib/utils"
+import { css } from "@/styled-system/css"
+
+// "message" is an SDK dispatch event, not a tx message; label it distinctly
+function getEventTypeDisplay(type: string): string {
+	return type === "message" ? "msg_dispatch" : type
+}
 
 // Helper to group events by event_index, then by attributes
-function groupEvents(events: any[]) {
-  const grouped = new Map<number, { event_type: string; msg_index: number | null; attributes: Map<string, string> }>()
+function groupEvents(events: Event[]) {
+	const grouped = new Map<
+		number,
+		{
+			event_type: string
+			msg_index: number | null
+			attributes: Map<string, string>
+		}
+	>()
 
-  events.forEach(event => {
-    if (!grouped.has(event.event_index)) {
-      grouped.set(event.event_index, {
-        event_type: event.event_type,
-        msg_index: event.msg_index,
-        attributes: new Map()
-      })
-    }
-    const eventGroup = grouped.get(event.event_index)
-    if (eventGroup && event.attr_key && event.attr_value !== null) {
-      eventGroup.attributes.set(event.attr_key, event.attr_value)
-    }
-  })
+	events.forEach((event) => {
+		if (!grouped.has(event.event_index)) {
+			grouped.set(event.event_index, {
+				event_type: event.event_type,
+				msg_index: event.msg_index,
+				attributes: new Map()
+			})
+		}
+		const eventGroup = grouped.get(event.event_index)
+		if (!eventGroup) return
+		if (event.attr_key && event.attr_value !== null) {
+			eventGroup.attributes.set(event.attr_key, event.attr_value)
+		}
+	})
 
-  return Array.from(grouped.entries()).map(([index, data]) => ({
-    event_index: index,
-    event_type: data.event_type,
-    msg_index: data.msg_index,
-    attributes: Array.from(data.attributes.entries()).map(([key, value]) => ({ key, value }))
-  }))
+	return Array.from(grouped.entries()).map(([index, data]) => ({
+		event_index: index,
+		event_type: data.event_type,
+		msg_index: data.msg_index,
+		attributes: Array.from(data.attributes.entries()).map(([key, value]) => ({
+			key,
+			value
+		}))
+	}))
 }
 
-
-// Group events by event_type for the UI
-function groupEventsByType(events: any[]) {
-  const grouped = new Map<string, any[]>()
-  events.forEach(event => {
-    const type = event.event_type
-    if (!grouped.has(type)) {
-      grouped.set(type, [])
-    }
-    grouped.get(type)?.push(event)
-  })
-  return Array.from(grouped.entries()).map(([type, evts]) => ({
-    type,
-    events: evts,
-    count: evts.length
-  }))
-}
-
-// Check if value looks like an address (bech32 or hex)
-function isAddress(value: string): boolean {
-  return /^[a-z]+1[a-z0-9]{38,}$/.test(value) || /^0x[a-fA-F0-9]{40}$/.test(value)
-}
+// Accent colors for different message types
+const MESSAGE_COLORS = [
+	"blue.8",
+	"violet.8",
+	"green.8",
+	"orange.8",
+	"pink.8",
+	"cyan.8",
+	"indigo.8",
+	"teal.8"
+]
 
 // Helper to check if a string is valid JSON
 function isJsonString(str: string): boolean {
-  try {
-    const parsed = JSON.parse(str)
-    return typeof parsed === 'object' && parsed !== null
-  } catch {
-    return false
-  }
+	try {
+		const parsed = JSON.parse(str)
+		return typeof parsed === "object" && parsed !== null
+	} catch {
+		return false
+	}
 }
 
 export default function TransactionDetailPage() {
-  const [mounted, setMounted] = useState(false)
-  const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
-  const [copied, setCopied] = useState(false)
-  const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({})
-  const [expandedEventTypes, setExpandedEventTypes] = useState<Record<string, boolean>>({})
-  const [eventFilter, setEventFilter] = useState('')
-  const [evmView, setEvmView] = useState(false)
-  const [isDecodingEVM, setIsDecodingEVM] = useState(false)
-  const [decodeAttempted, setDecodeAttempted] = useState(false)
-  const params = useParams()
-  const [searchParams] = useSearchParams()
-  const { getDenomDisplay } = useDenom()
+	const { hasFeature } = useChain()
+	const evmEnabled = hasFeature("evm")
+	const [mounted, setMounted] = useState(false)
+	const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
+	const [copied, setCopied] = useState(false)
+	const [expandedMessages, setExpandedMessages] = useState<
+		Record<number, boolean>
+	>({})
+	const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+	const [evmView, setEvmView] = useState(false)
+	const [isDecodingEVM, setIsDecodingEVM] = useState(false)
+	const [decodeAttempted, setDecodeAttempted] = useState(false)
+	const params = useParams()
+	const [searchParams] = useSearchParams()
 
-  useEffect(() => {
-    setMounted(true)
-    // Auto-enable EVM view if searched by EVM hash or URL contains EVM hash
-    if (searchParams.get('evm') === 'true' || (params.hash && /^0x[a-fA-F0-9]{64}$/.test(params.hash))) {
-      setEvmView(true)
-    }
-  }, [searchParams, params.hash])
+	useEffect(() => {
+		setMounted(true)
+		// Auto-enable EVM view if searched by EVM hash
+		if (searchParams.get("evm") === "true") {
+			setEvmView(true)
+		}
+	}, [searchParams])
 
-  const { data: transaction, isLoading, error, refetch } = useQuery({
-    queryKey: ['transaction', params.hash],
-    queryFn: async () => {
-      if (!params.hash) throw new Error('Transaction hash is required')
-      const result = await api.getTransaction(params.hash)
-      return result
-    },
-    enabled: mounted && !!params.hash,
-    refetchInterval: isDecodingEVM ? 2000 : false,
-  })
+	const {
+		data: transaction,
+		isLoading,
+		error,
+		refetch
+	} = useQuery({
+		queryKey: ["transaction", params.hash],
+		queryFn: async () => {
+			const hash = params.hash
+			if (!hash) {
+				throw new Error("Transaction hash is required")
+			}
+			const result = await api.getTransaction(hash)
+			return result
+		},
+		enabled: mounted && !!params.hash,
+		refetchInterval: isDecodingEVM ? 2000 : false
+	})
 
-  useEffect(() => {
-    if (!transaction || decodeAttempted) return
+	useEffect(() => {
+		if (!evmEnabled || !transaction || decodeAttempted) return
 
-    const isEVMTransaction = transaction.messages?.some(
-      (msg) => msg.type === '/ethermint.evm.v1.MsgEthereumTx'
-    )
+		const isEVMTransaction = transaction.messages?.some(
+			(msg) => msg.type === "/ethermint.evm.v1.MsgEthereumTx"
+		)
 
-    if (isEVMTransaction && !transaction.evm_data) {
-      setIsDecodingEVM(true)
-      setDecodeAttempted(true)
+		if (isEVMTransaction && !transaction.evm_data) {
+			setIsDecodingEVM(true)
+			setDecodeAttempted(true)
 
-      const apiURL = getEnv('VITE_POSTGREST_URL', '/api') ?? '/api'
+			const apiURL = import.meta.env.VITE_POSTGREST_URL || "/api"
 
-      fetch(`${apiURL}/rpc/request_evm_decode`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Prefer': 'params=single-object'
-        },
-        body: JSON.stringify({ _tx_id: transaction.id }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log('Priority EVM decode requested:', data.message)
-          if (data.success && data.status !== 'not_found') {
-            setTimeout(() => {
-              refetch().then(() => {
-                setIsDecodingEVM(false)
-              })
-            }, 2000)
-          } else {
-            setIsDecodingEVM(false)
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to request priority decode:', err)
-          setIsDecodingEVM(false)
-        })
-    }
-  }, [transaction, decodeAttempted, refetch])
+			fetch(`${apiURL}/rpc/request_evm_decode`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Prefer: "params=single-object"
+				},
+				body: JSON.stringify({ _tx_id: transaction.id })
+			})
+				.then((res) => res.json())
+				.then((data) => {
+					console.log("Priority EVM decode requested:", data.message)
+					if (data.success && data.status !== "not_found") {
+						setTimeout(() => {
+							refetch().then(() => {
+								setIsDecodingEVM(false)
+							})
+						}, 2000)
+					} else {
+						setIsDecodingEVM(false)
+					}
+				})
+				.catch((err) => {
+					console.error("Failed to request priority decode:", err)
+					setIsDecodingEVM(false)
+				})
+		}
+	}, [transaction, decodeAttempted, refetch, evmEnabled])
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text)
+		setCopied(true)
+		setTimeout(() => setCopied(false), 2000)
+	}
 
-  const toggleRawData = (messageIndex: number) => {
-    setShowRawData(prev => ({
-      ...prev,
-      [messageIndex]: !prev[messageIndex]
-    }))
-  }
+	const toggleRawData = (messageIndex: number) => {
+		setShowRawData((prev) => ({
+			...prev,
+			[messageIndex]: !prev[messageIndex]
+		}))
+	}
 
-  if (mounted && error) {
-    return (
-      <div className={css(styles.pageContainer)}>
-        <Link to="/tx" className={css(styles.backLink)}>
-          <ArrowLeft className={css(styles.backLinkIcon)} />
-          Back to Transactions
-        </Link>
-        <Card>
-          <CardContent className={css(styles.cardContentWithPadding)}>
-            <div className={css(styles.errorContainer)}>
-              <XCircle className={css(styles.errorIcon)} />
-              <h2 className={css(styles.errorTitle)}>Transaction Not Found</h2>
-              <p className={css(styles.errorDescription)}>
-                The requested transaction could not be found.
-              </p>
-              <p className={css(styles.errorMessage)}>{String(error)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+	if (mounted && error) {
+		return (
+			<div className={styles.stack4}>
+				<Link to="/tx" className={styles.backLink}>
+					<ArrowLeft className={styles.iconSm} />
+					Back to Transactions
+				</Link>
+				<Card>
+					<CardContent className={styles.cardPadTop}>
+						<div className={styles.centeredEmpty}>
+							<XCircle className={css({ h: "12", w: "12", color: "red.8" })} />
+							<h2 className={styles.errorTitle}>Transaction Not Found</h2>
+							<p className={styles.mutedText}>
+								The requested transaction could not be found.
+							</p>
+							<p className={styles.errorText}>{String(error)}</p>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		)
+	}
 
-  if (!mounted || isLoading) {
-    return (
-      <div className={css(styles.pageContainer)}>
-        <Skeleton className={css(styles.skeletonHeader)} />
-        <Skeleton className={css(styles.skeletonMedium)} />
-        <Skeleton className={css(styles.skeletonLarge)} />
-      </div>
-    )
-  }
+	if (!mounted || isLoading) {
+		return (
+			<div className={styles.stack4}>
+				<Skeleton className={css({ h: "8", w: "48" })} />
+				<Skeleton className={css({ h: "64", w: "full" })} />
+				<Skeleton className={css({ h: "96", w: "full" })} />
+			</div>
+		)
+	}
 
-  if (!transaction) {
-    return null
-  }
+	if (!transaction) {
+		return null
+	}
 
-  const isSuccess = !transaction.error
-  const feeAmounts = transaction.fee?.amount ?? []
-  const groupedEvents = groupEvents(transaction.events || [])
-  // Get native symbol from fee denom (for EVM display)
-  const nativeDenom = feeAmounts[0]?.denom || 'unknown'
-  const nativeSymbol = getDenomDisplay(nativeDenom)
+	const isSuccess = !transaction.error
+	const feeAmounts = transaction.fee?.amount ?? []
 
-  return (
-    <div className={css(styles.pageContainerLarge)}>
-      {/* Header */}
-      <div>
-        <Link to="/tx" className={css(styles.backLinkWithMargin)}>
-          <ArrowLeft className={css(styles.backLinkIcon)} />
-          Back to Transactions
-        </Link>
-        <div className={css(styles.headerTitleContainer)}>
-          <h1 className={css(styles.headerTitle)}>Transaction</h1>
-          <Badge variant={isSuccess ? 'success' : 'destructive'}>
-            {isSuccess ? (
-              <><CheckCircle className={css(styles.badgeIcon)} /> Success</>
-            ) : (
-              <><XCircle className={css(styles.badgeIcon)} /> Failed</>
-            )}
-          </Badge>
-        </div>
-        <div className={css(styles.hashContainer)}>
-          <p className={css(styles.hashText)}>
-            {transaction.id}
-          </p>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={css(styles.copyButton)}
-            onClick={() => copyToClipboard(transaction.id)}
-          >
-            {copied ? <CheckCircle className={css(styles.copyIcon)} /> : <Copy className={css(styles.copyIcon)} />}
-          </Button>
-        </div>
+	return (
+		<div className={styles.page}>
+			{/* Header */}
+			<div>
+				<Link to="/tx" className={styles.backLink}>
+					<ArrowLeft className={styles.iconSm} />
+					Back to Transactions
+				</Link>
+				<div className={styles.headerRow}>
+					<h1 className={styles.title}>Transaction</h1>
+					<Badge variant={isSuccess ? "success" : "destructive"}>
+						{isSuccess ? (
+							<>
+								<CheckCircle className={styles.iconXs} /> Success
+							</>
+						) : (
+							<>
+								<XCircle className={styles.iconXs} /> Failed
+							</>
+						)}
+					</Badge>
+				</div>
+				<div className={styles.txIdRow}>
+					<p className={styles.codeSmMuted}>{transaction.id}</p>
+					<Button
+						variant="ghost"
+						size="icon"
+						className={styles.copyButton}
+						onClick={() => copyToClipboard(transaction.id)}
+					>
+						{copied ? (
+							<CheckCircle className={styles.iconXs} />
+						) : (
+							<Copy className={styles.iconXs} />
+						)}
+					</Button>
+				</div>
 
-        {/* EVM View Toggle */}
-        {transaction.evm_data && (
-          <div className={css(styles.evmToggleContainer)}>
-            <Button
-              variant={evmView ? "default" : "outline"}
-              size="sm"
-              onClick={() => setEvmView(!evmView)}
-              className={css(styles.evmToggleButton)}
-            >
-              {evmView ? (
-                <><ToggleRight className={css(styles.toggleIcon)} /> EVM Details</>
-              ) : (
-                <><ToggleLeft className={css(styles.toggleIcon)} /> Overview</>
-              )}
-            </Button>
-          </div>
-        )}
+				{/* EVM View Toggle */}
+				{evmEnabled && transaction.evm_data && (
+					<div className="mt-4 flex items-center gap-3">
+						<Button
+							variant={evmView ? "default" : "outline"}
+							size="sm"
+							onClick={() => setEvmView(!evmView)}
+							className="gap-2"
+						>
+							{evmView ? (
+								<>
+									<ToggleRight className="h-4 w-4" /> EVM View
+								</>
+							) : (
+								<>
+									<ToggleLeft className="h-4 w-4" /> Cosmos View
+								</>
+							)}
+						</Button>
+						<span className="text-xs text-muted-foreground">
+							{evmView
+								? "Showing EVM transaction details"
+								: "Showing Cosmos SDK transaction details"}
+						</span>
+					</div>
+				)}
 
-        {/* EVM Decoding Status */}
-        {isDecodingEVM && (
-          <div className={css(styles.decodingStatus)}>
-            <Loader2 className={css(styles.decodingIcon)} />
-            <span>Decoding EVM transaction data...</span>
-          </div>
-        )}
+				{/* EVM Decoding Status */}
+				{evmEnabled && isDecodingEVM && (
+					<div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+						<Loader2 className="h-4 w-4 animate-spin" />
+						<span>Decoding EVM transaction data...</span>
+					</div>
+				)}
 
-        {transaction.ingest_error && (
-          <div className={css(styles.ingestErrorBox)}>
-            <p className={css(styles.ingestErrorTitle)}>Partial transaction data</p>
-            <p className={css(styles.ingestErrorMessage)}>
-              The indexer could not fetch full transaction details from the gRPC node.
-              Reason: {transaction.ingest_error.reason || transaction.ingest_error.message}.
-              Only the hash and error metadata are available.
-            </p>
-          </div>
-        )}
-      </div>
+				{transaction.ingest_error && (
+					<div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+						<p className="font-semibold">Partial transaction data</p>
+						<p className="mt-1">
+							The indexer could not fetch full transaction details from the gRPC
+							node. Reason:{" "}
+							{transaction.ingest_error.reason ||
+								transaction.ingest_error.message}
+							. Only the hash and error metadata are available.
+						</p>
+					</div>
+				)}
+			</div>
 
-      {/* EVM Details View - Full width, shows only EVM details */}
-      {evmView && transaction.evm_data ? (
-        <div className={css({ display: 'flex', flexDir: 'column', gap: '6' })}>
-          <EVMTransactionCard evmData={transaction.evm_data} nativeSymbol={nativeSymbol} />
-          {transaction.evm_logs && transaction.evm_logs.length > 0 && (
-            <EVMLogsCard logs={transaction.evm_logs} />
-          )}
-        </div>
-      ) : (
-      <div className={css(styles.mainGrid)}>
-        {/* Main Content Area */}
-        <div className={css(styles.mainContent)}>
-          {/* Transaction Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={css(styles.overviewGrid)}>
-                <div>
-                  <label className={css(styles.fieldLabel)}>Block Height</label>
-                  <p className={css(styles.fieldValueLarge)}>
-                    {transaction.height ? (
-                      <Link
-                        to={`/blocks/${transaction.height}`}
-                        className={css(styles.primaryLink)}
-                      >
-                        #{formatNumber(transaction.height)}
-                      </Link>
-                    ) : (
-                      <span className={css(styles.unavailableText)}>Unavailable</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className={css(styles.fieldLabel)}>Timestamp</label>
-                  {transaction.timestamp ? (
-                    <>
-                      <p className={css(styles.fieldValueSmall)}>{formatTimeAgo(transaction.timestamp)}</p>
-                      <p className={css(styles.timestampSecondary)}>
-                        {new Date(transaction.timestamp).toLocaleString()}
-                      </p>
-                    </>
-                  ) : (
-                    <p className={css(styles.unavailableTextSmall)}>Unavailable</p>
-                  )}
-                </div>
-                <div>
-                  <label className={css(styles.fieldLabel)}>Fee</label>
-                  <div className={css(styles.fieldValueSmall)}>
-                    {feeAmounts.length > 0
-                      ? feeAmounts.map((fee: any, idx: number) => (
-                          <div key={idx}>
-                            <span>{formatNativeFee(fee.amount, fee.denom)}</span>
-                            <span className={css({ fontSize: 'xs', color: 'fg.muted', ml: '1' })}>
-                              ({formatRawFee(fee.amount, fee.denom)})
-                            </span>
-                          </div>
-                        ))
-                      : 'N/A'}
-                  </div>
-                </div>
-                <div>
-                  <label className={css(styles.fieldLabel)}>Gas Limit</label>
-                  <p className={css(styles.fieldValueSmall)}>{transaction.fee?.gasLimit ? formatNumber(transaction.fee.gasLimit) : 'N/A'}</p>
-                </div>
-              </div>
+			<div className="grid gap-6 lg:grid-cols-3">
+				<div className="lg:col-span-2 space-y-6">
+					{/* Transaction Overview */}
+					<Card>
+						<CardHeader>
+							<CardTitle>Transaction Overview</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<div className={styles.label}>Block Height</div>
+									<p className={styles.valueLg}>
+										<Link
+											to={`/blocks/${transaction.height}`}
+											className={styles.link}
+										>
+											#{formatNumber(transaction.height)}
+										</Link>
+									</p>
+								</div>
+								<div>
+									<div className={styles.label}>Timestamp</div>
+									{transaction.timestamp ? (
+										<>
+											<p className={styles.textSm}>
+												{formatTimeAgo(transaction.timestamp)}
+											</p>
+											<p className={styles.metaText}>
+												{new Date(transaction.timestamp).toLocaleString()}
+											</p>
+										</>
+									) : (
+										<p className="text-sm text-muted-foreground">Unavailable</p>
+									)}
+								</div>
+								<div>
+									<div className={styles.label}>Fee</div>
+									<p className={styles.textSm}>
+										{feeAmounts.length > 0
+											? feeAmounts
+													.map((fee) => `${formatNumber(fee.amount)} ${fee.denom}`)
+													.join(", ")
+											: "N/A"}
+									</p>
+								</div>
+								<div>
+									<div className="text-sm font-medium text-muted-foreground">
+										Gas Limit
+									</div>
+									<p className="text-sm">
+										{transaction.fee?.gasLimit
+											? formatNumber(transaction.fee.gasLimit)
+											: "N/A"}
+									</p>
+								</div>
+							</div>
 
-              {transaction.memo && (
-                <div className={css(styles.memoContainer)}>
-                  <label className={css(styles.fieldLabel)}>Memo</label>
-                  <p className={css(styles.memoText)}>
-                    {transaction.memo}
-                  </p>
-                </div>
-              )}
+							{transaction.memo && (
+								<div className={styles.memo}>
+									<div className={styles.label}>Memo</div>
+									<p className={styles.memoText}>{transaction.memo}</p>
+								</div>
+							)}
 
-              {transaction.error && (
-                <div className={css(styles.errorFieldContainer)}>
-                  <label className={css(styles.fieldLabel)}>Error</label>
-                  <p className={css(styles.errorFieldText)}>
-                    {transaction.error}
-                  </p>
-                </div>
-              )}
+							{transaction.error && (
+								<div className={styles.errorBox}>
+									<div className={styles.label}>Error</div>
+									<p className={styles.errorPill}>{transaction.error}</p>
+								</div>
+							)}
 
-              {/* Dynamic Message-Specific Details */}
-              {transaction.messages && transaction.messages.length > 0 && (
-                <div className={css(styles.messageDetailsContainer)}>
-                  <div className={css(styles.messageDetailsBorder)}>
-                    <label className={css(styles.messageDetailsLabel)}>Transaction Details</label>
-                    {transaction.messages.map((message, msgIdx) => {
-                      // Include events where msg_index matches OR is null (null means it applies to message 0)
-                      const messageEvents = transaction.events?.filter(e =>
-                        e.msg_index === msgIdx || (e.msg_index === null && msgIdx === 0)
-                      ) || []
-                      const groupedEvents = groupEvents(messageEvents)
+							{/* Dynamic Message-Specific Details */}
+							{transaction.messages && transaction.messages.length > 0 && (
+								<div className={styles.stack4}>
+									<div className={styles.topDivider}>
+										<p className={styles.label}>Transaction Details</p>
+										{transaction.messages.map((message, msgIdx) => {
+											const messageEvents =
+												transaction.events?.filter(
+													(e) =>
+														e.msg_index === msgIdx ||
+														(e.msg_index === null && msgIdx === 0)
+												) || []
+											const groupedEvents = groupEvents(messageEvents)
 
-                      return (
-                        <div key={msgIdx} className={css(styles.messageDetailItem)}>
-                          {msgIdx > 0 && <div className={css(styles.messageDetailDivider)} />}
-                          <MessageDetails
-                            type={message.type ?? 'Unknown'}
-                            metadata={message.metadata}
-                            events={groupedEvents}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+											return (
+												<div key={message.id} className={styles.messageBlock}>
+													{msgIdx > 0 && <div className={styles.divider} />}
+													<MessageDetails
+														type={message.type ?? "Unknown"}
+														metadata={message.metadata}
+														events={groupedEvents}
+													/>
+												</div>
+											)
+										})}
+									</div>
+								</div>
+							)}
+						</CardContent>
+					</Card>
+					{/* Messages & Events - Nested View */}
+					<Card>
+						<CardHeader>
+							<CardTitle>
+								Messages & Events ({transaction.messages?.length || 0} messages)
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							{transaction.messages && transaction.messages.length > 0 ? (
+								<div className={styles.stack3}>
+									{transaction.messages.map((message, msgIdx) => {
+										const messageColor =
+											MESSAGE_COLORS[msgIdx % MESSAGE_COLORS.length]
+										const messageEvents =
+											transaction.events?.filter(
+												(e) =>
+													e.msg_index === msgIdx ||
+													(e.msg_index === null && msgIdx === 0)
+											) || []
+										const groupedEvents = groupEvents(messageEvents)
+										const isExpanded = expandedMessages[msgIdx]
 
-          {/* Messages & Events - Enhanced View */}
-          <Card>
-            <CardHeader>
-              <div className={css(styles.messagesHeaderContainer)}>
-                <CardTitle>Messages & Events ({transaction.messages?.length || 0} messages)</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {transaction.messages && transaction.messages.length > 0 ? (
-                <div className={css(styles.messagesContainer)}>
-                  {transaction.messages.map((message, msgIdx) => {
-                    const messageEvents = transaction.events?.filter(e =>
-                      e.msg_index === msgIdx || (e.msg_index === null && msgIdx === 0)
-                    ) || []
-                    const groupedEvents = groupEvents(messageEvents)
-                    const eventsByType = groupEventsByType(groupedEvents)
-                    const isExpanded = expandedMessages[msgIdx]
+										return (
+											<Collapsible
+												key={message.id}
+												open={isExpanded}
+												onOpenChange={() =>
+													setExpandedMessages((prev) => ({
+														...prev,
+														[msgIdx]: !prev[msgIdx]
+													}))
+												}
+											>
+												<div className="border rounded-lg overflow-hidden">
+													{/* Accent line */}
+													<div className={`h-0.5 ${messageColor} w-1/3`} />
 
-                    // Extract key info for summary
-                    const msgType = message.type?.split('.').pop() || 'Unknown'
-                    const sender = message.sender || message.data?.from_address
+													<CollapsibleTrigger className="w-full p-4 hover:bg-muted/50 transition-colors">
+														<div className="flex items-center justify-between">
+															<div className="flex items-center gap-3">
+																{isExpanded ? (
+																	<ChevronDown className="h-4 w-4 text-muted-foreground" />
+																) : (
+																	<ChevronRight className="h-4 w-4 text-muted-foreground" />
+																)}
+																<span className="text-sm font-medium">
+																	Message #{msgIdx}
+																</span>
+																<Badge
+																	variant="outline"
+																	className="font-mono text-xs"
+																>
+																	{message.type || "Unknown"}
+																</Badge>
+																{groupedEvents.length > 0 && (
+																	<Badge
+																		variant="secondary"
+																		className="text-xs"
+																	>
+																		{groupedEvents.length} events
+																	</Badge>
+																)}
+															</div>
+														</div>
+													</CollapsibleTrigger>
 
-                    return (
-                      <Collapsible
-                        key={msgIdx}
-                        open={isExpanded}
-                        onOpenChange={() => setExpandedMessages(prev => ({ ...prev, [msgIdx]: !prev[msgIdx] }))}
-                      >
-                        <div className={css(styles.collapsibleBorder)}>
-                          <CollapsibleTrigger className={css(styles.collapsibleTrigger)}>
-                            <div className={css(styles.collapsibleTriggerContent)}>
-                              <div className={css(styles.collapsibleTriggerLeft)}>
-                                {isExpanded ? (
-                                  <ChevronDown className={css(styles.chevronIcon)} />
-                                ) : (
-                                  <ChevronRight className={css(styles.chevronIcon)} />
-                                )}
-                                <div className={css(styles.messageTypeContainer)}>
-                                  <div className={css(styles.messageTypeHeader)}>
-                                    <span className={css(styles.messageTypeName)}>{msgType}</span>
-                                    <Badge variant="outline" className={css(styles.messageIndexBadge)}>
-                                      #{msgIdx}
-                                    </Badge>
-                                  </div>
-                                  {sender && (
-                                    <div className={css(styles.messageSender)}>
-                                      From: {sender.slice(0, 12)}...{sender.slice(-6)}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className={css(styles.eventCount)}>
-                                {groupedEvents.length} events
-                              </div>
-                            </div>
-                          </CollapsibleTrigger>
+													<CollapsibleContent>
+														<div className="px-4 pb-4 space-y-4">
+															{/* Message Details */}
+															{message.sender && (
+																<div className="bg-muted/30 rounded-lg p-3">
+																	<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+																		Sender
+																	</p>
+																	<div className="flex items-center gap-2 mt-1">
+																		<code className="text-sm font-mono">
+																			{message.sender}
+																		</code>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-5 w-5"
+																			onClick={() =>
+																				message.sender &&
+																				copyToClipboard(message.sender)
+																			}
+																		>
+																			<Copy className="h-3 w-3" />
+																		</Button>
+																	</div>
+																</div>
+															)}
 
-                          <CollapsibleContent>
-                            <div className={css(styles.collapsibleContentInner)}>
-                              {/* Sender with AddressChip */}
-                              {sender && (
-                                <div className={css(styles.senderChipContainer)}>
-                                  <AddressChip address={sender} label="From" />
-                                </div>
-                              )}
+															{/* Events nested under message */}
+															{groupedEvents.length > 0 && (
+																<div className="space-y-2 pl-4 border-l-2 border-muted">
+																	<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+																		Events
+																	</p>
+																	{groupedEvents.map((event) => {
+																		const eventKey = `${message.id}-${event.event_index}`
+																		const isEventExpanded =
+																			expandedEvents[eventKey]
 
-                              {/* Events grouped by type */}
-                              {eventsByType.length > 0 && (
-                                <div className={css(styles.eventsGroupContainer)}>
-                                  <div className={css(styles.eventsHeader)}>
-                                    <p className={css(styles.eventsHeaderLabel)}>
-                                      Events ({groupedEvents.length})
-                                    </p>
-                                    {groupedEvents.length > 3 && (
-                                      <TooltipProvider>
-                                        <Tooltip openDelay={300}>
-                                          <TooltipTrigger asChild>
-                                            <div className={css(styles.filterContainer)}>
-                                              <Filter className={css(styles.filterIcon)} />
-                                              <Input
-                                                placeholder="Filter by type or key..."
-                                                value={eventFilter}
-                                                onChange={(e) => setEventFilter(e.target.value)}
-                                                className={css(styles.filterInput)}
-                                              />
-                                            </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p className={css({ color: 'fg.default', maxW: 'xs' })}>
-                                              Filter events by event type (e.g. "transfer", "wasm") or attribute key (e.g. "sender", "amount")
-                                            </p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
+																		return (
+																			<Collapsible
+																				key={eventKey}
+																				open={isEventExpanded}
+																				onOpenChange={() =>
+																					setExpandedEvents((prev) => ({
+																						...prev,
+																						[eventKey]: !prev[eventKey]
+																					}))
+																				}
+																			>
+																				<div className="border rounded-lg overflow-hidden bg-card">
+																					<div
+																						className={`h-0.5 ${messageColor} opacity-60 w-1/4`}
+																					/>
 
-                                  {eventsByType.map(({ type, events: typeEvents }) => {
-                                    const typeKey = `${msgIdx}-${type}`
-                                    const isTypeExpanded = expandedEventTypes[typeKey]
-                                    // Filter matches event type or attribute keys
-                                    const filterLower = eventFilter.toLowerCase()
-                                    const typeMatches = type.toLowerCase().includes(filterLower)
-                                    const filteredEvents = eventFilter
-                                      ? typeMatches
-                                        ? typeEvents // Show all events if type matches
-                                        : typeEvents.filter(e =>
-                                            e.attributes.some((a: { key: string; value: string }) =>
-                                              a.key.toLowerCase().includes(filterLower)
-                                            )
-                                          )
-                                      : typeEvents
+																					<CollapsibleTrigger className="w-full p-3 hover:bg-muted/30 transition-colors">
+																						<div className="flex items-center justify-between text-left">
+																							<div className="flex items-center gap-2">
+																								{isEventExpanded ? (
+																									<ChevronDown className="h-3 w-3 text-muted-foreground" />
+																								) : (
+																									<ChevronRight className="h-3 w-3 text-muted-foreground" />
+																								)}
+																								<Badge
+																									variant="outline"
+																									className="text-xs"
+																								>
+																									{getEventTypeDisplay(event.event_type)}
+																								</Badge>
+																								<span className="text-xs text-muted-foreground">
+																									{event.attributes.length}{" "}
+																									attributes
+																								</span>
+																							</div>
+																						</div>
+																					</CollapsibleTrigger>
 
-                                    if (filteredEvents.length === 0) return null
+																					<CollapsibleContent>
+																						<div className="px-3 pb-3 space-y-2">
+																							{event.attributes.map((attr) => {
+																								const isJson = isJsonString(
+																									attr.value
+																								)
 
-                                    return (
-                                      <Collapsible
-                                        key={typeKey}
-                                        open={isTypeExpanded}
-                                        onOpenChange={() => setExpandedEventTypes(prev => ({
-                                          ...prev,
-                                          [typeKey]: !prev[typeKey]
-                                        }))}
-                                      >
-                                        <div className={css(styles.eventTypeBorder)}>
-                                          <CollapsibleTrigger className={css(styles.eventTypeTrigger)}>
-                                            <div className={css(styles.eventTypeTriggerContent)}>
-                                              <div className={css(styles.eventTypeLeft)}>
-                                                {isTypeExpanded ? (
-                                                  <ChevronDown className={css(styles.chevronSmallIcon)} />
-                                                ) : (
-                                                  <ChevronRight className={css(styles.chevronSmallIcon)} />
-                                                )}
-                                                <span className={css(styles.eventTypeName)}>
-                                                  {type}
-                                                </span>
-                                                <span className={css(styles.eventTypeCount)}>
-                                                  ({filteredEvents.length})
-                                                </span>
-                                              </div>
-                                            </div>
-                                          </CollapsibleTrigger>
+																								return (
+																									<div
+																										key={attr.key}
+																										className={
+																											isJson
+																												? "bg-muted/20 rounded p-2"
+																												: "bg-muted/20 rounded p-2"
+																										}
+																									>
+																										<div className="flex flex-col gap-2">
+																											<span className="text-xs font-medium text-muted-foreground">
+																												{attr.key}:
+																											</span>
+																											{isJson ? (
+																												<JsonViewer
+																													data={attr.value}
+																													maxHeight={400}
+																												/>
+																											) : (
+																												<span className="text-xs font-mono break-all">
+																													{attr.value}
+																												</span>
+																											)}
+																										</div>
+																									</div>
+																								)
+																							})}
+																						</div>
+																					</CollapsibleContent>
+																				</div>
+																			</Collapsible>
+																		)
+																	})}
+																</div>
+															)}
 
-                                          <CollapsibleContent>
-                                            <div className={css(styles.eventTypeContentBorder)}>
-                                              {filteredEvents.map((event, evtIdx) => (
-                                                <div key={evtIdx} className={css(styles.eventItemBorder)}>
-                                                  <Table>
-                                                    <TableHeader>
-                                                      <TableRow className={css(styles.tableHeaderRow)}>
-                                                        <TableHead className={css(styles.tableHeaderKey)}>Key</TableHead>
-                                                        <TableHead className={css(styles.tableHeaderValue)}>Value</TableHead>
-                                                      </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                      {event.attributes.map((attr: { key: string; value: string }, attrIdx: number) => {
-                                                        const isJson = isJsonString(attr.value)
-                                                        const addrMatch = isAddress(attr.value)
+															<div className={css({ pt: "2" })}>
+																<Button
+																	variant="outline"
+																	size="sm"
+																	onClick={() => toggleRawData(msgIdx)}
+																	className={styles.fullWidth}
+																>
+																	{showRawData[msgIdx] ? (
+																		<Eye className={styles.iconSm} />
+																	) : (
+																		<Code className={styles.iconSm} />
+																	)}
+																	{showRawData[msgIdx] ? "Hide" : "Show"} Raw
+																	Data
+																</Button>
+																{showRawData[msgIdx] && message.data && (
+																	<div className={styles.rawBox}>
+																		<pre>
+																			{JSON.stringify(message.data, null, 2)}
+																		</pre>
+																	</div>
+																)}
+															</div>
+														</div>
+													</CollapsibleContent>
+												</div>
+											</Collapsible>
+										)
+									})}
+								</div>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									No messages found
+								</p>
+							)}
+						</CardContent>
+					</Card>
+				</div>
 
-                                                        return (
-                                                          <TableRow key={attrIdx}>
-                                                            <TableCell className={css(styles.tableKeyCell)}>
-                                                              {attr.key}
-                                                            </TableCell>
-                                                            <TableCell className={css(styles.tableValueCell)}>
-                                                              {isJson ? (
-                                                                <JsonViewer data={attr.value} maxHeight={200} />
-                                                              ) : addrMatch ? (
-                                                                <AddressChip address={attr.value} truncate />
-                                                              ) : (
-                                                                <span className={css(styles.monoText)}>{attr.value}</span>
-                                                              )}
-                                                            </TableCell>
-                                                          </TableRow>
-                                                        )
-                                                      })}
-                                                    </TableBody>
-                                                  </Table>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </CollapsibleContent>
-                                        </div>
-                                      </Collapsible>
-                                    )
-                                  })}
-                                </div>
-                              )}
+				{/* Sidebar */}
+				<div className={styles.sidebar}>
+					<Card>
+						<CardHeader>
+							<CardTitle>Summary</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className={styles.stack3}>
+								<div className={styles.summaryRow}>
+									<span className={styles.mutedText}>Status</span>
+									<span
+										className={
+											isSuccess ? styles.successText : styles.errorText
+										}
+									>
+										{isSuccess ? "Success" : "Failed"}
+									</span>
+								</div>
+								<div className={styles.summaryRow}>
+									<span className={styles.mutedText}>Messages</span>
+									<span className={styles.summaryValue}>
+										{transaction.messages?.length || 0}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-muted-foreground">Events</span>
+									<span className="font-medium">
+										{transaction.events?.length || 0}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span className="text-muted-foreground">Block</span>
+									<Link
+										to={`/blocks/${transaction.height}`}
+										className="font-medium text-primary hover:text-primary/80"
+									>
+										#{formatNumber(transaction.height)}
+									</Link>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
 
-                              {/* Raw Data */}
-                              <div className={css(styles.rawDataContainer)}>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => toggleRawData(msgIdx)}
-                                  className={css(styles.rawDataButton)}
-                                >
-                                  {showRawData[msgIdx] ? <Eye className={css(styles.rawDataIcon)} /> : <Code className={css(styles.rawDataIcon)} />}
-                                  {showRawData[msgIdx] ? 'Hide' : 'Show'} Raw Data
-                                </Button>
-                                {showRawData[msgIdx] && message.data && (
-                                  <div className={css(styles.rawDataContent)}>
-                                    <pre>{JSON.stringify(message.data, null, 2)}</pre>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </div>
-                      </Collapsible>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className={css(styles.noMessagesText)}>
-                  {transaction.ingest_error
-                    ? 'The indexer could not decode this transaction from the RPC source.'
-                    : 'No messages found'}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className={css(styles.sidebar)}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={css(styles.summaryContainer)}>
-                <div className={css(styles.summaryRow)}>
-                  <span className={css(styles.summaryLabel)}>Status</span>
-                  <span className={css(isSuccess ? styles.summaryValueSuccess : styles.summaryValueError)}>
-                    {isSuccess ? 'Success' : 'Failed'}
-                  </span>
-                </div>
-                <div className={css(styles.summaryRow)}>
-                  <span className={css(styles.summaryLabel)}>Messages</span>
-                  <span className={css(styles.summaryValue)}>{transaction.messages?.length || 0}</span>
-                </div>
-                <div className={css(styles.summaryRow)}>
-                  <span className={css(styles.summaryLabel)}>Events</span>
-                  <span className={css(styles.summaryValue)}>{groupedEvents.length}</span>
-                </div>
-                <div className={css(styles.summaryRow)}>
-                  <span className={css(styles.summaryLabel)}>Block</span>
-                  {transaction.height ? (
-                    <Link
-                      to={`/blocks/${transaction.height}`}
-                      className={css(styles.summaryLinkValue)}
-                    >
-                      #{formatNumber(transaction.height)}
-                    </Link>
-                  ) : (
-                    <span className={css(styles.unavailableTextSmall)}>Unavailable</span>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* EVM Data in sidebar when in Cosmos view */}
-          {!evmView && transaction.evm_data && (
-            <EVMTransactionCard evmData={transaction.evm_data} nativeSymbol={nativeSymbol} />
-          )}
-        </div>
-      </div>
-      )}
-    </div>
-  )
+					{/* EVM data — only for chains that advertise the evm module */}
+					{evmEnabled && transaction.evm_data && (
+						<EVMTransactionCard evmData={transaction.evm_data} />
+					)}
+					{evmEnabled && transaction.evm_logs?.length > 0 && (
+						<EVMLogsCard logs={transaction.evm_logs} />
+					)}
+				</div>
+			</div>
+		</div>
+	)
 }
 
 const styles = {
-  pageContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  pageContainerLarge: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  backLink: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: 'fg.muted',
-    _hover: {
-      color: 'fg.default'
-    }
-  },
-  backLinkWithMargin: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: 'fg.muted',
-    marginBottom: '1rem',
-    _hover: {
-      color: 'fg.default'
-    }
-  },
-  backLinkIcon: {
-    height: '1rem',
-    width: '1rem'
-  },
-  cardContentWithPadding: {
-    paddingTop: '1.5rem'
-  },
-  errorContainer: {
-    textAlign: 'center',
-    paddingY: '3rem'
-  },
-  errorIcon: {
-    height: '3rem',
-    width: '3rem',
-    color: 'red.500',
-    marginX: 'auto',
-    marginBottom: '1rem'
-  },
-  errorTitle: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: 'red.600',
-    marginBottom: '0.5rem'
-  },
-  errorDescription: {
-    color: 'fg.muted',
-    marginBottom: '1rem'
-  },
-  errorMessage: {
-    fontSize: 'sm',
-    color: 'red.500'
-  },
-  skeletonHeader: {
-    height: '2rem',
-    width: '12rem'
-  },
-  skeletonMedium: {
-    height: '16rem',
-    width: '100%'
-  },
-  skeletonLarge: {
-    height: '24rem',
-    width: '100%'
-  },
-  headerTitleContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    marginBottom: '0.5rem'
-  },
-  headerTitle: {
-    fontSize: '1.875rem',
-    fontWeight: 'bold'
-  },
-  badgeIcon: {
-    height: '0.75rem',
-    width: '0.75rem',
-    marginRight: '0.25rem'
-  },
-  hashContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  hashText: {
-    fontFamily: 'mono',
-    fontSize: 'sm',
-    color: 'fg.muted',
-    wordBreak: 'break-all'
-  },
-  copyButton: {
-    height: '1.5rem',
-    width: '1.5rem'
-  },
-  copyIcon: {
-    height: '0.75rem',
-    width: '0.75rem'
-  },
-  evmToggleContainer: {
-    marginTop: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem'
-  },
-  evmToggleButton: {
-    gap: '0.5rem'
-  },
-  toggleIcon: {
-    height: '1rem',
-    width: '1rem'
-  },
-  evmToggleLabel: {
-    fontSize: 'xs',
-    color: 'fg.muted'
-  },
-  decodingStatus: {
-    marginTop: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: 'sm',
-    color: 'fg.muted'
-  },
-  decodingIcon: {
-    height: '1rem',
-    width: '1rem',
-    animation: 'spin'
-  },
-  ingestErrorBox: {
-    marginTop: '1rem',
-    borderRadius: 'md',
-    border: '1px solid',
-    borderColor: 'amber.200',
-    backgroundColor: 'amber.50',
-    padding: '1rem',
-    fontSize: 'sm',
-    color: 'amber.900'
-  },
-  ingestErrorTitle: {
-    fontWeight: 'semibold'
-  },
-  ingestErrorMessage: {
-    marginTop: '0.25rem'
-  },
-  mainGrid: {
-    display: 'grid',
-    gap: '1.5rem',
-    gridTemplateColumns: { base: '1fr', lg: 'repeat(3, 1fr)' }
-  },
-  mainContent: {
-    gridColumn: { base: 'auto', lg: 'span 2' },
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  overviewGrid: {
-    display: 'grid',
-    gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' },
-    gap: '1rem'
-  },
-  fieldLabel: {
-    fontSize: 'sm',
-    fontWeight: 'medium',
-    color: 'fg.muted'
-  },
-  fieldValueLarge: {
-    fontSize: 'lg'
-  },
-  fieldValueSmall: {
-    fontSize: 'sm'
-  },
-  primaryLink: {
-    color: 'colorPalette.fg',
-    _hover: {
-      color: 'colorPalette.emphasized'
-    }
-  },
-  unavailableText: {
-    color: 'fg.muted',
-    fontSize: 'sm'
-  },
-  unavailableTextSmall: {
-    fontSize: 'sm',
-    color: 'fg.muted'
-  },
-  timestampSecondary: {
-    fontSize: 'xs',
-    color: 'fg.muted'
-  },
-  memoContainer: {
-    marginTop: '1rem'
-  },
-  memoText: {
-    fontSize: 'sm',
-    backgroundColor: 'bg.muted',
-    padding: '0.75rem',
-    borderRadius: 'md',
-    fontFamily: 'mono',
-    marginTop: '0.25rem'
-  },
-  errorFieldContainer: {
-    marginTop: '1rem'
-  },
-  errorFieldText: {
-    fontSize: 'sm',
-    backgroundColor: 'red.50',
-    color: 'red.900',
-    padding: '0.75rem',
-    borderRadius: 'md',
-    marginTop: '0.25rem'
-  },
-  messageDetailsContainer: {
-    marginTop: '1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  messageDetailsBorder: {
-    borderTop: '1px solid',
-    borderColor: 'border.default',
-    paddingTop: '1rem'
-  },
-  messageDetailsLabel: {
-    fontSize: 'sm',
-    fontWeight: 'medium',
-    color: 'fg.muted',
-    marginBottom: '0.75rem',
-    display: 'block'
-  },
-  messageDetailItem: {
-    marginBottom: '1rem'
-  },
-  messageDetailDivider: {
-    borderTop: '1px solid',
-    borderColor: 'border.default',
-    marginY: '1rem'
-  },
-  messagesHeaderContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  messagesContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  collapsibleBorder: {
-    border: '1px solid',
-    borderColor: 'border.default',
-    borderRadius: 'lg',
-    overflow: 'hidden'
-  },
-  collapsibleTrigger: {
-    width: '100%',
-    padding: '1rem',
-    transition: 'colors',
-    _hover: {
-      backgroundColor: 'bg.muted/50'
-    }
-  },
-  collapsibleTriggerContent: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  collapsibleTriggerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem'
-  },
-  chevronIcon: {
-    height: '1rem',
-    width: '1rem',
-    color: 'fg.muted'
-  },
-  messageTypeContainer: {
-    textAlign: 'left'
-  },
-  messageTypeHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  messageTypeName: {
-    fontSize: 'sm',
-    fontWeight: 'semibold'
-  },
-  messageIndexBadge: {
-    fontFamily: 'mono',
-    fontSize: 'xs'
-  },
-  messageSender: {
-    fontSize: 'xs',
-    color: 'fg.muted',
-    marginTop: '0.25rem'
-  },
-  eventCount: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: 'xs',
-    color: 'fg.muted'
-  },
-  collapsibleContentInner: {
-    paddingX: '1rem',
-    paddingBottom: '1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    borderTop: '1px solid',
-    borderColor: 'border.default'
-  },
-  senderChipContainer: {
-    paddingTop: '1rem'
-  },
-  eventsGroupContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
-  },
-  eventsHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  eventsHeaderLabel: {
-    fontSize: 'xs',
-    fontWeight: 'medium',
-    color: 'fg.muted',
-    textTransform: 'uppercase',
-    letterSpacing: 'wider'
-  },
-  filterContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  filterIcon: {
-    height: '0.75rem',
-    width: '0.75rem',
-    color: 'fg.muted'
-  },
-  filterInput: {
-    height: '1.75rem',
-    width: '10rem',
-    fontSize: 'xs'
-  },
-  eventTypeBorder: {
-    border: '1px solid',
-    borderColor: 'border.default',
-    borderRadius: 'lg',
-    overflow: 'hidden'
-  },
-  eventTypeTrigger: {
-    width: '100%',
-    padding: '0.75rem',
-    transition: 'colors',
-    _hover: {
-      backgroundColor: 'bg.muted/30'
-    }
-  },
-  eventTypeTriggerContent: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  eventTypeLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  chevronSmallIcon: {
-    height: '0.75rem',
-    width: '0.75rem',
-    color: 'fg.muted'
-  },
-  eventTypeName: {
-    fontSize: 'xs',
-    fontWeight: 'medium'
-  },
-  eventTypeCount: {
-    fontSize: 'xs',
-    color: 'fg.muted'
-  },
-  eventTypeContentBorder: {
-    borderTop: '1px solid',
-    borderColor: 'border.default'
-  },
-  eventItemBorder: {
-    borderBottom: '1px solid',
-    borderColor: 'border.default',
-    _last: {
-      borderBottom: 'none'
-    }
-  },
-  tableHeaderRow: {
-    backgroundColor: 'bg.muted/30'
-  },
-  tableHeaderKey: {
-    width: '33.333333%',
-    fontSize: 'xs',
-    paddingY: '0.5rem'
-  },
-  tableHeaderValue: {
-    fontSize: 'xs',
-    paddingY: '0.5rem'
-  },
-  tableKeyCell: {
-    fontWeight: 'medium',
-    fontSize: 'xs',
-    paddingY: '0.5rem',
-    color: 'fg.muted'
-  },
-  tableValueCell: {
-    fontSize: 'xs',
-    paddingY: '0.5rem'
-  },
-  monoText: {
-    fontFamily: 'mono',
-    wordBreak: 'break-all'
-  },
-  rawDataContainer: {
-    paddingTop: '0.5rem'
-  },
-  rawDataButton: {
-    width: '100%'
-  },
-  rawDataIcon: {
-    height: '1rem',
-    width: '1rem',
-    marginRight: '0.5rem'
-  },
-  rawDataContent: {
-    marginTop: '0.5rem',
-    fontSize: 'xs',
-    backgroundColor: 'bg.muted',
-    padding: '0.75rem',
-    borderRadius: 'md',
-    overflowX: 'auto',
-    maxHeight: '12rem'
-  },
-  noMessagesText: {
-    fontSize: 'sm',
-    color: 'fg.muted'
-  },
-  sidebar: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  summaryContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
-  },
-  summaryRow: {
-    display: 'flex',
-    justifyContent: 'space-between'
-  },
-  summaryLabel: {
-    color: 'fg.muted'
-  },
-  summaryValue: {
-    fontWeight: 'medium'
-  },
-  summaryValueSuccess: {
-    color: 'green.600',
-    fontWeight: 'medium'
-  },
-  summaryValueError: {
-    color: 'red.600',
-    fontWeight: 'medium'
-  },
-  summaryLinkValue: {
-    fontWeight: 'medium',
-    color: 'accent.default',
-    _hover: {
-      color: 'accent.emphasized',
-      textDecoration: 'underline'
-    }
-  }
+	page: css({ display: "flex", flexDirection: "column", gap: "6" }),
+	stack4: css({ display: "flex", flexDirection: "column", gap: "4" }),
+	stack3: css({ display: "flex", flexDirection: "column", gap: "3" }),
+	backLink: css({
+		display: "inline-flex",
+		alignItems: "center",
+		gap: "2",
+		color: "fg.muted",
+		_hover: { color: "fg.default" },
+		mb: "4"
+	}),
+	cardPadTop: css({ pt: "6" }),
+	centeredEmpty: css({
+		textAlign: "center",
+		py: "12",
+		display: "flex",
+		flexDirection: "column",
+		gap: "3",
+		alignItems: "center"
+	}),
+	errorTitle: css({ fontSize: "2xl", fontWeight: "bold", color: "red.8" }),
+	mutedText: css({ color: "fg.muted" }),
+	errorText: css({ color: "red.8", fontSize: "sm" }),
+	iconSm: css({ h: "4", w: "4" }),
+	iconXs: css({ h: "3", w: "3", mr: "1" }),
+	headerRow: css({
+		display: "flex",
+		alignItems: "center",
+		gap: "3",
+		mb: "2"
+	}),
+	title: css({ fontSize: "3xl", fontWeight: "bold" }),
+	txIdRow: css({ display: "flex", alignItems: "center", gap: "2" }),
+	copyButton: css({ h: "6", w: "6" }),
+	codeSmMuted: css({
+		fontFamily: "mono",
+		fontSize: "sm",
+		color: "fg.muted",
+		wordBreak: "break-all"
+	}),
+	layoutGrid: css({
+		display: "grid",
+		gap: "6",
+		gridTemplateColumns: { base: "1fr", lg: "2fr 1fr" }
+	}),
+	mainCol: css({ display: "flex", flexDirection: "column", gap: "6" }),
+	link: css({
+		color: "colorPalette.default",
+		_hover: { color: "colorPalette.emphasized" }
+	}),
+	infoGrid: css({
+		display: "grid",
+		gap: "4",
+		gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" }
+	}),
+	label: css({ fontSize: "sm", fontWeight: "medium", color: "fg.muted" }),
+	valueLg: css({ fontSize: "lg", fontWeight: "bold" }),
+	textSm: css({ fontSize: "sm" }),
+	metaText: css({ fontSize: "xs", color: "fg.muted" }),
+	memo: css({ mt: "4" }),
+	memoText: css({
+		fontSize: "sm",
+		bg: "bg.muted",
+		p: "3",
+		rounded: "md",
+		fontFamily: "mono",
+		mt: "1"
+	}),
+	errorBox: css({ mt: "4" }),
+	errorPill: css({
+		fontSize: "sm",
+		bg: "red.1",
+		color: "red.11",
+		p: "3",
+		rounded: "md",
+		mt: "1"
+	}),
+	topDivider: css({ borderTopWidth: "1px", pt: "4" }),
+	messageBlock: css({ mb: "4" }),
+	divider: css({ borderTopWidth: "1px", my: "4" }),
+	panel: css({
+		borderWidth: "1px",
+		rounded: "lg",
+		overflow: "hidden",
+		bg: "bg.default"
+	}),
+	trigger: css({
+		width: "100%",
+		px: "4",
+		py: "3.5",
+		textAlign: "left",
+		transition: "all 0.2s ease",
+		_hover: { bg: "bg.muted" }
+	}),
+	triggerInner: css({ display: "flex", alignItems: "center", gap: "3" }),
+	textSmBold: css({ fontSize: "sm", fontWeight: "medium" }),
+	badgeXs: css({ fontSize: "xs" }),
+	panelBody: css({
+		px: "4",
+		pb: "4",
+		display: "flex",
+		flexDirection: "column",
+		gap: "4"
+	}),
+	cardMuted: css({
+		bg: "bg.muted",
+		rounded: "lg",
+		p: "3",
+		display: "flex",
+		flexDirection: "column",
+		gap: "1"
+	}),
+	labelUpper: css({
+		fontSize: "xs",
+		fontWeight: "medium",
+		color: "fg.muted",
+		textTransform: "uppercase",
+		letterSpacing: "widest"
+	}),
+	codeSm: css({ fontFamily: "mono", fontSize: "sm" }),
+	iconButton: css({ h: "5", w: "5", p: "0" }),
+	eventList: css({
+		display: "flex",
+		flexDirection: "column",
+		gap: "2",
+		pl: "4",
+		borderLeftWidth: "2px",
+		borderColor: "border.subtle"
+	}),
+	eventPanel: css({
+		borderWidth: "1px",
+		rounded: "lg",
+		overflow: "hidden",
+		bg: "bg.card"
+	}),
+	eventTrigger: css({
+		width: "100%",
+		px: "3",
+		py: "3",
+		textAlign: "left",
+		_hover: { bg: "bg.muted" }
+	}),
+	eventTriggerInner: css({ display: "flex", alignItems: "center", gap: "2" }),
+	eventBody: css({
+		px: "3",
+		pb: "3",
+		display: "flex",
+		flexDirection: "column",
+		gap: "2"
+	}),
+	attrBox: css({ bg: "bg.muted", rounded: "md", p: "2" }),
+	attrContent: css({ display: "flex", flexDirection: "column", gap: "2" }),
+	attrLabel: css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted" }),
+	attrValue: css({
+		fontSize: "xs",
+		fontFamily: "mono",
+		wordBreak: "break-all"
+	}),
+	fullWidth: css({ width: "100%", justifyContent: "center", gap: "2" }),
+	rawBox: css({
+		mt: "2",
+		fontSize: "xs",
+		bg: "bg.muted",
+		p: "3",
+		rounded: "md",
+		overflowY: "auto",
+		maxH: "48"
+	}),
+	sidebar: css({ display: "flex", flexDirection: "column", gap: "6" }),
+	summaryRow: css({
+		display: "flex",
+		justifyContent: "space-between",
+		alignItems: "center"
+	}),
+	summaryValue: css({ fontWeight: "medium" }),
+	successText: css({ color: "green.9", fontWeight: "medium" }),
+	blockLink: css({
+		color: "colorPalette.default",
+		_hover: { color: "colorPalette.emphasized" }
+	})
 }

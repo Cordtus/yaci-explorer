@@ -1,59 +1,30 @@
 {
-  "apiUrl": "/api",
-  "chainRestEndpoint": "",
-  "evmRpcEndpoint": "",
-  "evmEnabled": true,
-  "ibcEnabled": true,
-  "wasmEnabled": false,
-  "appName": "Block Explorer",
-  "appNameShort": "Explorer",
+  "defaultChainId": "example-1",
+  "chains": {
+    "example-1": {
+      "name": "Example Chain",
+      "apiUrl": "https://example-api.example.com",
+      "chainQueryUrl": "https://example-gateway.example.com/chain/example-1",
+      "features": { "evm": true, "ibc": true, "wasm": false, "governance": true, "staking": true },
+      "theme": {
+        "accentColor": "#3b82f6",
+        "accentColorFg": "#ffffff",
+        "accentColorSubtle": "#dbeafe"
+      }
+    },
+    "example-2": {
+      "name": "Example Chain 2",
+      "apiUrl": "https://example2-api.example.com",
+      "chainQueryUrl": "https://example-gateway.example.com/chain/example-2",
+      "features": { "evm": false, "ibc": true, "wasm": true, "governance": true, "staking": true }
+    }
+  },
+  "branding": {
+    "appName": "Yaci Explorer",
+    "footerText": ""
+  },
   "queries": {
     "staleTimeMs": 10000,
     "gcTimeMs": 300000
-  },
-  "dashboard": {
-    "refetchIntervalMs": 6000,
-    "itemCount": 5
-  },
-  "transactions": {
-    "pageSize": 10
-  },
-  "blocks": {
-    "pageSize": 10
-  },
-  "search": {
-    "addressResultLimit": 20,
-    "autoNavigateSingle": true
-  },
-  "analytics": {
-    "transactionVolumeHours": 24,
-    "transactionVolumeRefetchMs": 60000,
-    "messageSampleLimit": 10000,
-    "messageTopN": 10,
-    "messageRefetchMs": 60000,
-    "eventSampleLimit": 10000,
-    "eventTopN": 10,
-    "eventRefetchMs": 60000,
-    "blockIntervalLookback": 100,
-    "blockIntervalRefetchMs": 30000,
-    "blockIntervalMaxSeconds": 100,
-    "networkBlocksWindow": 100,
-    "networkTxWindow": 1000,
-    "networkMessageWindow": 2000,
-    "networkRefetchMs": 10000
-  },
-  "branding": {
-    "logoUrl": "",
-    "faviconUrl": "",
-    "primaryColor": "",
-    "accentColor": "",
-    "footerText": ""
-  },
-  "links": {
-    "website": "",
-    "docs": "",
-    "github": "",
-    "discord": "",
-    "twitter": ""
   }
 }

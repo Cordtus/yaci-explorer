@@ -1,97 +1,65 @@
+/**
+ * Application configuration
+ * Reads from runtime config.json (via getConfig) with env var fallbacks
+ */
 import { getConfig } from '@/lib/env'
 
-// Lazy app config - evaluated on first access after loadConfig() has run
-let _appConfig: AppConfigType | null = null
+const toNumber = (value: string | undefined, fallback: number): number => {
+  if (value === undefined || value === null || value === '') {
+    return fallback
+  }
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
 
-function buildAppConfig(): AppConfigType {
-  const config = getConfig()
+const toBoolean = (value: string | undefined, fallback: boolean): boolean => {
+  if (value === undefined || value === null || value === '') {
+    return fallback
+  }
+  return ['true', '1', 'yes', 'on'].includes(value.toLowerCase())
+}
 
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
+
+function buildAppConfig() {
+  const runtime = getConfig()
   return {
-    queries: {
-      staleTimeMs: config.queryStaleMs ?? 10_000,
-      gcTimeMs: config.queryGcMs ?? 300_000,
-    },
-    dashboard: {
-      refetchIntervalMs: config.dashboardRefreshMs ?? 6_000,
-      itemCount: config.dashboardItemCount ?? 5,
-    },
-    transactions: {
-      pageSize: config.txPageSize ?? 10,
-    },
-    blocks: {
-      pageSize: config.blocksPageSize ?? 10,
-    },
-    search: {
-      addressResultLimit: config.searchAddressLimit ?? 20,
-      autoNavigateSingle: config.searchAutoNavigateSingle ?? true,
-    },
-    analytics: {
-      transactionVolumeHours: config.analyticsVolumeHours ?? 24,
-      transactionVolumeRefetchMs: config.analyticsVolumeRefreshMs ?? 60_000,
-      messageSampleLimit: config.analyticsMessageSampleLimit ?? 10_000,
-      messageTopN: config.analyticsMessageTopN ?? 10,
-      messageRefetchMs: config.analyticsMessageRefreshMs ?? 60_000,
-      eventSampleLimit: config.analyticsEventSampleLimit ?? 10_000,
-      eventTopN: config.analyticsEventTopN ?? 10,
-      eventRefetchMs: config.analyticsEventRefreshMs ?? 60_000,
-      blockIntervalLookback: config.analyticsBlockIntervalLookback ?? 100,
-      blockIntervalRefetchMs: config.analyticsBlockIntervalRefreshMs ?? 30_000,
-      blockIntervalMaxSeconds: config.analyticsBlockIntervalMaxSeconds ?? 100,
-      networkBlocksWindow: config.analyticsNetworkBlockWindow ?? 100,
-      networkTxWindow: config.analyticsNetworkTxWindow ?? 1000,
-      networkMessageWindow: config.analyticsNetworkMsgWindow ?? 2000,
-      networkRefetchMs: config.analyticsNetworkRefreshMs ?? 10_000,
-    },
-  }
-}
-
-// Type definition for the config structure
-interface AppConfigType {
   queries: {
-    staleTimeMs: number
-    gcTimeMs: number
-  }
-  dashboard: {
-    refetchIntervalMs: number
-    itemCount: number
-  }
+    staleTimeMs: runtime.queries?.staleTimeMs ?? toNumber(env.VITE_QUERY_STALE_MS, 10_000),
+    gcTimeMs: runtime.queries?.gcTimeMs ?? toNumber(env.VITE_QUERY_GC_MS, 300_000),
+  },
   transactions: {
-    pageSize: number
-  }
-  blocks: {
-    pageSize: number
-  }
+    pageSize: toNumber(env.VITE_TX_PAGE_SIZE, 20),
+  },
   search: {
-    addressResultLimit: number
-    autoNavigateSingle: boolean
-  }
+    addressResultLimit: toNumber(env.VITE_SEARCH_ADDRESS_LIMIT, 20),
+    autoNavigateSingle: toBoolean(env.VITE_SEARCH_AUTO_NAVIGATE_SINGLE, true),
+  },
   analytics: {
-    transactionVolumeHours: number
-    transactionVolumeRefetchMs: number
-    messageSampleLimit: number
-    messageTopN: number
-    messageRefetchMs: number
-    eventSampleLimit: number
-    eventTopN: number
-    eventRefetchMs: number
-    blockIntervalLookback: number
-    blockIntervalRefetchMs: number
-    blockIntervalMaxSeconds: number
-    networkBlocksWindow: number
-    networkTxWindow: number
-    networkMessageWindow: number
-    networkRefetchMs: number
-  }
+    transactionVolumeHours: toNumber(env.VITE_ANALYTICS_VOLUME_HOURS, 24),
+    transactionVolumeRefetchMs: toNumber(env.VITE_ANALYTICS_VOLUME_REFRESH_MS, 60_000),
+    messageSampleLimit: toNumber(env.VITE_ANALYTICS_MESSAGE_SAMPLE_LIMIT, 10_000),
+    messageTopN: toNumber(env.VITE_ANALYTICS_MESSAGE_TOPN, 10),
+    messageRefetchMs: toNumber(env.VITE_ANALYTICS_MESSAGE_REFRESH_MS, 60_000),
+    eventSampleLimit: toNumber(env.VITE_ANALYTICS_EVENT_SAMPLE_LIMIT, 10_000),
+    eventTopN: toNumber(env.VITE_ANALYTICS_EVENT_TOPN, 10),
+    eventRefetchMs: toNumber(env.VITE_ANALYTICS_EVENT_REFRESH_MS, 60_000),
+    blockIntervalLookback: toNumber(env.VITE_ANALYTICS_BLOCK_INTERVAL_LOOKBACK, 100),
+    blockIntervalRefetchMs: toNumber(env.VITE_ANALYTICS_BLOCK_INTERVAL_REFRESH_MS, 30_000),
+    blockIntervalMaxSeconds: toNumber(env.VITE_ANALYTICS_BLOCK_INTERVAL_MAX_SECONDS, 100),
+    networkBlocksWindow: toNumber(env.VITE_ANALYTICS_NETWORK_BLOCK_WINDOW, 100),
+    networkTxWindow: toNumber(env.VITE_ANALYTICS_NETWORK_TX_WINDOW, 1000),
+    networkMessageWindow: toNumber(env.VITE_ANALYTICS_NETWORK_MSG_WINDOW, 2000),
+    networkRefetchMs: toNumber(env.VITE_ANALYTICS_NETWORK_REFRESH_MS, 10_000),
+  },
+  resetNotice: {
+    enabled: toBoolean(env.VITE_RESET_NOTICE_ENABLED, true),
+    refetchIntervalMs: toNumber(env.VITE_RESET_NOTICE_REFETCH_MS, 30_000),
+    hashCheckHeight: toNumber(env.VITE_RESET_NOTICE_HASH_CHECK_HEIGHT, 5),
+  },
+} as const
 }
 
-// Proxy for lazy initialization - defers config building until first property access
-export const appConfig: AppConfigType = new Proxy({} as AppConfigType, {
-  get(_, prop: keyof AppConfigType) {
-    if (!_appConfig) {
-      _appConfig = buildAppConfig()
-    }
-    return Reflect.get(_appConfig, prop)
-  }
-})
+export const appConfig = buildAppConfig()
 
-export type AppConfig = AppConfigType
+export type AppConfig = ReturnType<typeof buildAppConfig>

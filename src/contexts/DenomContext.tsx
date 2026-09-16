@@ -1,46 +1,81 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import {
-	initDenomService,
-	isDenomServiceReady,
-	resolveDenom,
-	getDenomSymbol,
-	type ResolvedDenom
-} from '@/lib/denom-service'
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react"
+import { getDenomMetadata } from "@/lib/denom"
 
 interface DenomContextType {
 	getDenomDisplay: (denom: string) => string
-	resolve: (denom: string) => ResolvedDenom
 	isLoading: boolean
 }
 
 const DenomContext = createContext<DenomContextType | undefined>(undefined)
 
+interface DenomMetadataRow {
+	denom: string
+	symbol: string
+}
+
 /**
- * Denom resolution provider
- * Initializes the denom service and provides resolution functions to components
+ * Global denom resolution cache
+ * Loads from database at app startup and caches all denom mappings
  */
 export function DenomProvider({ children }: { children: ReactNode }) {
-	const [isLoading, setIsLoading] = useState(!isDenomServiceReady())
+	const [denomCache, setDenomCache] = useState<Map<string, string>>(new Map())
+	const [isLoading, setIsLoading] = useState(true)
 
 	useEffect(() => {
-		if (isDenomServiceReady()) {
-			setIsLoading(false)
-			return
+		const loadDenomMetadata = async () => {
+			try {
+				const postgrestUrl = import.meta.env.VITE_POSTGREST_URL || import.meta.env.POSTGREST_URL
+				if (!postgrestUrl) {
+					throw new Error("VITE_POSTGREST_URL or POSTGREST_URL environment variable is not set")
+				}
+				const response = await fetch(
+					`${postgrestUrl}/denom_metadata?select=denom,symbol`
+				)
+
+				if (!response.ok) {
+					console.error("Failed to fetch denom metadata from database")
+					setIsLoading(false)
+					return
+				}
+
+				const metadata: DenomMetadataRow[] = await response.json()
+				const cache = new Map<string, string>()
+
+				// Build cache from database
+				metadata.forEach((row) => {
+					cache.set(row.denom, row.symbol)
+				})
+
+				setDenomCache(cache)
+				setIsLoading(false)
+			} catch (error) {
+				console.error("Error loading denom metadata:", error)
+				setIsLoading(false)
+			}
 		}
 
-		initDenomService().then(() => {
-			setIsLoading(false)
-		})
+		loadDenomMetadata()
 	}, [])
 
-	const value: DenomContextType = {
-		getDenomDisplay: getDenomSymbol,
-		resolve: resolveDenom,
-		isLoading
+	const getDenomDisplay = (denom: string): string => {
+		// Check cache first
+		const cachedDenom = denomCache.get(denom)
+		if (cachedDenom !== undefined) {
+			return cachedDenom
+		}
+
+		// For IBC denoms, return as-is if not in cache (will be truncated by UI)
+		if (denom.startsWith("ibc/")) {
+			return denom
+		}
+
+		// For native denoms, use static metadata (no setState during render)
+		const metadata = getDenomMetadata(denom)
+		return metadata.symbol
 	}
 
 	return (
-		<DenomContext.Provider value={value}>
+		<DenomContext.Provider value={{ getDenomDisplay, isLoading }}>
 			{children}
 		</DenomContext.Provider>
 	)
@@ -49,7 +84,7 @@ export function DenomProvider({ children }: { children: ReactNode }) {
 export function useDenom() {
 	const context = useContext(DenomContext)
 	if (context === undefined) {
-		throw new Error('useDenom must be used within a DenomProvider')
+		throw new Error("useDenom must be used within a DenomProvider")
 	}
 	return context
 }

@@ -1,27 +1,73 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import ReactECharts from 'echarts-for-react'
-import { useQuery } from '@tanstack/react-query'
-import { appConfig } from '@/config/app'
-import { css } from '@/styled-system/css'
-import { getBlockIntervals } from '@/lib/metrics'
+import { useQuery } from "@tanstack/react-query"
+import ReactECharts from "echarts-for-react"
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle
+} from "@/components/ui/card"
+import { appConfig } from "@/config/app"
 
-export function BlockIntervalChart() {
-	const lookback = appConfig.analytics.blockIntervalLookback
+type BlockTimeData = {
+	height: number
+	time: number
+	timestamp: string
+}
+
+const getBlockIntervalData = async (
+	limit: number
+): Promise<BlockTimeData[]> => {
+	const baseUrl = import.meta.env.VITE_POSTGREST_URL || import.meta.env.POSTGREST_URL
+	if (!baseUrl) {
+		throw new Error("POSTGREST_URL environment variable is not set")
+	}
+	const response = await fetch(
+		`${baseUrl}/blocks_raw?order=id.desc&limit=${limit}`
+	)
+	const blocks = await response.json()
+
+	const data: BlockTimeData[] = []
+	for (let i = 0; i < blocks.length - 1; i++) {
+		const currentTime = new Date(blocks[i].data?.block?.header?.time).getTime()
+		const previousTime = new Date(
+			blocks[i + 1].data?.block?.header?.time
+		).getTime()
+		const diff = (currentTime - previousTime) / 1000
+
+		if (diff > 0 && diff < appConfig.analytics.blockIntervalMaxSeconds) {
+			data.push({
+				height: blocks[i].id,
+				time: diff,
+				timestamp: blocks[i].data?.block?.header?.time
+			})
+		}
+	}
+
+	return data.reverse()
+}
+
+export const BlockIntervalChart = () => {
 	const { data, isLoading } = useQuery({
-		queryKey: ['block-intervals', lookback],
-		queryFn: () => getBlockIntervals(lookback),
-		refetchInterval: appConfig.analytics.blockIntervalRefetchMs,
+		queryKey: ["block-intervals", appConfig.analytics.blockIntervalLookback],
+		queryFn: () =>
+			getBlockIntervalData(appConfig.analytics.blockIntervalLookback),
+		refetchInterval: appConfig.analytics.blockIntervalRefetchMs
 	})
+	const lookbackLabel =
+		appConfig.analytics.blockIntervalLookback.toLocaleString()
 
 	if (isLoading || !data || data.length === 0) {
 		return (
 			<Card>
 				<CardHeader>
 					<CardTitle>Block Interval</CardTitle>
-					<CardDescription>Block production time over recent blocks</CardDescription>
+					<CardDescription>
+						Block production time over recent blocks
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className={styles.loadingContainer}>
+					<div className="h-[300px] flex items-center justify-center text-muted-foreground">
 						Loading...
 					</div>
 				</CardContent>
@@ -35,84 +81,92 @@ export function BlockIntervalChart() {
 
 	const option = {
 		tooltip: {
-			trigger: 'axis',
-			backgroundColor: 'rgba(15, 23, 42, 0.95)',
-			borderColor: 'rgba(52, 211, 153, 0.5)',
-			textStyle: { color: '#f1f5f9' },
+			trigger: "axis",
 			axisPointer: {
-				type: 'line',
-				lineStyle: { color: '#34d399', width: 1 }
+				type: "cross"
 			},
+			// biome-ignore lint/suspicious/noExplicitAny: typing charts at a later date
 			formatter: (params: any) => {
 				const point = params[0]
-				return `<div style="font-size: 13px;">
-					<strong>Block ${Number(point.name).toLocaleString()}</strong><br/>
-					Interval: <span style="color: #6ee7b7; font-weight: 600;">${point.value[1].toFixed(2)}s</span>
-				</div>`
-			},
+				return `
+          <div style="font-size: 12px;">
+            <strong>Block ${point.name}</strong><br/>
+            Interval: ${point.value[1].toFixed(2)}s
+          </div>
+        `
+			}
 		},
 		grid: {
-			left: '3%',
-			right: '4%',
-			bottom: '8%',
-			top: '8%',
-			containLabel: true,
+			left: "3%",
+			right: "4%",
+			bottom: "3%",
+			top: "15%",
+			containLabel: true
 		},
 		xAxis: {
-			type: 'category',
+			type: "category",
 			data: data.map((d) => d.height),
 			axisLabel: {
-				color: '#cbd5e1',
-				fontSize: 11,
-				rotate: 0,
-				interval: Math.floor(data.length / 6),
-				formatter: (value: number) => value.toLocaleString(),
+				rotate: 45,
+				interval: Math.floor(data.length / 10),
+				formatter: (value: number) => value.toLocaleString()
 			},
-			axisLine: { lineStyle: { color: '#475569' } },
-			splitLine: { show: false },
+			name: "Block Height",
+			nameLocation: "middle",
+			nameGap: 50
 		},
 		yAxis: {
-			type: 'value',
+			type: "value",
+			name: "Seconds",
+			nameLocation: "middle",
+			nameGap: 50,
 			axisLabel: {
-				color: '#cbd5e1',
-				fontSize: 11,
-				formatter: '{value}s',
-			},
-			axisLine: { show: false },
-			splitLine: { lineStyle: { color: '#334155', type: 'dashed' } },
+				formatter: "{value}s"
+			}
 		},
-		series: [{
-			name: 'Block Interval',
-			type: 'line',
-			data: data.map((d) => [d.height, d.time]),
-			smooth: true,
-			symbol: 'circle',
-			symbolSize: 6,
-			itemStyle: { color: '#34d399' },
-			lineStyle: { width: 3, color: '#34d399' },
-			areaStyle: {
-				color: {
-					type: 'linear',
-					x: 0, y: 0, x2: 0, y2: 1,
-					colorStops: [
-						{ offset: 0, color: 'rgba(52, 211, 153, 0.4)' },
-						{ offset: 1, color: 'rgba(52, 211, 153, 0.05)' },
-					],
+		series: [
+			{
+				name: "Block Interval",
+				type: "line",
+				data: data.map((d) => [d.height, d.time]),
+				smooth: true,
+				symbol: "circle",
+				symbolSize: 4,
+				lineStyle: {
+					width: 2,
+					color: "#3b82f6"
 				},
-			},
-			markLine: {
-				silent: true,
-				symbol: 'none',
-				lineStyle: { type: 'dashed', color: '#fbbf24', width: 2 },
-				label: {
-					color: '#fcd34d',
-					fontSize: 12,
-					fontWeight: 'bold',
-					formatter: `Avg: ${avgBlockTime.toFixed(2)}s`,
+				areaStyle: {
+					color: {
+						type: "linear",
+						x: 0,
+						y: 0,
+						x2: 0,
+						y2: 1,
+						colorStops: [
+							{ offset: 0, color: "rgba(59, 130, 246, 0.3)" },
+							{ offset: 1, color: "rgba(59, 130, 246, 0.05)" }
+						]
+					}
 				},
-				data: [{ yAxis: avgBlockTime }],
-			},
-		}],
+				markLine: {
+					silent: true,
+					symbol: "none",
+					lineStyle: {
+						type: "dashed",
+						color: "#10b981"
+					},
+					data: [
+						{
+							yAxis: avgBlockTime,
+							label: {
+								formatter: `Avg: ${avgBlockTime.toFixed(2)}s`
+							}
+						}
+					]
+				}
+			}
+		]
 	}
 
 	return (
@@ -120,17 +174,17 @@ export function BlockIntervalChart() {
 			<CardHeader>
 				<CardTitle>Block Production Interval</CardTitle>
 				<CardDescription>
-					Last {lookback.toLocaleString()} blocks | Avg: {avgBlockTime.toFixed(2)}s | Min: {minBlockTime.toFixed(2)}
-					s | Max: {maxBlockTime.toFixed(2)}s
+					Last {lookbackLabel} blocks | Avg: {avgBlockTime.toFixed(2)}s | Min:{" "}
+					{minBlockTime.toFixed(2)}s | Max: {maxBlockTime.toFixed(2)}s
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ReactECharts option={option} style={{ height: '300px' }} opts={{ renderer: 'canvas' }} notMerge={true} lazyUpdate={true} />
+				<ReactECharts
+					option={option}
+					style={{ height: "300px" }}
+					opts={{ renderer: "canvas" }}
+				/>
 			</CardContent>
 		</Card>
 	)
-}
-
-const styles = {
-	loadingContainer: css({ h: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'fg.muted' }),
 }

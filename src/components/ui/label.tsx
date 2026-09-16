@@ -1,27 +1,24 @@
 import * as React from 'react'
-import { cx, css } from '@/styled-system/css'
-import { formLabel } from '@/styled-system/recipes'
 
-export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+import { cx } from '../../../styled-system/css'
+import { formLabel, type FormLabelVariantProps } from '../../../styled-system/recipes'
 
-const Label = React.forwardRef<HTMLLabelElement, LabelProps>(({ className, ...props }, ref) => {
-  return (
-    <label
-      ref={ref}
-      className={cx(
-        formLabel(),
-        css({
-          fontSize: 'sm',
-          fontWeight: 'medium',
-          lineHeight: 'none',
-          _peerDisabled: { cursor: 'not-allowed', opacity: '0.7' },
-        }),
-        className
-      )}
-      {...props}
-    />
-  )
-})
+export interface LabelProps
+  extends React.LabelHTMLAttributes<HTMLLabelElement>,
+    FormLabelVariantProps {}
+
+const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+  ({ className, size, ...props }, ref) => {
+	return (
+		// biome-ignore lint/a11y/noLabelWithoutControl: generic label primitive; callers supply htmlFor
+		<label
+			ref={ref}
+			className={cx(formLabel({ size }), className)}
+			{...props}
+		/>
+	)
+  }
+)
 Label.displayName = 'Label'
 
 export { Label }

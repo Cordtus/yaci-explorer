@@ -3,8 +3,8 @@
  * Handles IBC denoms, native denoms, and display formatting
  */
 
-// Cache for IBC denom traces (currently unused, kept for future direct cache access)
-const _denomTraceCache = new Map<string, DenomTrace>()
+// Cache for IBC denom traces
+const denomTraceCache = new Map<string, DenomTrace>()
 
 export interface DenomTrace {
   baseDenom: string
@@ -64,7 +64,7 @@ const KNOWN_DENOMS: Record<string, { name: string; symbol: string; decimals: num
   axl: { name: 'Axelar', symbol: 'AXL', decimals: 6 },
   umfx: { name: 'Manifest', symbol: 'MFX', decimals: 6 },
   upoa: { name: 'POA', symbol: 'POA', decimals: 6 },
-  uom: { name: 'MANTRA', symbol: 'OM', decimals: 6 },
+  // Add more as needed
 }
 
 /**
@@ -156,7 +156,7 @@ export function formatDenomAmount(
   const decimals = options?.decimals ?? metadata.decimals
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
 
-  if (Number.isNaN(numAmount)) return '0'
+  if (isNaN(numAmount)) return '0'
 
   // Convert from base units
   const converted = numAmount / 10 ** decimals

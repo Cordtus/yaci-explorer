@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -8,40 +9,53 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}"
-echo "========================================"
-echo "        Yaci Explorer Setup"
-echo "========================================"
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║              Yaci Explorer Setup                              ║"
+echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
+# Detect script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
 # Check for .env file
-if [[ ! -f .env ]]; then
-  echo -e "${YELLOW}No .env file found. Creating from template...${NC}"
-  cp .env.example .env
-  echo -e "${GREEN}Created .env file${NC}"
+if [ ! -f .env ]; then
+    echo -e "${YELLOW}No .env file found. Creating from template...${NC}"
+    cp .env.example .env
+    echo -e "${GREEN}Created .env file${NC}"
 fi
 
+# Load existing .env
 source .env 2>/dev/null || true
 
+# Prompt function
 prompt() {
-  local var_name=$1
-  local prompt_text=$2
-  local default_value=$3
-  local current_value="${!var_name}"
+    local var_name=$1
+    local prompt_text=$2
+    local default_value=$3
+    local current_value="${!var_name}"
 
-  [[ -n "$current_value" ]] && default_value="$current_value"
+    if [ -n "$current_value" ]; then
+        default_value="$current_value"
+    fi
 
-  echo -ne "${BLUE}$prompt_text${NC}"
-  [[ -n "$default_value" ]] && echo -ne " [${default_value}]: " || echo -ne ": "
+    echo -ne "${BLUE}$prompt_text${NC}"
+    if [ -n "$default_value" ]; then
+        echo -ne " [${default_value}]: "
+    else
+        echo -ne ": "
+    fi
 
-  read -r input
-  [[ -z "$input" ]] && input="$default_value"
-  eval "$var_name='$input'"
+    read -r input
+    if [ -z "$input" ]; then
+        input="$default_value"
+    fi
+
+    eval "$var_name='$input'"
 }
 
+# Deployment type selection
 echo ""
 echo -e "${YELLOW}Select deployment type:${NC}"
 echo "  1) Docker Compose (recommended)"
@@ -51,27 +65,30 @@ echo ""
 read -p "Choice [1]: " deploy_type
 deploy_type=${deploy_type:-1}
 
+# Common configuration
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
 
-if [[ "$deploy_type" != "3" ]]; then
-  prompt CHAIN_GRPC_ENDPOINT "Chain gRPC endpoint" "localhost:9090"
-  prompt POSTGRES_PASSWORD "PostgreSQL password" "changeme"
+if [ "$deploy_type" != "3" ]; then
+    prompt CHAIN_GRPC_ENDPOINT "Chain gRPC endpoint" "localhost:9090"
+    prompt POSTGRES_PASSWORD "PostgreSQL password" "changeme"
 fi
 
-if [[ "$deploy_type" == "3" ]]; then
-  prompt API_URL "PostgREST API URL" "http://localhost:3000"
-  prompt CHAIN_REST_ENDPOINT "Chain REST endpoint (optional)" ""
+if [ "$deploy_type" = "3" ]; then
+    prompt VITE_POSTGREST_URL "PostgREST API URL" "http://localhost:3000"
 fi
 
+# Optional config
 echo ""
 read -p "Configure advanced options? [y/N]: " advanced
 if [[ "$advanced" =~ ^[Yy]$ ]]; then
-  prompt POSTGRES_USER "PostgreSQL user" "postgres"
-  prompt POSTGRES_DB "PostgreSQL database" "yaci"
-  prompt YACI_MAX_CONCURRENCY "Yaci max concurrency" "100"
+    prompt POSTGRES_USER "PostgreSQL user" "postgres"
+    prompt POSTGRES_DB "PostgreSQL database" "yaci"
+    prompt YACI_MAX_CONCURRENCY "Yaci max concurrency" "100"
+    prompt VITE_CHAIN_REST_ENDPOINT "Chain REST endpoint (for IBC)" ""
 fi
 
+# Save configuration
 echo ""
 echo -e "${YELLOW}Saving configuration...${NC}"
 
@@ -83,84 +100,82 @@ CHAIN_GRPC_ENDPOINT=${CHAIN_GRPC_ENDPOINT:-localhost:9090}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
 POSTGRES_USER=${POSTGRES_USER:-postgres}
 POSTGRES_DB=${POSTGRES_DB:-yaci}
+VITE_POSTGREST_URL=${VITE_POSTGREST_URL:-/api}
 EOF
 
-[[ -n "${YACI_MAX_CONCURRENCY:-}" ]] && echo "YACI_MAX_CONCURRENCY=$YACI_MAX_CONCURRENCY" >> .env
+if [ -n "$YACI_MAX_CONCURRENCY" ]; then
+    echo "YACI_MAX_CONCURRENCY=$YACI_MAX_CONCURRENCY" >> .env
+fi
+
+if [ -n "$VITE_CHAIN_REST_ENDPOINT" ]; then
+    echo "VITE_CHAIN_REST_ENDPOINT=$VITE_CHAIN_REST_ENDPOINT" >> .env
+fi
 
 echo -e "${GREEN}Configuration saved to .env${NC}"
 
-# Create config.json for frontend-only deployment
-if [[ "$deploy_type" == "3" ]]; then
-  echo -e "${YELLOW}Creating frontend config.json...${NC}"
-  cat > public/config.json << EOF
-{
-  "apiUrl": "${API_URL}",
-  "chainRestEndpoint": "${CHAIN_REST_ENDPOINT:-}",
-  "evmEnabled": true,
-  "ibcEnabled": true,
-  "appName": "Block Explorer"
-}
-EOF
-  echo -e "${GREEN}Frontend configuration saved to public/config.json${NC}"
-fi
-
+# Execute deployment
 echo ""
 case $deploy_type in
-  1)
-    echo -e "${YELLOW}Starting Docker Compose deployment...${NC}"
+    1)
+        echo -e "${YELLOW}Starting Docker Compose deployment...${NC}"
 
-    if ! command -v docker &> /dev/null; then
-      echo -e "${RED}Error: Docker is not installed${NC}"
-      exit 1
-    fi
+        if ! command -v docker &> /dev/null; then
+            echo -e "${RED}Error: Docker is not installed${NC}"
+            exit 1
+        fi
 
-    cd docker
-    docker compose up -d --build
+        cd docker
+        docker compose up -d --build
 
-    echo ""
-    echo -e "${GREEN}Deployment complete!${NC}"
-    echo ""
-    echo "Services:"
-    echo "  - Explorer UI:  http://localhost:3001"
-    echo "  - PostgREST:    http://localhost:3000"
-    echo "  - Prometheus:   http://localhost:2112/metrics"
-    echo ""
-    echo "Commands:"
-    echo "  View logs:      docker compose -f docker/docker-compose.yml logs -f"
-    echo "  Stop:           docker compose -f docker/docker-compose.yml down"
-    ;;
+        echo ""
+        echo -e "${GREEN}Deployment complete!${NC}"
+        echo ""
+        echo "Services:"
+        echo "  - Explorer UI:  http://localhost:3001"
+        echo "  - PostgREST:    http://localhost:3000"
+        echo "  - Prometheus:   http://localhost:2112/metrics"
+        echo ""
+        echo "Commands:"
+        echo "  View logs:      docker compose -f docker/docker-compose.yml logs -f"
+        echo "  Stop:           docker compose -f docker/docker-compose.yml down"
+        echo "  Reset database: docker compose -f docker/docker-compose.yml down -v"
+        ;;
 
-  2)
-    echo -e "${YELLOW}Starting native deployment...${NC}"
+    2)
+        echo -e "${YELLOW}Starting native deployment...${NC}"
 
-    if [[ "$EUID" -ne 0 ]]; then
-      echo -e "${RED}Native deployment requires root. Run with sudo.${NC}"
-      exit 1
-    fi
+        # Check if running as root
+        if [ "$EUID" -ne 0 ]; then
+            echo -e "${RED}Native deployment requires root. Run with sudo.${NC}"
+            exit 1
+        fi
 
-    # Install PostgreSQL
-    echo -e "${BLUE}Installing PostgreSQL...${NC}"
-    apt-get update -qq
-    apt-get install -y -qq postgresql postgresql-contrib
+        # Install PostgreSQL
+        echo -e "${BLUE}Installing PostgreSQL...${NC}"
+        apt-get update -qq
+        apt-get install -y -qq postgresql postgresql-contrib
 
-    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${POSTGRES_PASSWORD}';" 2>/dev/null || true
-    sudo -u postgres createdb "${POSTGRES_DB}" 2>/dev/null || true
+        # Configure PostgreSQL
+        sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${POSTGRES_PASSWORD}';" 2>/dev/null || true
+        sudo -u postgres createdb ${POSTGRES_DB} 2>/dev/null || true
 
-    # Install PostgREST
-    echo -e "${BLUE}Installing PostgREST...${NC}"
-    POSTGREST_VERSION="v12.0.2"
-    wget -q "https://github.com/PostgREST/postgrest/releases/download/${POSTGREST_VERSION}/postgrest-${POSTGREST_VERSION}-linux-static-x86_64.tar.xz" -O /tmp/postgrest.tar.xz
-    tar -xf /tmp/postgrest.tar.xz -C /usr/local/bin
-    chmod +x /usr/local/bin/postgrest
+        # Install PostgREST
+        echo -e "${BLUE}Installing PostgREST...${NC}"
+        POSTGREST_VERSION="v12.0.2"
+        wget -q "https://github.com/PostgREST/postgrest/releases/download/${POSTGREST_VERSION}/postgrest-${POSTGREST_VERSION}-linux-static-x86_64.tar.xz" -O /tmp/postgrest.tar.xz
+        tar -xf /tmp/postgrest.tar.xz -C /usr/local/bin
+        chmod +x /usr/local/bin/postgrest
 
-    cat > /etc/postgrest.conf << EOF
-db-uri = "postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB:-yaci}"
+        # Create PostgREST config
+        cat > /etc/postgrest.conf << EOF
+db-uri = "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}"
 db-schema = "api"
-db-anon-role = "web_anon"
+db-anon-role = "${POSTGRES_USER}"
 server-port = 3000
 EOF
 
-    cat > /etc/systemd/system/postgrest.service << EOF
+        # Create PostgREST service
+        cat > /etc/systemd/system/postgrest.service << EOF
 [Unit]
 Description=PostgREST API Server
 After=postgresql.service
@@ -174,100 +189,100 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-    # Install Go and Yaci
-    echo -e "${BLUE}Installing Yaci indexer...${NC}"
-    if ! command -v go &> /dev/null; then
-      wget -q "https://go.dev/dl/go1.21.5.linux-amd64.tar.gz" -O /tmp/go.tar.gz
-      tar -C /usr/local -xzf /tmp/go.tar.gz
-      export PATH=$PATH:/usr/local/go/bin
-    fi
+        # Install Go and Yaci
+        echo -e "${BLUE}Installing Yaci indexer...${NC}"
+        if ! command -v go &> /dev/null; then
+            wget -q "https://go.dev/dl/go1.21.5.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+            tar -C /usr/local -xzf /tmp/go.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+        fi
 
-    go install github.com/cordtus/yaci@latest || {
-      git clone https://github.com/cordtus/yaci /tmp/yaci
-      cd /tmp/yaci && go build -o /usr/local/bin/yaci .
-      cd "$PROJECT_ROOT"
-    }
+        go install github.com/cordtus/yaci@latest || {
+            git clone https://github.com/cordtus/yaci /tmp/yaci
+            cd /tmp/yaci && go build -o /usr/local/bin/yaci .
+        }
 
-    cat > /etc/systemd/system/yaci.service << EOF
+        # Create Yaci service
+        cat > /etc/systemd/system/yaci.service << EOF
 [Unit]
 Description=Yaci Blockchain Indexer
 After=postgresql.service
 Requires=postgresql.service
 
 [Service]
-ExecStart=/usr/local/bin/yaci extract postgres ${CHAIN_GRPC_ENDPOINT} -p postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB:-yaci} --live -k --enable-prometheus --prometheus-addr 0.0.0.0:2112
+ExecStart=/usr/local/bin/yaci extract postgres ${CHAIN_GRPC_ENDPOINT} -p postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB} --live -k --enable-prometheus --prometheus-addr 0.0.0.0:2112
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Install Bun and build frontend
-    echo -e "${BLUE}Building frontend...${NC}"
-    if ! command -v bun &> /dev/null; then
-      curl -fsSL https://bun.sh/install | bash
-      export PATH="$HOME/.bun/bin:$PATH"
-    fi
+        # Install Node.js and build frontend
+        echo -e "${BLUE}Building frontend...${NC}"
+        if ! command -v node &> /dev/null; then
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            apt-get install -y nodejs
+        fi
 
-    bun install
-    bun run build
+        npm install
+        npm run build
 
-    cat > /etc/systemd/system/yaci-explorer.service << EOF
+        # Install and configure serve
+        npm install -g serve
+
+        cat > /etc/systemd/system/yaci-explorer.service << EOF
 [Unit]
 Description=Yaci Explorer Frontend
 After=postgrest.service
 
 [Service]
 WorkingDirectory=${PROJECT_ROOT}
-ExecStart=$(which bun) serve ./dist
+ExecStart=/usr/bin/serve -s build/client -l 3001
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
-    systemctl enable postgresql postgrest yaci yaci-explorer
-    systemctl start postgresql postgrest yaci yaci-explorer
+        # Start services
+        systemctl daemon-reload
+        systemctl enable postgresql postgrest yaci yaci-explorer
+        systemctl start postgresql postgrest yaci yaci-explorer
 
-    echo ""
-    echo -e "${GREEN}Deployment complete!${NC}"
-    echo ""
-    echo "Services:"
-    echo "  - Explorer UI:  http://localhost:3001"
-    echo "  - PostgREST:    http://localhost:3000"
-    echo ""
-    echo "Commands:"
-    echo "  View status:    systemctl status yaci postgrest yaci-explorer"
-    echo "  View logs:      journalctl -u yaci -f"
-    ;;
+        echo ""
+        echo -e "${GREEN}Deployment complete!${NC}"
+        echo ""
+        echo "Services:"
+        echo "  - Explorer UI:  http://localhost:3001"
+        echo "  - PostgREST:    http://localhost:3000"
+        echo ""
+        echo "Commands:"
+        echo "  View status:    systemctl status yaci postgrest yaci-explorer"
+        echo "  View logs:      journalctl -u yaci -f"
+        ;;
 
-  3)
-    echo -e "${YELLOW}Building frontend only...${NC}"
+    3)
+        echo -e "${YELLOW}Building frontend only...${NC}"
 
-    if ! command -v bun &> /dev/null; then
-      echo -e "${RED}Error: bun is not installed. Install from https://bun.sh${NC}"
-      exit 1
-    fi
+        if ! command -v node &> /dev/null; then
+            echo -e "${RED}Error: Node.js is not installed${NC}"
+            exit 1
+        fi
 
-    bun install
-    bun run build
+        npm install
+        VITE_POSTGREST_URL="$VITE_POSTGREST_URL" npm run build
 
-    echo ""
-    echo -e "${GREEN}Build complete!${NC}"
-    echo ""
-    echo "Configuration: public/config.json has been created"
-    echo ""
-    echo "To run locally:"
-    echo "  bun serve ./dist"
-    echo ""
-    echo "For production:"
-    echo "  1. Copy dist/ to your web server"
-    echo "  2. Ensure config.json is accessible at /config.json"
-    ;;
+        echo ""
+        echo -e "${GREEN}Build complete!${NC}"
+        echo ""
+        echo "To run locally:"
+        echo "  npx serve -s build/client -l 3001"
+        echo ""
+        echo "For production, copy build/client to your web server"
+        ;;
 
-  *)
-    echo -e "${RED}Invalid option${NC}"
-    exit 1
-    ;;
+    *)
+        echo -e "${RED}Invalid option${NC}"
+        exit 1
+        ;;
 esac

@@ -1,151 +1,246 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { Blocks, Activity, TrendingUp } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatNumber } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
-import { getOverviewMetrics } from '@/lib/metrics'
-import { css } from '@/styled-system/css'
-import { ValidatorIcon } from '@/components/icons/icons'
+import { useQuery } from "@tanstack/react-query"
+import {
+	Activity,
+	Blocks,
+	DollarSign,
+	Gauge,
+	TrendingUp,
+	Users
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { DenomDisplay } from "@/components/common/DenomDisplay"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { api } from "@/lib/api"
+import { formatDenomAmount } from "@/lib/denom"
+import { getOverviewMetrics } from "@/lib/metrics"
+import { formatNumber } from "@/lib/utils"
+import { css } from "@/styled-system/css"
 
 /**
  * Dashboard metrics component displaying key chain statistics
  * Reusable across dashboard and analytics pages
  */
 export function DashboardMetrics() {
-  const [mounted, setMounted] = useState(false)
+	const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['overview-metrics'],
-    queryFn: getOverviewMetrics,
-    refetchInterval: 10000,
-    enabled: mounted,
-  })
+	const { data: stats, isLoading: statsLoading } = useQuery({
+		queryKey: ["overview-metrics"],
+		queryFn: getOverviewMetrics,
+		refetchInterval: 10000,
+		enabled: mounted
+	})
 
-  const activeValidators = stats?.activeValidators ?? 0
-  const hasActiveValidators = activeValidators > 0
-  const avgBlockTime = stats?.avgBlockTime ?? 0
+	const { data: feeRevenue } = useQuery({
+		queryKey: ["feeRevenue"],
+		queryFn: () => api.getTotalFeeRevenue(),
+		refetchInterval: 30000,
+		enabled: mounted
+	})
 
-  return (
-    <>
-      {/* Primary Stats */}
-      <div className={css({
-        display: 'grid',
-        gap: '4',
-        gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }
-      })}>
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Latest Block</CardTitle>
-            <Blocks className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueText)}>
-              {statsLoading ? <Skeleton className={css(styles.skeletonLarge)} /> : formatNumber(stats?.latestBlock || 0)}
-            </div>
-            <p className={css(styles.helperText)}>
-              {avgBlockTime.toFixed(2)}s avg block time
-            </p>
-          </CardContent>
-        </Card>
+	const { data: gasEfficiency } = useQuery({
+		queryKey: ["gasEfficiency"],
+		queryFn: () => api.getGasEfficiency(),
+		refetchInterval: 30000,
+		enabled: mounted
+	})
 
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Transactions</CardTitle>
-            <Activity className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueText)}>
-              {statsLoading ? <Skeleton className={css(styles.skeletonLarge)} /> : formatNumber(stats?.totalTransactions || 0)}
-            </div>
-            <p className={css(styles.helperText)}>
-              Total indexed
-            </p>
-          </CardContent>
-        </Card>
+	const activeValidators = stats?.activeValidators ?? 0
+	const hasActiveValidators = activeValidators > 0
+	const avgBlockTime = stats?.avgBlockTime ?? 0
 
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Active Validators</CardTitle>
-            <ValidatorIcon className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueText)}>
-              {statsLoading ? (
-                <Skeleton className={css(styles.skeletonLarge)} />
-              ) : hasActiveValidators ? (
-                activeValidators
-              ) : (
-                <span className={css(styles.mutedValue)}>-</span>
-              )}
-            </div>
-            <p className={css(styles.helperText)}>
-              {hasActiveValidators ? 'Active set' : 'Fetching validator data...'}
-            </p>
-          </CardContent>
-        </Card>
+	return (
+		<>
+			{/* Primary Stats */}
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Latest Block</CardTitle>
+						<Blocks className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent className={styles.cardContent}>
+						<div className={styles.value}>
+							{statsLoading ? (
+								<Skeleton className={styles.skeletonValue} />
+							) : (
+								formatNumber(stats?.latestBlock || 0)
+							)}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{avgBlockTime.toFixed(2)}s avg block time
+						</p>
+					</CardContent>
+				</Card>
 
-        <Card>
-          <CardHeader className={css(styles.cardHeader)}>
-            <CardTitle className={css(styles.cardTitle)}>Total Supply</CardTitle>
-            <TrendingUp className={css(styles.icon)} />
-          </CardHeader>
-          <CardContent>
-            <div className={css(styles.valueText)}>
-              {statsLoading ? (
-                <Skeleton className={css(styles.skeletonLarge)} />
-              ) : stats?.totalSupply ? (
-                stats.totalSupply
-              ) : (
-                <span className={css(styles.mutedValue)}>-</span>
-              )}
-            </div>
-            <p className={css(styles.helperText)}>
-              {stats?.totalSupply ? 'Native Token' : 'Not available'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  )
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Transactions</CardTitle>
+						<Activity className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent className={styles.cardContent}>
+						<div className={styles.value}>
+							{statsLoading ? (
+								<Skeleton className={styles.skeletonValue} />
+							) : (
+								formatNumber(stats?.totalTransactions || 0)
+							)}
+						</div>
+						<p className={styles.subdued}>
+							{formatNumber(stats?.tps || 0, 2)} TPS (indexed)
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card className={styles.statCard}>
+					<CardHeader className={styles.cardHeader}>
+						<CardTitle className={styles.cardTitle}>
+							Active Validators
+						</CardTitle>
+						<Users className={styles.icon} />
+					</CardHeader>
+					<CardContent className={styles.cardContent}>
+						<div className={styles.value}>
+							{statsLoading ? (
+								<Skeleton className={styles.skeletonValue} />
+							) : hasActiveValidators ? (
+								activeValidators
+							) : (
+								<span className={styles.valuePlaceholder}>-</span>
+							)}
+						</div>
+						<p className={styles.subdued}>
+							{hasActiveValidators
+								? "Active set"
+								: "Fetching validator data..."}
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Total Supply</CardTitle>
+						<TrendingUp className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{statsLoading ? (
+								<Skeleton className={styles.skeletonValue} />
+							) : stats?.totalSupply && stats.totalSupply !== "0" ? (
+								formatNumber(stats.totalSupply)
+							) : (
+								<span className="text-muted-foreground text-base">-</span>
+							)}
+						</div>
+						<p className={styles.subdued}>
+							{stats?.totalSupply && stats.totalSupply !== "0"
+								? "Native Token"
+								: "Requires gRPC query"}
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Secondary Metrics */}
+			<div className="grid gap-4 md:grid-cols-2">
+				<Card className={styles.statCard}>
+					<CardHeader className={styles.cardHeader}>
+						<CardTitle className={styles.cardTitle}>
+							Total Fee Revenue
+						</CardTitle>
+						<DollarSign className={styles.icon} />
+					</CardHeader>
+					<CardContent className={styles.cardContent}>
+						<div className={styles.value}>
+							{!feeRevenue ? (
+								<Skeleton className="h-8 w-24" />
+							) : (
+								<div className={styles.revenueWrap}>
+									{Object.entries(feeRevenue).map(([denom, amount]) => {
+										const formatted = formatDenomAmount(String(amount), denom, {
+											maxDecimals: 2
+										})
+										return (
+											<span key={denom} className={styles.revenueItem}>
+												{formatted} <DenomDisplay denom={denom} />
+											</span>
+										)
+									})}
+								</div>
+							)}
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Avg Gas Limit</CardTitle>
+						<Gauge className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent className={styles.cardContent}>
+						<div className={styles.value}>
+							{!gasEfficiency ? (
+								<Skeleton className={styles.skeletonValue} />
+							) : (
+								`${(gasEfficiency.avgGasLimit / 1000).toFixed(0)}K`
+							)}
+						</div>
+						<p className={styles.subdued}>
+							{gasEfficiency &&
+								`from recent ${formatNumber(gasEfficiency.transactionCount)} txs`}
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+		</>
+	)
 }
 
 const styles = {
-  cardHeader: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    spaceY: '0',
-    paddingBottom: '0.5rem',
-  },
-  cardTitle: {
-    fontSize: 'sm',
-    fontWeight: 'medium',
-  },
-  icon: {
-    height: '1rem',
-    width: '1rem',
-    color: 'fg.muted',
-  },
-  valueText: {
-    fontSize: '2xl',
-    fontWeight: 'bold',
-  },
-  helperText: {
-    fontSize: 'xs',
-    color: 'fg.muted',
-  },
-  mutedValue: {
-    color: 'fg.muted',
-    fontSize: 'base',
-  },
-  skeletonLarge: {
-    height: '2rem',
-    width: '6rem',
-  },
+	statCard: css({}),
+	cardHeader: css({
+		display: "flex",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		spaceY: "0",
+		pb: "2"
+	}),
+	cardTitle: css({
+		fontSize: "sm",
+		fontWeight: "medium"
+	}),
+	cardContent: css({}),
+	value: css({
+		fontSize: "2xl",
+		fontWeight: "bold"
+	}),
+	valuePlaceholder: css({
+		fontSize: "base",
+		color: "fg.muted"
+	}),
+	subdued: css({
+		fontSize: "xs",
+		color: "fg.muted"
+	}),
+	icon: css({
+		h: "4",
+		w: "4",
+		color: "fg.muted"
+	}),
+	skeletonValue: css({
+		h: "8",
+		w: "24"
+	}),
+	revenueWrap: css({
+		display: "flex",
+		flexDirection: "column",
+		gap: "1"
+	}),
+	revenueItem: css({
+		fontSize: "sm"
+	})
 }

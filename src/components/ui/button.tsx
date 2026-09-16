@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { cx, css } from '@/styled-system/css'
-import { button, type ButtonVariantProps } from '@/styled-system/recipes'
+import { cx, css } from '../../../styled-system/css'
+import { button as buttonRecipe, type ButtonVariantProps } from '../../../styled-system/recipes'
 
 type LegacyVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 type LegacySize = 'default' | 'sm' | 'lg' | 'icon'
@@ -12,58 +12,59 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const mapVariant = (variant?: ButtonProps['variant']): ButtonVariantProps['variant'] => {
-  if (!variant || variant === 'default') return 'solid'
-  if (variant === 'destructive') return 'solid'
+  if (!variant || variant === 'default' || variant === 'destructive') return 'solid'
   if (variant === 'secondary') return 'subtle'
   return variant as ButtonVariantProps['variant']
 }
 
 const mapSize = (size?: ButtonProps['size']): ButtonVariantProps['size'] => {
   if (!size || size === 'default') return 'md'
-  if (size === 'icon') return 'md'
-  if (size === 'lg') return 'lg'
+  if (size === 'icon') return 'sm'
   return size as ButtonVariantProps['size']
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-    const recipeClass = button({ variant: mapVariant(variant), size: mapSize(size) })
-
-    const destructiveStyles =
+    const Comp = asChild && React.isValidElement(children) ? 'span' : 'button'
+    const variantClass = buttonRecipe({ variant: mapVariant(variant), size: mapSize(size) })
+    const overrides =
       variant === 'destructive'
         ? css({
-            bg: 'red.600',
-            color: 'white',
-            _hover: { bg: 'red.700' },
+            bg: 'red.default',
+            color: 'red.fg',
+            _hover: { bg: 'red.emphasized' },
+            _focusVisible: { outline: '2px solid', outlineColor: 'red.default', outlineOffset: '2px' },
           })
         : undefined
 
-    const iconStyles =
+    const iconSize =
       size === 'icon'
         ? css({
+            minW: '10',
             w: '10',
             h: '10',
-            p: '0',
-            minW: '10',
+            px: '0',
           })
         : undefined
 
-    const mergedClass = cx(recipeClass, destructiveStyles, iconStyles, className)
+    const mergedClass = cx(variantClass, overrides, iconSize, className)
 
     if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children, {
+      return React.cloneElement(children as any, {
+        className: cx((children as any).props?.className, mergedClass),
+        ref,
         ...props,
-        className: cx(
-          (children.props as { className?: string })?.className,
-          mergedClass
-        ),
-      } as React.HTMLAttributes<HTMLElement>)
+      })
     }
 
     return (
-      <button className={mergedClass} ref={ref} {...props}>
+      <Comp
+        className={mergedClass}
+        ref={ref}
+        {...props}
+      >
         {children}
-      </button>
+      </Comp>
     )
   }
 )

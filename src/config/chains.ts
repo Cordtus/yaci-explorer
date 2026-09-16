@@ -3,174 +3,80 @@
  * Add your chain here to enable chain-specific features and optimizations
  */
 
-export interface ChainFeatures {
-  /** Chain has EVM module (MsgEthereumTx support) */
-  evm: boolean
-  /** Chain has IBC support */
-  ibc: boolean
-  /** Chain has CosmWasm support */
-  wasm: boolean
-  /** Chain has custom modules */
+export const FEATURE_DEFAULTS = {
+  evm: false,
+  ibc: true,
+  wasm: false,
+  governance: true,
+  staking: true,
+} as const
+
+/** Known per-chain feature flags. Add a key here to gate a new area. */
+export type FeatureKey = keyof typeof FEATURE_DEFAULTS
+
+export interface ChainFeatures extends Record<FeatureKey, boolean> {
+  /** Chain has custom modules (module names, not booleans) */
   customModules?: string[]
+  /** Allow per-chain flags beyond the known set (e.g. "compute") */
+  [feature: string]: boolean | string[] | undefined
+}
+
+/** Per-chain overrides; unset flags fall back to FEATURE_DEFAULTS */
+export type FeatureFlags = Partial<Record<FeatureKey, boolean>> & {
+  customModules?: string[]
+}
+
+/** Resolve a chain's partial flags against the defaults */
+export function resolveFeatures(flags?: FeatureFlags): ChainFeatures {
+  return { ...FEATURE_DEFAULTS, ...flags } as ChainFeatures
 }
 
 export interface ChainConfig {
   /** Human-readable chain name */
   name: string
   /** Chain features */
-  features: ChainFeatures
-  /** Native base denomination (e.g., 'umfx', 'ujuno') */
+  features: FeatureFlags
+  /** Native base denomination (e.g., 'uatom', 'uexample') */
   nativeDenom: string
-  /** Display symbol (e.g., 'MFX', 'JUNO') */
+  /** Display symbol (e.g., 'ATOM', 'EX') */
   nativeSymbol: string
   /** Number of decimal places */
   decimals: number
-  /** Optional: RPC endpoint for additional queries */
-  rpcEndpoint?: string
-  /** Optional: REST API endpoint */
-  restEndpoint?: string
   /** Optional: Block explorer URL pattern */
   explorerUrl?: string
+  /** Bech32 address prefix (e.g., 'cosmos', 'osmo', 'example') */
+  bech32Prefix: string
 }
 
 /**
  * Known chain configurations
- * Chain ID as key
+ * Chain ID as key. Add your chains here; `/config.json` can override at runtime.
  */
 export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
-  'manifest-1': {
-    name: 'Manifest Network',
+  'example-1': {
+    name: 'Example EVM Chain',
     features: {
       evm: true,
       ibc: true,
       wasm: false,
     },
-    nativeDenom: 'umfx',
-    nativeSymbol: 'MFX',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.manifest.nodestake.top',
-    restEndpoint: 'https://api.manifest.nodestake.top',
-  },
-  'manifest-ledger-1': {
-    name: 'Manifest Testnet',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'umfx',
-    nativeSymbol: 'MFX',
-    decimals: 6,
-    rpcEndpoint: 'https://nodes.chandrastation.com/rpc/manifest/',
-    restEndpoint: 'https://nodes.chandrastation.com/api/manifest/',
-  },
-  'manifest-ledger-testnet': {
-    name: 'Manifest Testnet',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'umfx',
-    nativeSymbol: 'MFX',
-    decimals: 6,
-    rpcEndpoint: 'https://nodes.chandrastation.com/rpc/manifest/',
-    restEndpoint: 'https://nodes.chandrastation.com/api/manifest/',
-  },
-  'juno-1': {
-    name: 'Juno Network',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-    },
-    nativeDenom: 'ujuno',
-    nativeSymbol: 'JUNO',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.juno.strange.love',
-    restEndpoint: 'https://api.juno.strange.love',
-  },
-  'osmosis-1': {
-    name: 'Osmosis',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-      customModules: ['poolmanager', 'gamm', 'concentrated-liquidity'],
-    },
-    nativeDenom: 'uosmo',
-    nativeSymbol: 'OSMO',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.osmosis.zone',
-    restEndpoint: 'https://lcd.osmosis.zone',
-  },
-  'cosmoshub-4': {
-    name: 'Cosmos Hub',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'uatom',
-    nativeSymbol: 'ATOM',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.cosmos.network',
-    restEndpoint: 'https://api.cosmos.network',
-  },
-  'stargaze-1': {
-    name: 'Stargaze',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-      customModules: ['nft'],
-    },
-    nativeDenom: 'ustars',
-    nativeSymbol: 'STARS',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.stargaze-apis.com',
-    restEndpoint: 'https://rest.stargaze-apis.com',
-  },
-  'evmos_9001-2': {
-    name: 'Evmos',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: false,
-      customModules: ['erc20', 'claims'],
-    },
-    nativeDenom: 'aevmos',
-    nativeSymbol: 'EVMOS',
+    nativeDenom: 'aexample',
+    nativeSymbol: 'EX',
     decimals: 18,
-    rpcEndpoint: 'https://evmos-rpc.polkachu.com',
-    restEndpoint: 'https://evmos-api.polkachu.com',
+    bech32Prefix: 'example',
   },
-  'neutron-1': {
-    name: 'Neutron',
+  'example-2': {
+    name: 'Example Cosmos Chain',
     features: {
       evm: false,
       ibc: true,
       wasm: true,
-      customModules: ['interchainqueries', 'interchaintxs'],
+      customModules: ['examplemodule'],
     },
-    nativeDenom: 'untrn',
-    nativeSymbol: 'NTRN',
+    nativeDenom: 'uexample',
+    nativeSymbol: 'EX',
     decimals: 6,
-    rpcEndpoint: 'https://rpc.neutron.strange.love',
-    restEndpoint: 'https://api.neutron.strange.love',
-  },
-  'mantra-1': {
-    name: 'MANTRA',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-    },
-    nativeDenom: 'uom',
-    nativeSymbol: 'OM',
-    decimals: 6,
-    rpcEndpoint: 'https://rpc.mantrachain.io',
-    restEndpoint: 'https://api.mantrachain.io',
+    bech32Prefix: 'example',
   },
 }
 
@@ -196,65 +102,7 @@ export function getChainConfig(chainId: string): ChainConfig {
     nativeDenom: 'unknown',
     nativeSymbol: 'UNKNOWN',
     decimals: 6,
+    bech32Prefix: 'cosmos',
   }
 }
 
-/**
- * Check if chain has specific feature
- */
-export function hasChainFeature(
-  chainId: string,
-  feature: keyof ChainFeatures
-): boolean {
-  const config = getChainConfig(chainId)
-  if (feature === 'customModules') {
-    return Array.isArray(config.features.customModules) && config.features.customModules.length > 0
-  }
-  return config.features[feature] || false
-}
-
-/**
- * Get all configured chain IDs
- */
-export function getAllChainIds(): string[] {
-  return Object.keys(CHAIN_CONFIGS)
-}
-
-/**
- * Detect if message type is chain-specific
- */
-export function isChainSpecificMessage(messageType: string): {
-  isCustom: boolean
-  moduleName?: string
-  chainRecommendation?: string
-} {
-  // EVM messages
-  if (messageType.includes('MsgEthereumTx') || messageType.includes('evm')) {
-    return {
-      isCustom: true,
-      moduleName: 'evm',
-      chainRecommendation: 'This message type requires EVM module support',
-    }
-  }
-
-  // CosmWasm messages
-  if (messageType.includes('cosmwasm') || messageType.includes('wasm')) {
-    return {
-      isCustom: true,
-      moduleName: 'wasm',
-      chainRecommendation: 'This message type requires CosmWasm support',
-    }
-  }
-
-  // Osmosis-specific
-  if (messageType.includes('osmosis')) {
-    return {
-      isCustom: true,
-      moduleName: 'osmosis-custom',
-      chainRecommendation: 'Osmosis-specific module',
-    }
-  }
-
-  // Standard Cosmos SDK message
-  return { isCustom: false }
-}
