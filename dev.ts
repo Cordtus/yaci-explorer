@@ -176,7 +176,7 @@ if (!cssOk || !buildOk) {
 console.log('Initial build complete')
 
 // Watch for changes with debounce
-let debounceTimer: Timer | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 function scheduleRebuild() {
 	if (debounceTimer) clearTimeout(debounceTimer)
