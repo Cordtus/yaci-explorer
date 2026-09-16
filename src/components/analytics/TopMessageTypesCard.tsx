@@ -31,23 +31,27 @@ async function getTopMessageTypes(): Promise<MessageTypeStats[]> {
 		throw new Error("Failed to fetch message types")
 	}
 
-	const messages = await response.json()
+	const messages = (await response.json()) as Array<{ type?: string }>
 
 	// Count occurrences
-	const typeCounts: { [key: string]: number } = {}
-	messages.forEach((msg: any) => {
+	const typeCounts: Record<string, number> = {}
+	for (const msg of messages) {
 		const type = msg.type || "Unknown"
 		// Simplify type names (remove module path)
 		const simplifiedType = type.split(".").pop() || type
-		return {
-			type: simplifiedType,
-			count,
-			percentage: (count / total) * 100,
-			trend: "stable" as const
-		}
-	})
+		typeCounts[simplifiedType] = (typeCounts[simplifiedType] ?? 0) + 1
+	}
 
-	return stats
+	const total = messages.length
+	return Object.entries(typeCounts)
+		.map(([type, count]) => ({
+			type,
+			count,
+			percentage: total > 0 ? (count / total) * 100 : 0,
+			trend: "stable" as const
+		}))
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 10)
 }
 
 export function TopMessageTypesCard() {

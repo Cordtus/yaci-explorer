@@ -65,8 +65,9 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
 
   return (
     <div>
-      <div
-        className="flex gap-2 py-0.5 cursor-pointer hover:bg-muted/50 rounded"
+      <button
+        type="button"
+        className="flex w-full gap-2 py-0.5 cursor-pointer hover:bg-muted/50 rounded text-left bg-transparent border-0"
         style={{ paddingLeft: `${indent}px` }}
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -80,7 +81,7 @@ function JsonNode({ data, name, level = 0, isLast = true }: JsonNodeProps) {
           {isArray ? '[' : '{'}
           {!isExpanded && <span className="text-xs text-muted-foreground ml-1">{preview}</span>}
         </span>
-      </div>
+      </button>
 
       {isExpanded && (
         <>

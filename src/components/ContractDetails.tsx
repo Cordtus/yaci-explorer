@@ -26,7 +26,7 @@ interface ContractCall {
 	status: number
 	function_name: string | null
 	function_signature: string | null
-	height: number
+	height?: number
 }
 
 interface FunctionStat {

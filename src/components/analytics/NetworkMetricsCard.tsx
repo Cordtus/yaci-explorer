@@ -12,10 +12,12 @@ import { useChain } from "@/contexts/ChainContext"
 import { css } from "@/styled-system/css"
 import type { LucideIcon } from "lucide-react"
 
-function formatNumber(num: number): string {
-	if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`
-	if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
-	return num.toLocaleString()
+function formatNumber(num: number | string): string {
+	const value = typeof num === "string" ? Number(num) : num
+	if (!Number.isFinite(value)) return "0"
+	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`
+	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
+	return value.toLocaleString()
 }
 
 interface MetricItem {

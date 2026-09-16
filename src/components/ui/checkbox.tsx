@@ -7,9 +7,9 @@ import { cx, css } from "../../../styled-system/css"
 import { checkbox as checkboxRecipe, type CheckboxVariantProps } from "../../../styled-system/recipes"
 
 export interface CheckboxProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>,
-    CheckboxVariantProps {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   label?: React.ReactNode
+  size?: CheckboxVariantProps['size']
 }
 
 const slots = checkboxRecipe()

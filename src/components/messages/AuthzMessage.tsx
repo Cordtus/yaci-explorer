@@ -11,9 +11,9 @@ export function AuthzExecMessage({ metadata }: MessageRendererProps) {
 			{metadata.grantee && <DetailRow label="Grantee (Executor)" value={metadata.grantee} copyable icon={Users} />}
 			{innerMsgs.length > 0 && (
 				<div className={css({ p: "3", rounded: "lg", bg: "bg.muted", borderWidth: "1px", borderColor: "border.default" })}>
-					<label className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
+					<span className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
 						Executing {innerMsgs.length} Authorized {innerMsgs.length === 1 ? "Message" : "Messages"}
-					</label>
+					</span>
 					<div className={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
 						{innerMsgs.map((msg: any, idx: number) => (
 							<Badge key={idx} variant="outline">

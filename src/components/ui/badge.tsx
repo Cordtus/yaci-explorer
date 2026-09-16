@@ -5,9 +5,7 @@ import { badge as badgeRecipe, type BadgeVariantProps } from '../../../styled-sy
 
 type LegacyVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    BadgeVariantProps {
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: LegacyVariant | BadgeVariantProps['variant']
 }
 

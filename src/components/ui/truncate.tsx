@@ -33,9 +33,9 @@ export function Truncate({
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <span className={cn("cursor-help", className)}>{truncated}</span>
         </TooltipTrigger>
         <TooltipContent>

@@ -9,9 +9,9 @@ export function GovVoteMessage({ metadata }: MessageRendererProps) {
 			<MessageHeader icon={Vote} label="Governance Vote" color="indigo.600" />
 			{metadata.proposalId && (
 				<div className={css({ p: "3", rounded: "lg", bg: "bg.muted", borderWidth: "1px", borderColor: "border.default" })}>
-					<label className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
+					<span className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
 						Proposal ID
-					</label>
+					</span>
 					<div className={css({ fontSize: "lg", fontWeight: "bold", color: "indigo.600" })}>
 						#{metadata.proposalId}
 					</div>
@@ -20,9 +20,9 @@ export function GovVoteMessage({ metadata }: MessageRendererProps) {
 			{metadata.voter && <DetailRow label="Voter" value={metadata.voter} copyable icon={Users} />}
 			{metadata.option && (
 				<div className={css({ p: "3", rounded: "lg", bg: "bg.muted" })}>
-					<label className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
+					<span className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
 						Vote
-					</label>
+					</span>
 					<Badge variant="outline">{metadata.option}</Badge>
 				</div>
 			)}

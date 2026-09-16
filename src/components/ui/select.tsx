@@ -11,12 +11,15 @@ type SelectContextValue = {
 
 const SelectContext = React.createContext<SelectContextValue | null>(null)
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+	onValueChange?: (value: string) => void
+}
 
 const Select = ({
 	value,
 	defaultValue,
 	onChange,
+	onValueChange,
 	children,
 	...props
 }: SelectProps) => {
@@ -26,6 +29,7 @@ const Select = ({
 
 	const handleChange = (next: string) => {
 		if (!isControlled) setInternal(next)
+		onValueChange?.(next)
 		onChange?.({ target: { value: next } } as any)
 	}
 

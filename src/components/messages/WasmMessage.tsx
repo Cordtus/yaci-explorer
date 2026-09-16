@@ -29,9 +29,9 @@ export function ExecuteContractMessage({ metadata, events, getDenomDisplay }: Me
 			<AmountBox label="Funds Sent" amounts={transferAmounts} getDenomDisplay={getDenomDisplay} color="teal.600" />
 			{decodedMsg && (
 				<div className={css({ p: "3", rounded: "lg", bg: "bg.muted" })}>
-					<label className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
+					<span className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
 						Contract Message
-					</label>
+					</span>
 					<pre className={css({ fontSize: "xs", fontFamily: "mono", overflow: "auto", maxH: "32", mt: "1" })}>
 						{JSON.stringify(decodedMsg, null, 2)}
 					</pre>
@@ -39,9 +39,9 @@ export function ExecuteContractMessage({ metadata, events, getDenomDisplay }: Me
 			)}
 			{wasmEvents.length > 0 && (
 				<div className={css({ p: "3", rounded: "lg", bg: "bg.muted" })}>
-					<label className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
+					<span className={css({ fontSize: "xs", fontWeight: "medium", color: "fg.muted", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2" })}>
 						Contract Events
-					</label>
+					</span>
 					{wasmEvents.map((event, idx) => (
 						<div key={idx} className={css({ fontSize: "xs", fontFamily: "mono", mb: "2" })}>
 							{event.attributes.map((attr, attrIdx) => (

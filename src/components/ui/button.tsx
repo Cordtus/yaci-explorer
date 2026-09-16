@@ -5,9 +5,7 @@ import { button as buttonRecipe, type ButtonVariantProps } from '../../../styled
 type LegacyVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 type LegacySize = 'default' | 'sm' | 'lg' | 'icon'
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    ButtonVariantProps {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean
   variant?: LegacyVariant | ButtonVariantProps['variant']
   size?: LegacySize | ButtonVariantProps['size']

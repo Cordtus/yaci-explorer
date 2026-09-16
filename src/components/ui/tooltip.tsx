@@ -28,6 +28,7 @@ const TooltipTrigger = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HT
     const ctx = React.useContext(TooltipContext)
     if (!ctx) return <>{children}</>
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: trigger wraps arbitrary children and only toggles tooltip visibility
       <span
         ref={ref}
         className={css({ display: 'inline-flex' })}

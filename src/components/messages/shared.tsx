@@ -90,7 +90,7 @@ export function DetailRow({ label, value, copyable, icon: Icon }: {
 			<div className={css({ display: "flex", alignItems: "center", gap: "2", minW: "0" })}>
 				{Icon && <Icon className={css({ h: "4", w: "4", color: "fg.muted", flexShrink: "0" })} />}
 				<div className={css({ minW: "0" })}>
-					<label className={labelStyle}>{label}</label>
+					<span className={labelStyle}>{label}</span>
 					<p className={css({ fontSize: "sm", fontFamily: "mono", wordBreak: "break-all", mt: "1" })}>{value}</p>
 				</div>
 			</div>
@@ -117,9 +117,9 @@ export function AmountBox({ label, amounts, getDenomDisplay, color = "accent.def
 	if (amounts.length === 0) return null
 	return (
 		<div className={css({ p: "3", rounded: "lg", bg: "bg.muted", borderWidth: "1px", borderColor: "border.default" })}>
-			<label className={css({ fontSize: "xs", fontWeight: "medium", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2", color: "fg.muted" })}>
+			<span className={css({ fontSize: "xs", fontWeight: "medium", textTransform: "uppercase", letterSpacing: "wider", display: "block", mb: "2", color: "fg.muted" })}>
 				{label}
-			</label>
+			</span>
 			{amounts.map((amt, idx) => (
 				<div key={idx} className={css({ fontSize: "lg", fontWeight: "bold", color })}>
 					{formatDenom(amt.amount, amt.denom, getDenomDisplay)}

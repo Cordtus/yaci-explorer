@@ -9,13 +9,14 @@ export interface LabelProps
 
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, size, ...props }, ref) => {
-    return (
-      <label
-        ref={ref}
-        className={cx(formLabel({ size }), className)}
-        {...props}
-      />
-    )
+	return (
+		// biome-ignore lint/a11y/noLabelWithoutControl: generic label primitive; callers supply htmlFor
+		<label
+			ref={ref}
+			className={cx(formLabel({ size }), className)}
+			{...props}
+		/>
+	)
   }
 )
 Label.displayName = 'Label'
