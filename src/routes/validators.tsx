@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataTable } from "@/components/ui/data-table"
 import { ValidatorAvatar } from "@/components/ValidatorAvatar"
 import { useChain } from "@/contexts/ChainContext"
-import { type Validator } from "@/lib/api"
+import type { Validator } from "@/lib/api"
 import { formatAddress } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 

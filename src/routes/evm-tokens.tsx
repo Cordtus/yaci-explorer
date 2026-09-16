@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { useChain } from "@/contexts/ChainContext"
-import { type EvmToken } from "@/lib/api"
+import type { EvmToken } from "@/lib/api"
 import { truncateAddress } from "@/lib/address"
 import { css } from "@/styled-system/css"
 

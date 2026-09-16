@@ -61,7 +61,7 @@ async function getTotalSupply(chainInfo: DetectedChainInfo): Promise<string | nu
     const data = (await res.json()) as { amount?: { amount?: string } }
     const raw = data.amount?.amount ? parseFloat(data.amount.amount) : NaN
     if (Number.isNaN(raw)) return null
-    return (raw / Math.pow(10, chainInfo.decimals)).toLocaleString(undefined, {
+    return (raw / 10 ** chainInfo.decimals).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   } catch {

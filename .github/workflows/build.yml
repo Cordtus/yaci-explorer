@@ -1,12 +1,21 @@
 name: build
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tsconfig.json'
+      - 'panda.config.ts'
+      - 'biome.json'
+      - 'Dockerfile'
+      - 'fly.toml'
+      - 'nginx.conf'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build:
@@ -15,19 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Type check
-        run: yarn typecheck
+        run: bun install --frozen-lockfile
 
       - name: Build
-        run: yarn build
-        env:
-          VITE_POSTGREST_URL: https://yaci-postgrest.fly.dev
+        run: bun run build
