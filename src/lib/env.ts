@@ -53,7 +53,7 @@ export interface RuntimeConfig {
 }
 
 const DEFAULT_CONFIG: RuntimeConfig = {
-	defaultChainId: 'manifest-1',
+	defaultChainId: 'example-1',
 	chains: {},
 	branding: {
 		appName: 'Yaci Explorer',

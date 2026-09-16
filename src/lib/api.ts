@@ -1200,7 +1200,7 @@ export class YaciClient {
 
 /**
  * Fetch account balances from the chain query service
- * @param chainQueryBaseUrl - Chain query base URL (e.g. "/api/chain" or "https://shared.example.com/chain/manifest-1")
+ * @param chainQueryBaseUrl - Chain query base URL (e.g. "/api/chain" or "https://shared.example.com/chain/example-1")
  * @param address - The bech32 account address
  */
 export async function getAccountBalances(chainQueryBaseUrl: string, address: string): Promise<TokenBalance[]> {

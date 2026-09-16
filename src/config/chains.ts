@@ -36,147 +36,47 @@ export interface ChainConfig {
   name: string
   /** Chain features */
   features: FeatureFlags
-  /** Native base denomination (e.g., 'umfx', 'ujuno') */
+  /** Native base denomination (e.g., 'uatom', 'uexample') */
   nativeDenom: string
-  /** Display symbol (e.g., 'MFX', 'JUNO') */
+  /** Display symbol (e.g., 'ATOM', 'EX') */
   nativeSymbol: string
   /** Number of decimal places */
   decimals: number
   /** Optional: Block explorer URL pattern */
   explorerUrl?: string
-  /** Bech32 address prefix (e.g., 'cosmos', 'osmo', 'manifest') */
+  /** Bech32 address prefix (e.g., 'cosmos', 'osmo', 'example') */
   bech32Prefix: string
 }
 
 /**
  * Known chain configurations
- * Chain ID as key
+ * Chain ID as key. Add your chains here; `/config.json` can override at runtime.
  */
 export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
-  'manifest-1': {
-    name: 'Manifest Network',
+  'example-1': {
+    name: 'Example EVM Chain',
     features: {
       evm: true,
       ibc: true,
       wasm: false,
     },
-    nativeDenom: 'umfx',
-    nativeSymbol: 'MFX',
-    decimals: 6,
-    bech32Prefix: 'manifest',
-  },
-  'juno-1': {
-    name: 'Juno Network',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-    },
-    nativeDenom: 'ujuno',
-    nativeSymbol: 'JUNO',
-    decimals: 6,
-    bech32Prefix: 'juno',
-  },
-  'osmosis-1': {
-    name: 'Osmosis',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-      customModules: ['poolmanager', 'gamm', 'concentrated-liquidity'],
-    },
-    nativeDenom: 'uosmo',
-    nativeSymbol: 'OSMO',
-    decimals: 6,
-    bech32Prefix: 'osmo',
-  },
-  'cosmoshub-4': {
-    name: 'Cosmos Hub',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'uatom',
-    nativeSymbol: 'ATOM',
-    decimals: 6,
-    bech32Prefix: 'cosmos',
-  },
-  'stargaze-1': {
-    name: 'Stargaze',
-    features: {
-      evm: false,
-      ibc: true,
-      wasm: true,
-      customModules: ['nft'],
-    },
-    nativeDenom: 'ustars',
-    nativeSymbol: 'STARS',
-    decimals: 6,
-    bech32Prefix: 'stars',
-  },
-  'evmos_9001-2': {
-    name: 'Evmos',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: false,
-      customModules: ['erc20', 'claims'],
-    },
-    nativeDenom: 'aevmos',
-    nativeSymbol: 'EVMOS',
+    nativeDenom: 'aexample',
+    nativeSymbol: 'EX',
     decimals: 18,
-    bech32Prefix: 'evmos',
+    bech32Prefix: 'example',
   },
-  'neutron-1': {
-    name: 'Neutron',
+  'example-2': {
+    name: 'Example Cosmos Chain',
     features: {
       evm: false,
       ibc: true,
       wasm: true,
-      customModules: ['interchainqueries', 'interchaintxs'],
+      customModules: ['examplemodule'],
     },
-    nativeDenom: 'untrn',
-    nativeSymbol: 'NTRN',
+    nativeDenom: 'uexample',
+    nativeSymbol: 'EX',
     decimals: 6,
-    bech32Prefix: 'neutron',
-  },
-  'republic_9001-1': {
-    name: 'Republic Devnet',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'atest',
-    nativeSymbol: 'TEST',
-    decimals: 18,
-    bech32Prefix: 'rai',
-  },
-  '9001': {
-    name: 'Local Cosmos EVM POC',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: true,
-      customModules: ['erc20', 'feemarket', 'ibc-go', '08-wasm'],
-    },
-    nativeDenom: 'atest',
-    nativeSymbol: 'TEST',
-    decimals: 18,
-    bech32Prefix: 'cosmos',
-  },
-  'republic_77701-1': {
-    name: 'Republic AI',
-    features: {
-      evm: true,
-      ibc: true,
-      wasm: false,
-    },
-    nativeDenom: 'arai',
-    nativeSymbol: 'RAI',
-    decimals: 18,
-    bech32Prefix: 'rai',
+    bech32Prefix: 'example',
   },
 }
 

@@ -4,6 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Copy, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { useChain } from '@/contexts/ChainContext'
 import type { EvmData } from '@/lib/api'
 
 interface EVMTransactionCardProps {
@@ -52,12 +53,12 @@ function getTxTypeLabel(type: number): string {
 }
 
 // Determine transaction action based on input data and decoded info
-function getTransactionAction(evmData: EvmData): { label: string; description: string } {
+function getTransactionAction(evmData: EvmData, symbol: string): { label: string; description: string } {
   // No input data = native transfer
   if (!evmData.data || evmData.data === '0x') {
     return {
       label: 'Native Transfer',
-      description: `Transfer ${formatWei(evmData.value)} RAI`
+      description: `Transfer ${formatWei(evmData.value)} ${symbol}`
     }
   }
 
@@ -97,6 +98,9 @@ function getTransactionAction(evmData: EvmData): { label: string; description: s
 }
 
 export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
+  const { chainInfo } = useChain()
+  const symbol = chainInfo.displayDenom
+  const baseDenom = chainInfo.baseDenom
   const [copied, setCopied] = useState<string | null>(null)
   const [inputExpanded, setInputExpanded] = useState(false)
 
@@ -146,7 +150,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
     )
   }
 
-  const action = getTransactionAction(evmData)
+  const action = getTransactionAction(evmData, symbol)
 
   return (
     <Card>
@@ -168,10 +172,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
             </div>
             <div className="text-right">
               <div className="font-mono font-medium">
-                {formatWei(evmData.value)} RAI
+                {formatWei(evmData.value)} {symbol}
               </div>
               <div className="text-xs text-muted-foreground">
-                Fee: {formatWei(transactionFee)} RAI
+                Fee: {formatWei(transactionFee)} {symbol}
               </div>
             </div>
           </div>
@@ -220,10 +224,10 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Value:</span>
           <span className="font-medium">
-            {formatWei(evmData.value)} RAI
+            {formatWei(evmData.value)} {symbol}
             {evmData.value !== '0' && (
               <span className="text-xs text-muted-foreground ml-1">
-                ({evmData.value} arai)
+                ({evmData.value} {baseDenom})
               </span>
             )}
           </span>
@@ -233,7 +237,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
           <span className="text-muted-foreground">Tx Fee:</span>
           <span className="font-medium">
-            {formatWei(transactionFee)} RAI
+            {formatWei(transactionFee)} {symbol}
           </span>
         </div>
 
@@ -254,7 +258,7 @@ export function EVMTransactionCard({ evmData }: EVMTransactionCardProps) {
           <span>
             {formatGwei(evmData.gasPrice)} Gwei
             <span className="text-xs text-muted-foreground ml-1">
-              ({evmData.gasPrice} arai)
+              ({evmData.gasPrice} {baseDenom})
             </span>
           </span>
         </div>

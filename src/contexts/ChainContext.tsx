@@ -30,7 +30,7 @@ interface ChainContextValue {
 	chainConfig: ChainConfig
 	chainInfo: ChainInfo
 	api: YaciClient
-	/** Base URL for chain query service gRPC proxy (e.g. "/api/chain" or "https://shared.example.com/chain/manifest-1") */
+	/** Base URL for chain query service gRPC proxy (e.g. "/api/chain" or "https://shared.example.com/chain/example-1") */
 	chainQueryBaseUrl: string
 	switchChain: (chainId: string) => void
 	availableChains: Array<{ id: string; name: string }>

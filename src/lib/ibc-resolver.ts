@@ -32,7 +32,7 @@ export const CHANNEL_CACHE_KEY = 'yaci_ibc_channel_cache'
 
 /**
  * Query channel information via the chain query service gRPC proxy
- * @param chainQueryBaseUrl - Base URL for chain query service (e.g. "/api/chain" or "https://shared.example.com/chain/manifest-1")
+ * @param chainQueryBaseUrl - Base URL for chain query service (e.g. "/api/chain" or "https://shared.example.com/chain/example-1")
  */
 export async function queryChannelInfo(
 	chainQueryBaseUrl: string,
