@@ -29,6 +29,11 @@ import { api, type Event } from "@/lib/api"
 import { formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 
+// "message" is an SDK dispatch event, not a tx message; label it distinctly
+function getEventTypeDisplay(type: string): string {
+	return type === "message" ? "msg_dispatch" : type
+}
+
 // Helper to group events by event_index, then by attributes
 function groupEvents(events: Event[]) {
 	const grouped = new Map<
@@ -543,7 +548,7 @@ export default function TransactionDetailPage() {
 																									variant="outline"
 																									className="text-xs"
 																								>
-																									{event.event_type}
+																									{getEventTypeDisplay(event.event_type)}
 																								</Badge>
 																								<span className="text-xs text-muted-foreground">
 																									{event.attributes.length}{" "}
