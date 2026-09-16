@@ -66,7 +66,7 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 
 					return (
 						<Collapsible
-							key={idx}
+							key={log.logIndex}
 							open={isExpanded}
 							onOpenChange={() => setExpandedLogs(prev => ({ ...prev, [idx]: !prev[idx] }))}
 						>
@@ -101,7 +101,7 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 									<div className="px-3 pb-3 space-y-3 border-t">
 										{/* Contract Address */}
 										<div className="pt-3">
-											<label className="text-xs font-medium text-muted-foreground">Contract Address</label>
+											<span className="text-xs font-medium text-muted-foreground">Contract Address</span>
 											<div className="flex items-center gap-1 mt-1">
 												<code className="text-xs bg-muted px-2 py-1 rounded">{log.address}</code>
 												<CopyButton text={log.address} field={`log-${idx}-address`} />
@@ -111,12 +111,12 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 										{/* Topics */}
 										{log.topics.length > 0 && (
 											<div>
-												<label className="text-xs font-medium text-muted-foreground">
+												<span className="text-xs font-medium text-muted-foreground">
 													Topics ({log.topics.length})
-												</label>
+												</span>
 												<div className="space-y-1 mt-1">
 													{log.topics.map((topic, topicIdx) => (
-														<div key={topicIdx} className="flex items-start gap-2">
+														<div key={topic} className="flex items-start gap-2">
 															<span className="text-xs text-muted-foreground min-w-[60px]">
 																[{topicIdx}]
 															</span>
@@ -135,7 +135,7 @@ export function EVMLogsCard({ logs }: EVMLogsCardProps) {
 										{/* Data */}
 										{log.data && log.data !== '0x' && (
 											<div>
-												<label className="text-xs font-medium text-muted-foreground">Data</label>
+												<span className="text-xs font-medium text-muted-foreground">Data</span>
 												<div className="flex items-center gap-1 mt-1">
 													<code className="text-xs bg-muted px-2 py-1 rounded break-all flex-1">
 														{log.data}

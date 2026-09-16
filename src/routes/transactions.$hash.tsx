@@ -16,6 +16,8 @@ import { useEffect, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router"
 import { JsonViewer } from "@/components/JsonViewer"
 import { MessageDetails } from "@/components/MessageDetails"
+import { EVMLogsCard } from "@/components/EVMLogsCard"
+import { EVMTransactionCard } from "@/components/EVMTransactionCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,8 +27,9 @@ import {
 	CollapsibleTrigger
 } from "@/components/ui/collapsible"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useChain } from "@/contexts/ChainContext"
 import { api, type Event } from "@/lib/api"
-import { formatHash, formatNumber, formatTimeAgo } from "@/lib/utils"
+import { formatNumber, formatTimeAgo } from "@/lib/utils"
 import { css } from "@/styled-system/css"
 
 // "message" is an SDK dispatch event, not a tx message; label it distinctly
@@ -94,6 +97,8 @@ function isJsonString(str: string): boolean {
 }
 
 export default function TransactionDetailPage() {
+	const { hasFeature } = useChain()
+	const evmEnabled = hasFeature("evm")
 	const [mounted, setMounted] = useState(false)
 	const [showRawData, setShowRawData] = useState<Record<number, boolean>>({})
 	const [copied, setCopied] = useState(false)
@@ -135,7 +140,7 @@ export default function TransactionDetailPage() {
 	})
 
 	useEffect(() => {
-		if (!transaction || decodeAttempted) return
+		if (!evmEnabled || !transaction || decodeAttempted) return
 
 		const isEVMTransaction = transaction.messages?.some(
 			(msg) => msg.type === "/ethermint.evm.v1.MsgEthereumTx"
@@ -173,7 +178,7 @@ export default function TransactionDetailPage() {
 					setIsDecodingEVM(false)
 				})
 		}
-	}, [transaction, decodeAttempted, refetch])
+	}, [transaction, decodeAttempted, refetch, evmEnabled])
 
 	const copyToClipboard = (text: string) => {
 		navigator.clipboard.writeText(text)
@@ -267,7 +272,7 @@ export default function TransactionDetailPage() {
 				</div>
 
 				{/* EVM View Toggle */}
-				{transaction.evm_data && (
+				{evmEnabled && transaction.evm_data && (
 					<div className="mt-4 flex items-center gap-3">
 						<Button
 							variant={evmView ? "default" : "outline"}
@@ -294,7 +299,7 @@ export default function TransactionDetailPage() {
 				)}
 
 				{/* EVM Decoding Status */}
-				{isDecodingEVM && (
+				{evmEnabled && isDecodingEVM && (
 					<div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
 						<Loader2 className="h-4 w-4 animate-spin" />
 						<span>Decoding EVM transaction data...</span>
@@ -683,49 +688,12 @@ export default function TransactionDetailPage() {
 						</CardContent>
 					</Card>
 
-					{/* EVM Data if available */}
-					{transaction.evm_data && (
-						<Card>
-							<CardHeader>
-								<CardTitle>EVM Transaction</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="space-y-3 text-sm">
-									{transaction.evm_data.hash && (
-										<div>
-											<p className="text-muted-foreground">EVM Hash</p>
-											<p className="font-mono text-xs break-all">
-												{transaction.evm_data.hash}
-											</p>
-										</div>
-									)}
-									{transaction.evm_data.from && (
-										<div>
-											<p className="text-muted-foreground">From</p>
-											<p className="font-mono text-xs">
-												{formatHash(transaction.evm_data.from, 8)}
-											</p>
-										</div>
-									)}
-									{transaction.evm_data.to && (
-										<div>
-											<p className="text-muted-foreground">To</p>
-											<p className="font-mono text-xs">
-												{formatHash(transaction.evm_data.to, 8)}
-											</p>
-										</div>
-									)}
-									{transaction.evm_data.gasUsed !== null && (
-										<div>
-											<p className="text-muted-foreground">Gas Used</p>
-											<p className="font-mono text-xs">
-												{formatNumber(transaction.evm_data.gasUsed)}
-											</p>
-										</div>
-									)}
-								</div>
-							</CardContent>
-						</Card>
+					{/* EVM data — only for chains that advertise the evm module */}
+					{evmEnabled && transaction.evm_data && (
+						<EVMTransactionCard evmData={transaction.evm_data} />
+					)}
+					{evmEnabled && transaction.evm_logs?.length > 0 && (
+						<EVMLogsCard logs={transaction.evm_logs} />
 					)}
 				</div>
 			</div>
