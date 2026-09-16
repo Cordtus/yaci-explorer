@@ -627,7 +627,23 @@ export class YaciClient {
 
 	async getChainStats(): Promise<ChainStats> {
 		const result = await this.query<ChainStats[]>('chain_stats')
-		return result[0]
+		const stats = result[0]
+		if (!stats) return stats
+		// chain_stats exposes counters only; block-time stats live in get_block_time_analysis
+		try {
+			const blockTime = await this.rpc<{ avg: number; min: number; max: number }>(
+				'get_block_time_analysis',
+				{ _limit: 100 }
+			)
+			return {
+				...stats,
+				avg_block_time: blockTime.avg,
+				min_block_time: blockTime.min,
+				max_block_time: blockTime.max,
+			}
+		} catch {
+			return stats
+		}
 	}
 
 	async getTxVolumeDaily(): Promise<Array<{ date: string; count: number }>> {
@@ -721,7 +737,12 @@ export class YaciClient {
 	}
 
 	async getActiveAddressesDaily(days = 30): Promise<Array<{ date: string; count: number }>> {
-		return this.rpc('get_active_addresses_daily', { _days: days })
+		// Backend exposes this as the `daily_active_addresses` view (date, active_addresses)
+		const rows = await this.query<Array<{ date: string; active_addresses: number }>>(
+			'daily_active_addresses',
+			{ order: 'date.desc', limit: days }
+		)
+		return rows.map(row => ({ date: row.date, count: row.active_addresses }))
 	}
 
 	// Governance endpoints
