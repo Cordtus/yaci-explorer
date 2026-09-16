@@ -1,9 +1,10 @@
 import type { ReactNode } from "react"
 import { Navigate } from "react-router"
+import type { FeatureKey } from "@/config/chains"
 import { useChain } from "@/contexts/ChainContext"
 
 interface FeatureGateProps {
-	feature: string
+	feature: FeatureKey
 	children: ReactNode
 }
 

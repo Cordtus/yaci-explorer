@@ -5,14 +5,13 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { getChainConfig, resolveFeatures, type ChainConfig, type ChainFeatures } from '@/config/chains'
+import { getChainConfig, resolveFeatures, type ChainConfig, type ChainFeatures, type FeatureKey } from '@/config/chains'
 import { YaciClient } from '@/lib/api'
 import {
 	getConfig,
 	getDefaultChainId,
 	getRuntimeChainConfig,
 	getRuntimeChainIds,
-	type RuntimeChainConfig,
 } from '@/lib/env'
 import { applyChainTheme } from '@/lib/theme'
 
@@ -35,7 +34,7 @@ interface ChainContextValue {
 	switchChain: (chainId: string) => void
 	availableChains: Array<{ id: string; name: string }>
 	/** Whether the selected chain enables a given feature flag (e.g. "evm", "governance") */
-	hasFeature: (feature: string) => boolean
+	hasFeature: (feature: FeatureKey) => boolean
 }
 
 const ChainContext = createContext<ChainContextValue | null>(null)
@@ -190,7 +189,7 @@ export function ChainProvider({ children }: { children: ReactNode }) {
 	}, [])
 
 	const hasFeature = useCallback(
-		(feature: string) => Boolean(chainInfo.features[feature]),
+		(feature: FeatureKey) => Boolean(chainInfo.features[feature]),
 		[chainInfo.features]
 	)
 

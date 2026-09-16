@@ -3,7 +3,7 @@
 import { type ChainFeatures, getChainConfig, resolveFeatures } from "@/config/chains"
 import type { YaciClient } from "@/lib/api"
 
-export interface ChainInfo {
+export interface DetectedChainInfo {
 	chainId: string
 	chainName: string
 	baseDenom: string
@@ -12,13 +12,13 @@ export interface ChainInfo {
 	features: ChainFeatures
 }
 
-let cachedChainInfo: ChainInfo | null = null
+let cachedChainInfo: DetectedChainInfo | null = null
 
 /**
  * Detect chain information from actual blockchain data
  * Uses chain registry config if available, falls back to auto-detection
  */
-export async function getChainInfo(api: YaciClient): Promise<ChainInfo> {
+export async function getChainInfo(api: YaciClient): Promise<DetectedChainInfo> {
 	// Return cached if available
 	if (cachedChainInfo) {
 		return cachedChainInfo

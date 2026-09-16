@@ -18,7 +18,7 @@ type BlockTimeData = {
 const getBlockIntervalData = async (
 	limit: number
 ): Promise<BlockTimeData[]> => {
-	const baseUrl = import.meta.env.POSTGREST_URL
+	const baseUrl = import.meta.env.VITE_POSTGREST_URL || import.meta.env.POSTGREST_URL
 	if (!baseUrl) {
 		throw new Error("POSTGREST_URL environment variable is not set")
 	}

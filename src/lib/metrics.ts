@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import { getChainInfo, type ChainInfo } from '@/lib/chain-info'
+import { getChainInfo, type DetectedChainInfo } from '@/lib/chain-info'
 
 export interface OverviewMetrics {
   latestBlock: number
@@ -51,7 +51,7 @@ async function getActiveValidators(): Promise<number> {
   return latestBlock?.data?.block?.last_commit?.signatures?.length || 0
 }
 
-async function getTotalSupply(chainInfo: ChainInfo): Promise<string | null> {
+async function getTotalSupply(chainInfo: DetectedChainInfo): Promise<string | null> {
   if (!REST_ENDPOINT) return null
   try {
     const res = await fetch(

@@ -6,7 +6,7 @@ import pandacss from '@pandacss/dev/postcss'
 
 const isProd = process.env.NODE_ENV === 'production'
 const browserEnv: Record<string, string> = Object.fromEntries(
-	Object.entries(process.env).filter(([key]) => key.startsWith('VITE_') || key === 'POSTGREST_URL'),
+	Object.entries(process.env).filter(([key]) => key.startsWith('VITE_')),
 ) as Record<string, string>
 if (!browserEnv.VITE_POSTGREST_URL && process.env.POSTGREST_URL) {
 	browserEnv.VITE_POSTGREST_URL = process.env.POSTGREST_URL
@@ -33,9 +33,9 @@ function buildRuntimeConfig() {
 		name: process.env.VITE_CHAIN_NAME || process.env.CHAIN_NAME || chainId,
 		apiUrl,
 		features: {
-			evm: envFlag('VITE_FEATURE_EVM', true),
+			evm: envFlag('VITE_FEATURE_EVM', false),
 			ibc: envFlag('VITE_FEATURE_IBC', true),
-			wasm: envFlag('VITE_FEATURE_WASM', true),
+			wasm: envFlag('VITE_FEATURE_WASM', false),
 			governance: envFlag('VITE_FEATURE_GOVERNANCE', true),
 			staking: envFlag('VITE_FEATURE_STAKING', true),
 		},
